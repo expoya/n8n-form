@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>n8n Formular</title>
+</head>
+<body>
+  <h2>Unternehmensdaten eingeben</h2>
+  <form id="myForm">
+    <label>Unternehmensname: <input type="text" name="companyName" required></label><br><br>
+    <label>Website: <input type="url" name="website" required></label><br><br>
+    <button type="submit">Absenden</button>
+  </form>
+
+  <h3>Antwort:</h3>
+  <pre id="responseOutput" style="background:#f4f4f4;padding:10px;"></pre>
+
+  <script>
+    document.getElementById("myForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      const response = await fetch("https://dein-n8n-server/webhook/dein-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      document.getElementById("responseOutput").innerText = JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
+</html>
