@@ -11,7 +11,7 @@
 
   <div class="min-h-screen flex flex-col md:flex-row gap-6 p-4">
 
-    <!-- Eingabe -->
+    <!-- Eingabe-Pane -->
     <aside class="md:w-80 w-full bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-4">
 
       <div class="text-center space-y-2">
@@ -44,7 +44,7 @@
           </div>
         </div>
 
-        <div><label class="block mb-0.5">Regionen (, / ;) </label>
+        <div><label class="block mb-0.5">Regionen (, / ;)</label>
           <textarea name="regions" rows="2"
                     class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1"
                     placeholder="OÖ; NÖ; Wien"></textarea></div>
@@ -62,11 +62,16 @@
         <!-- Toggle -->
         <div class="flex items-center justify-between">
           <span id="toggleLabel">Ohne Ortsbezug</span>
+
           <button type="button" id="toggle"
-                  class="relative h-5 w-10 rounded-full bg-gray-600"
+                  class="relative h-5 w-10 rounded-full bg-gray-600 transition-colors"
                   role="switch" aria-checked="false">
-            <span aria-hidden="true"
-                  class="inline-block h-4 w-4 bg-white rounded-full transform translate-x-0 transition"></span>
+            <span class="sr-only">Ortsbezug</span>
+
+            <!-- beweglicher Knopf -->
+            <span id="knob"
+                  class="absolute top-0.5 left-0.5 h-4 w-4 bg-white rounded-full
+                         transform translate-x-0 transition-transform"></span>
           </button>
         </div>
         <input type="hidden" name="regional" id="regional" value="false">
@@ -78,7 +83,7 @@
       </form>
     </aside>
 
-    <!-- Ausgabe -->
+    <!-- Ausgabe-Pane -->
     <section class="flex-1 w-full bg-gray-800 border border-gray-700 rounded-xl p-4 flex flex-col">
       <header class="flex items-center justify-between mb-3">
         <h2 class="text-base font-semibold text-indigo-400">Titel-Liste</h2>
@@ -108,14 +113,20 @@
     /* --- Toggle --- */
     $('#toggle').addEventListener('click', () => {
       const t   = $('#toggle');
-      const on  = t.getAttribute('aria-checked') === 'true';
+      const k   = $('#knob');
+      const lbl = $('#toggleLabel');
+      const hid = $('#regional');
+
+      const on = t.getAttribute('aria-checked') === 'true';
+
       t.setAttribute('aria-checked', (!on).toString());
       t.classList.toggle('bg-indigo-600', !on);
       t.classList.toggle('bg-gray-600',   on);
-      t.firstElementChild.classList.toggle('translate-x-5', !on);
-      t.firstElementChild.classList.toggle('translate-x-0',  on);
-      $('#toggleLabel').textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
-      $('#regional').value          = (!on).toString();
+      k.classList.toggle('translate-x-5', !on);  // 1.25 rem (Tailwind scale)
+      k.classList.toggle('translate-x-0',  on);
+
+      lbl.textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
+      hid.value       = (!on).toString();
     });
 
     /* --- State --- */
@@ -131,6 +142,7 @@
       $('#fillBtn').disabled = titles.length >= wanted;
     };
 
+    /* --- löschen --- */
     $('#titleList').onclick = e=>{
       if(e.target.dataset.i){
         titles.splice(e.target.dataset.i,1);
@@ -138,6 +150,7 @@
       }
     };
 
+    /* --- Nachgenerieren --- */
     $('#fillBtn').onclick = async ()=>{
       const missing = wanted - titles.length;
       if(missing<=0) return;
