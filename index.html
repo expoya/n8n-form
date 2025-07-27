@@ -2,14 +2,16 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI-Content-Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-900 text-gray-200 font-sans">
 
   <div class="min-h-screen flex flex-col items-center justify-center px-4 py-10">
     <div class="w-full max-w-xl bg-gray-800 shadow-2xl rounded-2xl p-10 border border-gray-700">
-      
+
       <!-- Logo -->
       <img src="assets/logo.png" alt="Expoya Logo" class="h-12 mx-auto mb-6">
 
@@ -18,35 +20,115 @@
         AI-Content-Engine
       </h1>
 
+      <!-- Formular -->
       <form id="myForm" class="space-y-6">
 
         <!-- Unternehmensname -->
         <div>
           <label class="block text-sm font-medium text-gray-400">Unternehmensname</label>
           <input name="companyName" type="text" required
-                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
+                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
         <!-- Website -->
         <div>
           <label class="block text-sm font-medium text-gray-400">Website</label>
           <input name="website" type="url" required
-                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
+                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
         <!-- Anzahl Expos -->
         <div>
           <label class="block text-sm font-medium text-gray-400">Anzahl Expos</label>
           <input name="expoCount" type="number" min="1" required
-                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none" />
+                 class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
-        <!-- Ortsbezug Toggle -->
+        <!-- Ortsbezug-Toggle -->
         <div>
-          <label class="block text-sm font-medium text-gray-400 mb-1">Ortsbezug in Expos aktivieren?</label>
+          <label class="block text-sm font-medium text-gray-400 mb-1">
+            Ortsbezug in Expos aktivieren?
+          </label>
           <p class="text-xs text-gray-500 mb-2">
-            z. B. „Fenster Sachverständiger <strong>in Österreich</strong>“ statt nur „Fenster Sachverständiger“
+            z. B. „Fenster Sachverständiger <strong>in Österreich</strong>“ statt nur „Fenster Sachverständiger“
           </p>
+
           <div class="flex items-center space-x-4">
             <span id="regionalLabel" class="text-sm text-gray-300">Ohne Ortsbezug</span>
-            <butt
+
+            <button type="button" id="regionalToggle"
+                    class="relative inline-flex h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    role="switch" aria-checked="false">
+              <span class="sr-only">Ortsbezug aktivieren</span>
+              <span aria-hidden="true"
+                    class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition translate-x-0"></span>
+            </button>
+          </div>
+
+          <!-- verstecktes Feld für den Boolean-Wert -->
+          <input type="hidden" name="regional" id="regionalHidden" value="false">
+        </div>
+
+        <!-- Submit -->
+        <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white py-2 px-4 rounded-md font-semibold tracking-wide">
+          🚀 Generieren
+        </button>
+      </form>
+
+      <!-- Antwortbereich -->
+      <div class="mt-8">
+        <h2 class="text-sm font-semibold text-gray-400 mb-2">Antwort von der Engine:</h2>
+        <pre id="responseOutput"
+             class="bg-gray-700 p-4 rounded-md text-sm overflow-x-auto whitespace-pre-wrap text-green-300 font-mono border border-gray-600"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    /* Toggle-Logik */
+    const toggle   = document.getElementById('regionalToggle');
+    const label    = document.getElementById('regionalLabel');
+    const hidden   = document.getElementById('regionalHidden');
+
+    toggle.addEventListener('click', () => {
+      const isOn = toggle.getAttribute('aria-checked') === 'true';
+
+      toggle.setAttribute('aria-checked', !isOn);
+      toggle.classList.toggle('bg-indigo-600', !isOn);
+      toggle.classList.toggle('bg-gray-600',   isOn);
+      toggle.querySelector('span')
+            .classList.toggle('translate-x-5', !isOn);
+      toggle.querySelector('span')
+            .classList.toggle('translate-x-0',  isOn);
+
+      label.textContent = !isOn ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
+      hidden.value      = !isOn ? 'true'         : 'false';
+    });
+
+    /* Formularsubmit */
+    document.getElementById('myForm')
+            .addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const data     = Object.fromEntries(formData.entries());
+
+      const response = await fetch(
+        'https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773',
+        {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(data)
+        }
+      );
+
+      const result = await response.json();
+      document.getElementById('responseOutput').innerText =
+        JSON.stringify(result, null, 2);
+    });
+  </script>
+
+</body>
+</html>
