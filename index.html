@@ -7,147 +7,147 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-900 text-gray-200 font-sans">
+<body class="bg-gray-900 text-gray-200 font-sans text-[13px]">
 
-  <div class="min-h-screen flex flex-col md:flex-row gap-8 p-6">
+  <div class="min-h-screen flex flex-col md:flex-row gap-6 p-4">
 
-    <!-- Eingabe-Pane -->
-    <aside class="md:w-96 w-full bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-6 space-y-6">
+    <!-- Eingabe -->
+    <aside class="md:w-80 w-full bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-4">
 
-      <div class="text-center space-y-4">
-        <img src="assets/logo.png" class="h-12 mx-auto" alt="Logo">
-        <h1 class="text-2xl font-extrabold text-indigo-400">AI-Content-Engine</h1>
+      <div class="text-center space-y-2">
+        <img src="assets/logo.png" class="h-8 mx-auto" alt="Logo">
+        <h1 class="text-xl font-bold text-indigo-400">AI-Content-Engine</h1>
       </div>
 
-      <form id="form" class="space-y-4 text-sm">
+      <form id="form" class="space-y-3">
 
-        <!-- Basisfelder -->
-        <div><label class="block mb-1 text-gray-400">Unternehmensname</label>
-          <input name="companyName" required class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
+        <div><label class="block mb-0.5">Unternehmensname</label>
+          <input name="companyName" required
+                 class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
         </div>
 
-        <div><label class="block mb-1 text-gray-400">Website</label>
-          <input name="website" type="url" required class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
+        <div><label class="block mb-0.5">Website</label>
+          <input name="website" type="url" required
+                 class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="block mb-1 text-gray-400"># Expos</label>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block mb-0.5"># Expos</label>
             <input name="expoCount" type="number" min="1" required
-                   class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
+                   class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
           </div>
-          <div><label class="block mb-1 text-gray-400">Branche</label>
+          <div><label class="block mb-0.5">Branche</label>
             <select name="branche" id="brancheSelect" required
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
+                    class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
               <option value="">– wählen –</option>
             </select>
           </div>
         </div>
 
-        <!-- Mehrzeiler -->
-        <div><label class="block mb-1 text-gray-400">Regionen (, / ;) </label>
+        <div><label class="block mb-0.5">Regionen (, / ;) </label>
           <textarea name="regions" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1"
                     placeholder="OÖ; NÖ; Wien"></textarea></div>
 
-        <div><label class="block mb-1 text-gray-400">Zielgruppen (, / ;)</label>
+        <div><label class="block mb-0.5">Zielgruppen (, / ;)</label>
           <textarea name="audiences" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1"
                     placeholder="Architekten; Bauträger"></textarea></div>
 
-        <div><label class="block mb-1 text-gray-400">Produkte / DL (, / ;)</label>
+        <div><label class="block mb-0.5">Produkte / DL (, / ;)</label>
           <textarea name="offerings" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1"
                     placeholder="Fenster; Türen"></textarea></div>
 
         <!-- Toggle -->
         <div class="flex items-center justify-between">
-          <span id="toggleLabel" class="text-gray-300">Ohne Ortsbezug</span>
+          <span id="toggleLabel">Ohne Ortsbezug</span>
           <button type="button" id="toggle"
-                  class="relative h-6 w-11 rounded-full bg-gray-600"
+                  class="relative h-5 w-10 rounded-full bg-gray-600"
                   role="switch" aria-checked="false">
             <span aria-hidden="true"
-                  class="inline-block h-5 w-5 bg-white rounded-full transform translate-x-0 transition"></span>
+                  class="inline-block h-4 w-4 bg-white rounded-full transform translate-x-0 transition"></span>
           </button>
         </div>
         <input type="hidden" name="regional" id="regional" value="false">
 
         <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded font-semibold">
+                class="w-full bg-indigo-600 hover:bg-indigo-700 py-1.5 rounded font-semibold text-sm">
           🚀 Generieren
         </button>
       </form>
     </aside>
 
-    <!-- Ausgabe-Pane -->
-    <section class="flex-1 w-full bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-6 flex flex-col">
-      <header class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-indigo-400">Titel-Liste</h2>
-        <div id="counter" class="text-sm text-gray-400">0 / 0</div>
+    <!-- Ausgabe -->
+    <section class="flex-1 w-full bg-gray-800 border border-gray-700 rounded-xl p-4 flex flex-col">
+      <header class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold text-indigo-400">Titel-Liste</h2>
+        <div id="counter" class="text-xs text-gray-400">0 / 0</div>
       </header>
 
-      <!-- Dynamische Titelliste -->
-      <ul id="titleList" class="flex-1 overflow-auto space-y-2 text-sm"></ul>
+      <ul id="titleList" class="flex-1 overflow-auto space-y-1 text-xs"></ul>
 
       <button id="fillBtn" disabled
-              class="mt-4 self-end bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded font-semibold text-sm">
-        ⟲ fehlende Titel nach­generieren
+              class="mt-3 self-end bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded text-xs font-semibold">
+        ⟲ fehlende Titel nachgenerieren
       </button>
     </section>
-
   </div>
 
   <!-- Script -->
   <script>
-    /* -------- Hilfsfunktionen -------- */
-    const $ = s => document.querySelector(s);
+    const $  = s => document.querySelector(s);
     const api = "https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773";
+
+    /* --- Branchen laden --- */
+    fetch('assets/gmb_categories.json')
+      .then(r=>r.json())
+      .then(arr=>arr.forEach(c=>$('#brancheSelect')
+        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)));
+
+    /* --- Toggle --- */
+    $('#toggle').addEventListener('click', () => {
+      const t   = $('#toggle');
+      const on  = t.getAttribute('aria-checked') === 'true';
+      t.setAttribute('aria-checked', (!on).toString());
+      t.classList.toggle('bg-indigo-600', !on);
+      t.classList.toggle('bg-gray-600',   on);
+      t.firstElementChild.classList.toggle('translate-x-5', !on);
+      t.firstElementChild.classList.toggle('translate-x-0',  on);
+      $('#toggleLabel').textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
+      $('#regional').value          = (!on).toString();
+    });
+
+    /* --- State --- */
     let wanted = 0, titles = [];
 
-    /* Toggle */
-    $('#toggle').onclick = () => {
-      const on = $('#toggle').ariaChecked === 'true';
-      $('#toggle').ariaChecked = (!on).toString();
-      $('#toggle').firstElementChild.classList.toggle('translate-x-5', !on);
-      $('#toggle').classList.toggle('bg-indigo-600', !on);
-      $('#toggleLabel').textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
-      $('#regional').value = (!on).toString();
-    };
-
-    /* Branchenliste */
-    fetch('assets/gmb_categories_de_200.json').then(r=>r.json())
-      .then(arr => { arr.forEach(c=>$('#brancheSelect')
-        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)); });
-
-    /* Liste aktualisieren */
-    function renderList() {
+    const render = () => {
       $('#titleList').innerHTML = titles.map((t,i)=>
-        `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-3 py-1">
-           <span class="mr-2 flex-1 truncate">${t}</span>
-           <button data-i="${i}" class="text-red-400 hover:text-red-500 text-xs">🗑︎</button>
+        `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-2 py-0.5">
+           <span class="truncate mr-1">${t}</span>
+           <button data-i="${i}" class="text-red-400 hover:text-red-500">🗑︎</button>
          </li>`).join('');
       $('#counter').textContent = `${titles.length} / ${wanted}`;
       $('#fillBtn').disabled = titles.length >= wanted;
-    }
+    };
 
-    /* Elemente löschen */
     $('#titleList').onclick = e=>{
       if(e.target.dataset.i){
         titles.splice(e.target.dataset.i,1);
-        renderList();
+        render();
       }
     };
 
-    /* Nachgenerieren */
     $('#fillBtn').onclick = async ()=>{
       const missing = wanted - titles.length;
       if(missing<=0) return;
       const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({action:'fill',missing,existing:titles})});
       titles = titles.concat(await res.json());
-      renderList();
+      render();
     };
 
-    /* Formular submit = Initial-Generate */
+    /* --- Formular --- */
     $('#form').onsubmit = async ev=>{
       ev.preventDefault();
       const fd = Object.fromEntries(new FormData(ev.target).entries());
@@ -155,11 +155,12 @@
         fd[k]=fd[k].split(/[;,]/).map(s=>s.trim()).filter(Boolean);
       });
       fd.expoCount = +(fd.expoCount||0);
-      fd.action = 'generate';
-      wanted = fd.expoCount;
+      fd.action    = 'generate';
+      wanted       = fd.expoCount;
+
       const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
-      titles = await res.json();               // erwartet Array of strings
-      renderList();
+      titles = await res.json();
+      render();
     };
   </script>
 </body>
