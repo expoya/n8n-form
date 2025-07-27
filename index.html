@@ -67,8 +67,6 @@
                   class="relative h-5 w-10 rounded-full bg-gray-600 transition-colors"
                   role="switch" aria-checked="false">
             <span class="sr-only">Ortsbezug</span>
-
-            <!-- beweglicher Knopf -->
             <span id="knob"
                   class="absolute top-0.5 left-0.5 h-4 w-4 bg-white rounded-full
                          transform translate-x-0 transition-transform"></span>
@@ -76,9 +74,9 @@
         </div>
         <input type="hidden" name="regional" id="regional" value="false">
 
-        <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 py-1.5 rounded font-semibold text-sm">
-          🚀 Generieren
+        <button type="submit" id="submitBtn"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 py-1.5 rounded font-semibold text-sm flex items-center justify-center gap-1">
+          <span id="btnIcon">🚀</span><span id="btnText">Generieren</span>
         </button>
       </form>
     </aside>
@@ -108,23 +106,18 @@
     fetch('assets/gmb_categories.json')
       .then(r=>r.json())
       .then(arr=>arr.forEach(c=>$('#brancheSelect')
-        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)));
+        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)))
+      .catch(e=>console.error('Branchen-JSON Ladefehler:',e));
 
     /* --- Toggle --- */
     $('#toggle').addEventListener('click', () => {
-      const t   = $('#toggle');
-      const k   = $('#knob');
-      const lbl = $('#toggleLabel');
-      const hid = $('#regional');
-
-      const on = t.getAttribute('aria-checked') === 'true';
-
+      const t   = $('#toggle'), k=$('#knob'), lbl=$('#toggleLabel'), hid=$('#regional');
+      const on  = t.getAttribute('aria-checked') === 'true';
       t.setAttribute('aria-checked', (!on).toString());
       t.classList.toggle('bg-indigo-600', !on);
       t.classList.toggle('bg-gray-600',   on);
-      k.classList.toggle('translate-x-5', !on);  // 1.25 rem (Tailwind scale)
+      k.classList.toggle('translate-x-5', !on);
       k.classList.toggle('translate-x-0',  on);
-
       lbl.textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
       hid.value       = (!on).toString();
     });
@@ -133,16 +126,17 @@
     let wanted = 0, titles = [];
 
     const render = () => {
-      $('#titleList').innerHTML = titles.map((t,i)=>
-        `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-2 py-0.5">
-           <span class="truncate mr-1">${t}</span>
-           <button data-i="${i}" class="text-red-400 hover:text-red-500">🗑︎</button>
-         </li>`).join('');
+      $('#titleList').innerHTML = titles.length
+        ? titles.map((t,i)=>
+          `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-2 py-0.5">
+             <span class="truncate mr-1">${t}</span>
+             <button data-i="${i}" class="text-red-400 hover:text-red-500">🗑︎</button>
+           </li>`).join('')
+        : '<li class="text-gray-500">Noch keine Titel …</li>';
       $('#counter').textContent = `${titles.length} / ${wanted}`;
-      $('#fillBtn').disabled = titles.length >= wanted;
+      $('#fillBtn').disabled    = titles.length >= wanted;
     };
 
-    /* --- löschen --- */
     $('#titleList').onclick = e=>{
       if(e.target.dataset.i){
         titles.splice(e.target.dataset.i,1);
@@ -150,31 +144,48 @@
       }
     };
 
-    /* --- Nachgenerieren --- */
     $('#fillBtn').onclick = async ()=>{
       const missing = wanted - titles.length;
       if(missing<=0) return;
-      const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'fill',missing,existing:titles})});
-      titles = titles.concat(await res.json());
-      render();
+      console.log('🔄 Nachgenerieren:', missing);
+      try{
+        const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'fill',missing,existing:titles})});
+        if(!res.ok) throw new Error(res.status+' '+res.statusText);
+        titles = titles.concat(await res.json());
+        render();
+      }catch(e){alert('Fill-Webhook-Fehler – siehe Konsole');console.error(e);}
     };
 
-    /* --- Formular --- */
+    /* --- Formular submit --- */
     $('#form').onsubmit = async ev=>{
       ev.preventDefault();
-      const fd = Object.fromEntries(new FormData(ev.target).entries());
-      ['regions','audiences','offerings'].forEach(k=>{
-        fd[k]=fd[k].split(/[;,]/).map(s=>s.trim()).filter(Boolean);
-      });
-      fd.expoCount = +(fd.expoCount||0);
-      fd.action    = 'generate';
-      wanted       = fd.expoCount;
+      const btn = $('#submitBtn');
+      $('#btnIcon').textContent='⏳';
+      $('#btnText').textContent='Wird generiert';
+      btn.disabled = true;
 
-      const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
-      titles = await res.json();
-      render();
+      const fd = Object.fromEntries(new FormData(ev.target).entries());
+      ['regions','audiences','offerings'].forEach(k=>fd[k]=fd[k].split(/[;,]/).map(x=>x.trim()).filter(Boolean));
+      fd.expoCount=+(fd.expoCount||0); fd.action='generate'; wanted=fd.expoCount;
+      console.log('🚀 POST payload:', fd);
+
+      try{
+        const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
+        if(!res.ok) throw new Error(res.status+' '+res.statusText);
+        titles = await res.json();
+        console.log('✅ Antwort:', titles);
+      }catch(e){
+        console.error('Webhook-Error:',e);
+        alert('Webhook nicht erreichbar – Details in Konsole');
+      }finally{
+        render();
+        btn.disabled = false;
+        $('#btnIcon').textContent='🚀';
+        $('#btnText').textContent='Generieren';
+      }
     };
   </script>
 </body>
 </html>
+
