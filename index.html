@@ -9,142 +9,158 @@
 
 <body class="bg-gray-900 text-gray-200 font-sans">
 
-  <!-- Hüll-Container -->
-  <div class="min-h-screen flex flex-col md:flex-row md:items-start md:justify-center gap-8 p-6">
+  <div class="min-h-screen flex flex-col md:flex-row gap-8 p-6">
 
-    <!-- ▸ Eingabe-Spalte (links) -->
+    <!-- Eingabe-Pane -->
     <aside class="md:w-96 w-full bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-6 space-y-6">
 
-      <!-- Logo & Titel -->
       <div class="text-center space-y-4">
-        <img src="assets/logo.png" alt="Logo" class="h-12 mx-auto">
+        <img src="assets/logo.png" class="h-12 mx-auto" alt="Logo">
         <h1 class="text-2xl font-extrabold text-indigo-400">AI-Content-Engine</h1>
       </div>
 
-      <!-- Formular -->
-      <form id="myForm" class="space-y-4 text-sm">
+      <form id="form" class="space-y-4 text-sm">
 
-        <div>
-          <label class="block text-gray-400 mb-1">Unternehmensname</label>
-          <input name="companyName" required
-                 class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        <!-- Basisfelder -->
+        <div><label class="block mb-1 text-gray-400">Unternehmensname</label>
+          <input name="companyName" required class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
         </div>
 
-        <div>
-          <label class="block text-gray-400 mb-1">Website</label>
-          <input name="website" type="url" required
-                 class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        <div><label class="block mb-1 text-gray-400">Website</label>
+          <input name="website" type="url" required class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-gray-400 mb-1"># Expos</label>
+          <div><label class="block mb-1 text-gray-400"># Expos</label>
             <input name="expoCount" type="number" min="1" required
-                   class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                   class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
           </div>
-          <div>
-            <label class="block text-gray-400 mb-1">Branche</label>
+          <div><label class="block mb-1 text-gray-400">Branche</label>
             <select name="branche" id="brancheSelect" required
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2">
               <option value="">– wählen –</option>
             </select>
           </div>
         </div>
 
-        <!-- Multiline-Felder -->
-        <div>
-          <label class="block text-gray-400 mb-1">Regionen (Komma/;) </label>
+        <!-- Mehrzeiler -->
+        <div><label class="block mb-1 text-gray-400">Regionen (, / ;) </label>
           <textarea name="regions" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="OÖ; NÖ; Wien"></textarea>
-        </div>
+                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    placeholder="OÖ; NÖ; Wien"></textarea></div>
 
-        <div>
-          <label class="block text-gray-400 mb-1">Zielgruppen (Komma/;)</label>
+        <div><label class="block mb-1 text-gray-400">Zielgruppen (, / ;)</label>
           <textarea name="audiences" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Architekten; Bauträger"></textarea>
-        </div>
+                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    placeholder="Architekten; Bauträger"></textarea></div>
 
-        <div>
-          <label class="block text-gray-400 mb-1">Produkte / Dienstleistungen (Komma/;)</label>
+        <div><label class="block mb-1 text-gray-400">Produkte / DL (, / ;)</label>
           <textarea name="offerings" rows="2"
-                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Fenster; Türen"></textarea>
-        </div>
+                    class="w-full bg-gray-700 border-gray-600 rounded px-3 py-2"
+                    placeholder="Fenster; Türen"></textarea></div>
 
         <!-- Toggle -->
         <div class="flex items-center justify-between">
-          <span id="regionalLabel" class="text-gray-300">Ohne Ortsbezug</span>
-          <button type="button" id="regionalToggle"
-                  class="relative h-6 w-11 rounded-full bg-gray-600 transition-colors"
+          <span id="toggleLabel" class="text-gray-300">Ohne Ortsbezug</span>
+          <button type="button" id="toggle"
+                  class="relative h-6 w-11 rounded-full bg-gray-600"
                   role="switch" aria-checked="false">
-            <span class="sr-only">Ortsbezug</span>
             <span aria-hidden="true"
-                  class="inline-block h-5 w-5 bg-white rounded-full transform transition translate-x-0"></span>
+                  class="inline-block h-5 w-5 bg-white rounded-full transform translate-x-0 transition"></span>
           </button>
         </div>
-
-        <input type="hidden" name="regional" id="regionalHidden" value="false">
+        <input type="hidden" name="regional" id="regional" value="false">
 
         <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded font-semibold">🚀 Generieren</button>
+                class="w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded font-semibold">
+          🚀 Generieren
+        </button>
       </form>
     </aside>
 
-    <!-- ▸ Ausgabe-Spalte (rechts) -->
+    <!-- Ausgabe-Pane -->
     <section class="flex-1 w-full bg-gray-800 border border-gray-700 shadow-xl rounded-2xl p-6 flex flex-col">
-      <h2 class="text-lg font-semibold text-indigo-400 mb-4">Antwort der Engine</h2>
-      <pre id="responseOutput"
-           class="flex-1 bg-gray-900 p-4 rounded overflow-auto text-green-300 font-mono text-xs border border-gray-700"></pre>
+      <header class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-indigo-400">Titel-Liste</h2>
+        <div id="counter" class="text-sm text-gray-400">0 / 0</div>
+      </header>
+
+      <!-- Dynamische Titelliste -->
+      <ul id="titleList" class="flex-1 overflow-auto space-y-2 text-sm"></ul>
+
+      <button id="fillBtn" disabled
+              class="mt-4 self-end bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded font-semibold text-sm">
+        ⟲ fehlende Titel nach­generieren
+      </button>
     </section>
 
   </div>
 
-  <!-- JS ---------------------------------------------------------------- -->
+  <!-- Script -->
   <script>
-    /* Toggle-Logik */
-    const t = document.getElementById('regionalToggle');
-    const l = document.getElementById('regionalLabel');
-    const h = document.getElementById('regionalHidden');
-    t.addEventListener('click', () => {
-      const on = t.getAttribute('aria-checked') === 'true';
-      t.setAttribute('aria-checked', !on);
-      t.classList.toggle('bg-indigo-600', !on);
-      t.classList.toggle('bg-gray-600',   on);
-      t.firstElementChild.classList.toggle('translate-x-5', !on);
-      t.firstElementChild.classList.toggle('translate-x-0',  on);
-      l.textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
-      h.value = !on ? 'true' : 'false';
-    });
+    /* -------- Hilfsfunktionen -------- */
+    const $ = s => document.querySelector(s);
+    const api = "https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773";
+    let wanted = 0, titles = [];
 
-    /* Branchen-Dropdown laden (Shortlist-JSON) */
-    fetch('assets/gmb_categories_de_200.json')
-      .then(r => r.json())
-      .then(arr => {
-        const sel = document.getElementById('brancheSelect');
-        arr.forEach(cat => sel.insertAdjacentHTML('beforeend',
-          `<option value="${cat}">${cat}</option>`));
-      });
+    /* Toggle */
+    $('#toggle').onclick = () => {
+      const on = $('#toggle').ariaChecked === 'true';
+      $('#toggle').ariaChecked = (!on).toString();
+      $('#toggle').firstElementChild.classList.toggle('translate-x-5', !on);
+      $('#toggle').classList.toggle('bg-indigo-600', !on);
+      $('#toggleLabel').textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
+      $('#regional').value = (!on).toString();
+    };
 
-    /* Formular absenden */
-    document.getElementById('myForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const fd   = new FormData(e.target);
-      const data = Object.fromEntries(fd.entries());
+    /* Branchenliste */
+    fetch('assets/gmb_categories_de_200.json').then(r=>r.json())
+      .then(arr => { arr.forEach(c=>$('#brancheSelect')
+        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)); });
 
+    /* Liste aktualisieren */
+    function renderList() {
+      $('#titleList').innerHTML = titles.map((t,i)=>
+        `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-3 py-1">
+           <span class="mr-2 flex-1 truncate">${t}</span>
+           <button data-i="${i}" class="text-red-400 hover:text-red-500 text-xs">🗑︎</button>
+         </li>`).join('');
+      $('#counter').textContent = `${titles.length} / ${wanted}`;
+      $('#fillBtn').disabled = titles.length >= wanted;
+    }
+
+    /* Elemente löschen */
+    $('#titleList').onclick = e=>{
+      if(e.target.dataset.i){
+        titles.splice(e.target.dataset.i,1);
+        renderList();
+      }
+    };
+
+    /* Nachgenerieren */
+    $('#fillBtn').onclick = async ()=>{
+      const missing = wanted - titles.length;
+      if(missing<=0) return;
+      const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'fill',missing,existing:titles})});
+      titles = titles.concat(await res.json());
+      renderList();
+    };
+
+    /* Formular submit = Initial-Generate */
+    $('#form').onsubmit = async ev=>{
+      ev.preventDefault();
+      const fd = Object.fromEntries(new FormData(ev.target).entries());
       ['regions','audiences','offerings'].forEach(k=>{
-        data[k] = (data[k]||'').split(/[;,]/).map(x=>x.trim()).filter(Boolean);
+        fd[k]=fd[k].split(/[;,]/).map(s=>s.trim()).filter(Boolean);
       });
-      data.expoCount = +data.expoCount || 0;
-
-      const r = await fetch(
-        'https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773',
-        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}
-      );
-      document.getElementById('responseOutput').textContent =
-        JSON.stringify(await r.json(), null, 2);
-    });
+      fd.expoCount = +(fd.expoCount||0);
+      fd.action = 'generate';
+      wanted = fd.expoCount;
+      const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
+      titles = await res.json();               // erwartet Array of strings
+      renderList();
+    };
   </script>
 </body>
 </html>
