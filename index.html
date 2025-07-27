@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>AI-Content-Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -44,13 +44,50 @@
                  class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
+        <!-- Regionen -->
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Regionen<br>
+            <span class="text-xs text-gray-500">mit Komma oder Semikolon trennen</span>
+          </label>
+          <textarea name="regions" rows="2" placeholder="Oberösterreich; Niederösterreich; Wien"
+                    class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        </div>
+
+        <!-- Zielgruppen -->
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Zielgruppen<br>
+            <span class="text-xs text-gray-500">mit Komma oder Semikolon trennen</span>
+          </label>
+          <textarea name="audiences" rows="2" placeholder="Architekten; Bauträger; Private Hausbesitzer"
+                    class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        </div>
+
+        <!-- Produkte / Dienstleistungen -->
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Produkte / Dienstleistungen<br>
+            <span class="text-xs text-gray-500">mit Komma oder Semikolon trennen</span>
+          </label>
+          <textarea name="offerings" rows="2" placeholder="Fenster; Türen; Wintergärten"
+                    class="mt-1 w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        </div>
+
+        <!-- Branche -->
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Branche (Google Business Kategorie)</label>
+          <select name="branche" id="brancheSelect" required
+                  class="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="">– bitte wählen –</option>
+          </select>
+          <p id="brancheHint" class="text-xs text-gray-500 mt-1 hidden">Kategorien geladen …</p>
+        </div>
+
         <!-- Ortsbezug-Toggle -->
         <div>
           <label class="block text-sm font-medium text-gray-400 mb-1">
             Ortsbezug in Expos aktivieren?
           </label>
           <p class="text-xs text-gray-500 mb-2">
-            z. B. „Fenster Sachverständiger <strong>in Österreich</strong>“ statt nur „Fenster Sachverständiger“
+            z. B. „Fenster Sachverständiger <strong>in Österreich</strong>“
           </p>
 
           <div class="flex items-center space-x-4">
@@ -65,7 +102,6 @@
             </button>
           </div>
 
-          <!-- verstecktes Feld für den Boolean-Wert -->
           <input type="hidden" name="regional" id="regionalHidden" value="false">
         </div>
 
@@ -76,28 +112,27 @@
         </button>
       </form>
 
-      <!-- Antwortbereich -->
+      <!-- Antwort -->
       <div class="mt-8">
-        <h2 class="text-sm font-semibold text-gray-400 mb-2">Antwort von der Engine:</h2>
+        <h2 class="text-sm font-semibold text-gray-400 mb-2">Antwort von n8n:</h2>
         <pre id="responseOutput"
              class="bg-gray-700 p-4 rounded-md text-sm overflow-x-auto whitespace-pre-wrap text-green-300 font-mono border border-gray-600"></pre>
       </div>
+
     </div>
   </div>
 
-  <!-- JavaScript -->
   <script>
-    /* Toggle-Logik */
-    const toggle   = document.getElementById('regionalToggle');
-    const label    = document.getElementById('regionalLabel');
-    const hidden   = document.getElementById('regionalHidden');
+    /* -------- Toggle-Logik -------- */
+    const toggle  = document.getElementById('regionalToggle');
+    const label   = document.getElementById('regionalLabel');
+    const hidden  = document.getElementById('regionalHidden');
 
     toggle.addEventListener('click', () => {
       const isOn = toggle.getAttribute('aria-checked') === 'true';
-
       toggle.setAttribute('aria-checked', !isOn);
       toggle.classList.toggle('bg-indigo-600', !isOn);
-      toggle.classList.toggle('bg-gray-600',   isOn);
+      toggle.classList.toggle('bg-gray-600',  isOn);
       toggle.querySelector('span')
             .classList.toggle('translate-x-5', !isOn);
       toggle.querySelector('span')
@@ -107,13 +142,45 @@
       hidden.value      = !isOn ? 'true'         : 'false';
     });
 
-    /* Formularsubmit */
+    /* -------- Branchen laden -------- */
+    (async () => {
+      try {
+        const res  = await fetch('assets/gmb_categories.json');
+        const list = await res.json();          // erwartet Array
+        const sel  = document.getElementById('brancheSelect');
+
+        list.forEach(cat => {
+          const opt   = document.createElement('option');
+          opt.value   = cat;
+          opt.textContent = cat;
+          sel.appendChild(opt);
+        });
+        document.getElementById('brancheHint').classList.remove('hidden');
+        document.getElementById('brancheHint').textContent =
+          list.length + ' Kategorien geladen';
+      } catch (e) {
+        console.error('Branchen-Liste konnte nicht geladen werden', e);
+      }
+    })();
+
+    /* -------- Formular absenden -------- */
     document.getElementById('myForm')
             .addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const formData = new FormData(e.target);
       const data     = Object.fromEntries(formData.entries());
+
+      /* Mehrzeilige Felder in Arrays umwandeln (Komma oder Semikolon) */
+      ['regions','audiences','offerings'].forEach(key => {
+        data[key] = (data[key] || '')
+          .split(/[;,]/)            // Komma oder Semikolon
+          .map(s => s.trim())
+          .filter(Boolean);         // leere Einträge weg
+      });
+
+      /* expoCount numerisch absenden */
+      data.expoCount = Number(data.expoCount || 0);
 
       const response = await fetch(
         'https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773',
