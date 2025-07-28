@@ -180,10 +180,10 @@ button:hover, .button:hover {
   color: #e2e6ee;
 }
 .compact-panel {
-  padding: 13px 10px 13px 10px !important;
-  min-width: 295px !important;
-  max-width: 340px !important;
-  gap: 8px !important;
+  padding: 28px 18px 28px 18px !important;
+  min-width: 330px !important;
+  max-width: 400px !important;
+  gap: 11px !important;
 }
 .compact-panel h1 {
   font-size: 1.16rem;
@@ -210,3 +210,39 @@ button:hover, .button:hover {
 }
 .compact-panel .form-group { margin-bottom: 5px !important; }
 .compact-panel .logo { max-width: 95px; margin-bottom: 7px; }
+.toggle-row-group {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.toggle-row .switch {
+  transform: scale(0.75);
+  margin: 0 4px;
+}
+.toggle-row label {
+  font-size: 12px !important;
+  margin: 0 0 0 0 !important;
+}
+.tonality-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 3px;
+}
+.tonality-slider {
+  flex: 1 1 0;
+  min-width: 60px;
+  max-width: 140px;
+  margin: 0 8px;
+}
+.tonality-label {
+  width: 64px;
+  font-size: 12px;
+}
+.tonality-value {
+  font-size: 13px;
+  min-width: 80px;
+  text-align: center;
+  font-weight: 600;
+}
