@@ -179,3 +179,34 @@ button:hover, .button:hover {
   font-size: 15px;
   color: #e2e6ee;
 }
+.compact-panel {
+  padding: 13px 10px 13px 10px !important;
+  min-width: 295px !important;
+  max-width: 340px !important;
+  gap: 8px !important;
+}
+.compact-panel h1 {
+  font-size: 1.16rem;
+  margin-bottom: 9px;
+}
+.compact-panel label,
+.compact-panel .tonality-label,
+.compact-panel .toggle-label {
+  font-size: 12.4px !important;
+  margin-bottom: 2px !important;
+}
+.compact-panel input,
+.compact-panel textarea,
+.compact-panel select {
+  padding: 5px 6px !important;
+  font-size: 12.4px !important;
+  min-height: 23px;
+}
+.compact-panel textarea { min-height: 22px; max-height: 56px; }
+.compact-panel button {
+  padding: 8px 0 !important;
+  font-size: 14.5px !important;
+  margin-top: 7px;
+}
+.compact-panel .form-group { margin-bottom: 5px !important; }
+.compact-panel .logo { max-width: 95px; margin-bottom: 7px; }
