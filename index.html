@@ -101,4 +101,22 @@
       data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
 
       // Optional: Debug-Ausgabe
-      // document.getElement
+      // document.getElementById("outputArea").innerText = JSON.stringify(data, null, 2);
+
+      // Hier die Webhook-URL eintragen:
+      const webhookUrl = "https://expoya.app.n8n.cloud/webhook-test/03796224-cbe0-443a-adeb-e91f64514773";
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        document.getElementById("outputArea").innerText = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.getElementById("outputArea").innerText = "Fehler: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
