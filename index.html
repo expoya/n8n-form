@@ -2,166 +2,103 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Expoya AI-Content-Engine</title>
-  <link rel="stylesheet" href="assets/style.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-Content-Engine</title>
+  <meta name="viewport" content="width=600, initial-scale=1">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body>
-<div class="app-container">
-  <!-- Linker Bereich: Eingabe -->
-  <div class="panel compact-panel">
-    <img src="assets/logo.png" alt="Expoya Logo" class="logo" />
-    <h1>AI-Content-Engine</h1>
-    <form id="myForm" autocomplete="off">
-      <div class="form-group">
-        <label for="companyName">Unternehmensname</label>
-        <input type="text" id="companyName" name="companyName" required>
-      </div>
-      <div class="form-group">
-        <label for="website">Website</label>
-        <input type="url" id="website" name="website">
-      </div>
-      <div class="form-group" style="display: flex; gap:7px;">
-        <div style="flex:1;">
-          <label for="expoCount"># Expos</label>
-          <input type="number" id="expoCount" name="expoCount" min="1" required>
+  <div class="container">
+    <div class="compact-panel">
+      <img src="assets/logo.png" alt="Expoya Logo" class="logo" style="max-width:120px; margin:0 auto 6px auto; display:block;">
+      <h2 class="headline">AI-Content-Engine</h2>
+
+      <form id="myForm" autocomplete="off">
+        <div class="form-group">
+          <input type="text" name="companyName" placeholder="Unternehmensname" required>
         </div>
-        <div style="flex:1;">
-          <label for="branche">Branche</label>
-          <select id="branche" name="branche" required>
+        <div class="form-group">
+          <input type="url" name="website" placeholder="Website">
+        </div>
+        <div class="form-row">
+          <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
+          <select name="branche" required style="flex:3;">
             <option value="">– wählen –</option>
+            <option>Bankfiliale</option>
+            <option>Architekt</option>
+            <option>Apotheke</option>
+            <option>Bäckerei</option>
+            <!-- ... weitere Branchen wie in deiner JSON ... -->
           </select>
         </div>
-      </div>
-      <div class="form-group">
-        <label for="regionen">Regionen <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="regionen" name="regionen" rows="1" placeholder="OÖ; NÖ; Wien"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="zielgruppen">Zielgruppen <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="zielgruppen" name="zielgruppen" rows="1" placeholder="Architekten; Bauträger"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="produkte">Produkte / DL <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="produkte" name="produkte" rows="1" placeholder="Fenster; Türen"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="zielsetzung">Zielsetzung der Expos</label>
-        <textarea id="zielsetzung" name="zielsetzung" rows="2" placeholder="z. B. 'Mehr Leads für regionale Fensterbauer'"></textarea>
-      </div>
-      <div class="form-group tonality-row">
-        <span class="tonality-label">Tonalität</span>
-        <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
-        <span class="tonality-value" id="tonality-value">Neutral</span>
-      </div>
-      <div class="form-group toggle-row">
-        <label style="margin:0 4px 0 0;">Mit Ortsbezug</label>
-        <label class="switch">
-          <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="form-group toggle-row">
-        <label style="margin:0 4px 0 0;">Ansprache</label>
-        <label class="switch">
-          <input type="checkbox" id="ansprache" name="ansprache" checked>
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-label" id="ansprache-label" style="margin-left:8px;">Du</span>
-      </div>
-      <button type="submit">🚀 Generieren</button>
-    </form>
+        <div class="form-group">
+          <textarea name="regionen" placeholder="Regionen (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+          <textarea name="zielgruppen" placeholder="Zielgruppen (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+          <textarea name="produkte" placeholder="Produkte / DL (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="1"></textarea>
+        </div>
+        <div class="form-group tonality-row">
+          <span class="tonality-label">Tonalität</span>
+          <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
+          <span class="tonality-value" id="tonality-value">Neutral</span>
+        </div>
+        <div class="form-group toggle-row-group">
+          <div class="toggle-row">
+            <label class="toggle-label" for="mitOrtsbezug" style="margin-right:2px;">Mit Ortsbezug</label>
+            <label class="switch switch-small">
+              <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-label" for="ansprache" style="margin-right:2px;">Ansprache</label>
+            <label class="switch switch-small">
+              <input type="checkbox" id="ansprache" name="ansprache" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="ansprache-label" style="margin-left:4px;">Du</span>
+          </div>
+        </div>
+        <button class="btn-primary" type="submit">🚀 Generieren</button>
+      </form>
+    </div>
+    <div class="output-panel">
+      <h2 class="headline" style="font-size:1.1rem;">Titel-Liste</h2>
+      <div id="outputArea" class="output-area"></div>
+    </div>
   </div>
 
-  <!-- Rechter Bereich: Ausgabe -->
-  <div class="output-panel">
-    <h2 style="margin-top:0;">Titel-Liste</h2>
-    <div class="titles-list" id="titlesList"></div>
-  </div>
-</div>
-
-<script>
-  // Branchen dynamisch laden
-  fetch("assets/gmb_categories.json")
-    .then(r => r.json())
-    .then(list => {
-      const dropdown = document.getElementById("branche");
-      list.forEach(cat => {
-        const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
-        dropdown.appendChild(opt);
-      });
+  <script>
+    // Tonalität
+    const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
+    const tonalityInput = document.getElementById('tonality');
+    const tonalityValue = document.getElementById('tonality-value');
+    tonalityInput.addEventListener('input', function() {
+      tonalityValue.innerText = tonalities[this.value - 1];
     });
 
-  // Tonalität Mapping
-  const tonalityMap = {
-    1: "Locker",
-    2: "Eher locker",
-    3: "Neutral",
-    4: "Eher formell",
-    5: "Sehr formell"
-  };
-  const tonalitySlider = document.getElementById("tonality");
-  const tonalityLabel = document.getElementById("tonality-value");
-  tonalitySlider.addEventListener("input", () => {
-    tonalityLabel.textContent = tonalityMap[tonalitySlider.value];
-  });
+    // Ansprache Toggle
+    const anspracheInput = document.getElementById('ansprache');
+    const anspracheLabel = document.getElementById('ansprache-label');
+    anspracheInput.addEventListener('change', function() {
+      anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
+    });
 
-  // Du/Sie Toggle
-  const anspracheToggle = document.getElementById("ansprache");
-  const anspracheLabel = document.getElementById("ansprache-label");
-  function updateAnsprache() {
-    anspracheLabel.textContent = anspracheToggle.checked ? "Du" : "Sie";
-  }
-  anspracheToggle.addEventListener("input", updateAnsprache);
-  updateAnsprache();
+    // Formular Handling
+    document.getElementById("myForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+      // Typenkonvertierung:
+      data['mitOrtsbezug'] = document.getElementById('mitOrtsbezug').checked;
+      data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
+      data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
 
-  // Form Handling
-  document.getElementById("myForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
-
-    const data = {
-      companyName: document.getElementById("companyName").value,
-      website: document.getElementById("website").value,
-      expoCount: document.getElementById("expoCount").value,
-      branche: document.getElementById("branche").value,
-      regionen: document.getElementById("regionen").value,
-      zielgruppen: document.getElementById("zielgruppen").value,
-      produkte: document.getElementById("produkte").value,
-      zielsetzung: document.getElementById("zielsetzung").value,
-      tonalitaet: tonalitySlider.value,
-      mitOrtsbezug: document.getElementById("mitOrtsbezug").checked,
-      ansprache: anspracheToggle.checked ? "Du" : "Sie"
-    };
-
-    // TEST-WEBHOOK URL, für PROD einfach wechseln!
-    const webhookURL = "https://expoya.app.n8n.cloud/webhook-test/03796224-cbe0-443a-adeb-e91f64514773";
-
-    try {
-      const btn = this.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.textContent = "Wird generiert...";
-
-      const resp = await fetch(webhookURL, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-      });
-
-      let text = "";
-      try { text = await resp.text(); } catch(e){}
-      document.getElementById("titlesList").innerText = text || "Erfolgreich gesendet!";
-
-      btn.disabled = false;
-      btn.textContent = "🚀 Generieren";
-    } catch (err) {
-      document.getElementById("titlesList").innerText = "Fehler: " + err.message;
-      const btn = this.querySelector('button[type="submit"]');
-      btn.disabled = false;
-      btn.textContent = "🚀 Generieren";
-    }
-  });
-</script>
-</body>
-</html>
+      // Optional: Debug-Ausgabe
+      // document.getElement
