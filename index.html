@@ -13,7 +13,6 @@
 
     <!-- Eingabe-Pane -->
     <aside class="md:w-80 w-full bg-gray-800 border border-gray-700 rounded-xl p-4 space-y-4">
-
       <div class="text-center space-y-2">
         <img src="assets/logo.png" class="h-8 mx-auto" alt="Logo">
         <h1 class="text-xl font-bold text-indigo-400">AI-Content-Engine</h1>
@@ -22,13 +21,11 @@
       <form id="form" class="space-y-3">
 
         <div><label class="block mb-0.5">Unternehmensname</label>
-          <input name="companyName" required
-                 class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
+          <input name="companyName" required class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
         </div>
 
         <div><label class="block mb-0.5">Website</label>
-          <input name="website" type="url" required
-                 class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
+          <input name="website" type="url" required class="w-full bg-gray-700 border-gray-600 rounded px-2 py-1">
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -62,11 +59,9 @@
         <!-- Toggle -->
         <div class="flex items-center justify-between">
           <span id="toggleLabel">Ohne Ortsbezug</span>
-
           <button type="button" id="toggle"
                   class="relative h-5 w-10 rounded-full bg-gray-600 transition-colors"
                   role="switch" aria-checked="false">
-            <span class="sr-only">Ortsbezug</span>
             <span id="knob"
                   class="absolute top-0.5 left-0.5 h-4 w-4 bg-white rounded-full
                          transform translate-x-0 transition-transform"></span>
@@ -97,93 +92,70 @@
     </section>
   </div>
 
-  <!-- Script -->
   <script>
-    const $  = s => document.querySelector(s);
-    const api = "https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773";
+    const api   = "https://expoya.app.n8n.cloud/webhook/03796224-cbe0-443a-adeb-e91f64514773";
+    const $     = s => document.querySelector(s);
 
     /* --- Branchen laden --- */
     fetch('assets/gmb_categories.json')
       .then(r=>r.json())
-      .then(arr=>arr.forEach(c=>$('#brancheSelect')
-        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)))
-      .catch(e=>console.error('Branchen-JSON Ladefehler:',e));
+      .then(a=>a.forEach(c=>$('#brancheSelect')
+        .insertAdjacentHTML('beforeend',`<option>${c}</option>`)));
 
     /* --- Toggle --- */
-    $('#toggle').addEventListener('click', () => {
-      const t   = $('#toggle'), k=$('#knob'), lbl=$('#toggleLabel'), hid=$('#regional');
-      const on  = t.getAttribute('aria-checked') === 'true';
-      t.setAttribute('aria-checked', (!on).toString());
-      t.classList.toggle('bg-indigo-600', !on);
-      t.classList.toggle('bg-gray-600',   on);
-      k.classList.toggle('translate-x-5', !on);
-      k.classList.toggle('translate-x-0',  on);
+    $('#toggle').onclick = () => {
+      const t=$('#toggle'),k=$('#knob'),lbl=$('#toggleLabel'),hid=$('#regional');
+      const on = t.getAttribute('aria-checked')==='true';
+      t.setAttribute('aria-checked',(!on).toString());
+      t.classList.toggle('bg-indigo-600',!on);
+      t.classList.toggle('bg-gray-600', on);
+      k.classList.toggle('translate-x-5',!on);
+      k.classList.toggle('translate-x-0', on);
       lbl.textContent = !on ? 'Mit Ortsbezug' : 'Ohne Ortsbezug';
       hid.value       = (!on).toString();
-    });
+    };
 
-    /* --- State --- */
-    let wanted = 0, titles = [];
-
-    const render = () => {
+    /* --- State & Render --- */
+    let wanted=0,titles=[];
+    const render=()=>{
       $('#titleList').innerHTML = titles.length
         ? titles.map((t,i)=>
-          `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between items-center px-2 py-0.5">
+          `<li class="bg-gray-900 border border-gray-700 rounded flex justify-between px-2 py-0.5">
              <span class="truncate mr-1">${t}</span>
              <button data-i="${i}" class="text-red-400 hover:text-red-500">🗑︎</button>
            </li>`).join('')
         : '<li class="text-gray-500">Noch keine Titel …</li>';
       $('#counter').textContent = `${titles.length} / ${wanted}`;
-      $('#fillBtn').disabled    = titles.length >= wanted;
+      $('#fillBtn').disabled    = titles.length>=wanted;
+    };
+    $('#titleList').onclick=e=>{
+      if(e.target.dataset.i){titles.splice(e.target.dataset.i,1);render();}
     };
 
-    $('#titleList').onclick = e=>{
-      if(e.target.dataset.i){
-        titles.splice(e.target.dataset.i,1);
-        render();
-      }
+    /* --- Nachgenerieren --- */
+    $('#fillBtn').onclick=async()=>{
+      const missing=wanted-titles.length;
+      if(missing<=0)return;
+      const res=await fetch(api,{method:'POST',
+        body:new URLSearchParams({action:'fill',missing,existing:JSON.stringify(titles)})});
+      titles=titles.concat(await res.json());
+      render();
     };
 
-    $('#fillBtn').onclick = async ()=>{
-      const missing = wanted - titles.length;
-      if(missing<=0) return;
-      console.log('🔄 Nachgenerieren:', missing);
-      try{
-        const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'fill',missing,existing:titles})});
-        if(!res.ok) throw new Error(res.status+' '+res.statusText);
-        titles = titles.concat(await res.json());
-        render();
-      }catch(e){alert('Fill-Webhook-Fehler – siehe Konsole');console.error(e);}
-    };
-
-    /* --- Formular submit --- */
-    $('#form').onsubmit = async ev=>{
+    /* --- Submit --- */
+    $('#form').onsubmit=async ev=>{
       ev.preventDefault();
-      const btn = $('#submitBtn');
-      $('#btnIcon').textContent='⏳';
-      $('#btnText').textContent='Wird generiert';
-      btn.disabled = true;
+      $('#submitBtn').disabled=true; $('#btnIcon').textContent='⏳'; $('#btnText').textContent='Lade…';
 
       const fd = Object.fromEntries(new FormData(ev.target).entries());
-      ['regions','audiences','offerings'].forEach(k=>fd[k]=fd[k].split(/[;,]/).map(x=>x.trim()).filter(Boolean));
-      fd.expoCount=+(fd.expoCount||0); fd.action='generate'; wanted=fd.expoCount;
-      console.log('🚀 POST payload:', fd);
+      ['regions','audiences','offerings'].forEach(k=>fd[k]=fd[k].split(/[;,]/).map(s=>s.trim()).filter(Boolean));
+      fd.action='generate'; wanted=fd.expoCount;
 
-      try{
-        const res = await fetch(api,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fd)});
-        if(!res.ok) throw new Error(res.status+' '+res.statusText);
-        titles = await res.json();
-        console.log('✅ Antwort:', titles);
-      }catch(e){
-        console.error('Webhook-Error:',e);
-        alert('Webhook nicht erreichbar – Details in Konsole');
-      }finally{
-        render();
-        btn.disabled = false;
-        $('#btnIcon').textContent='🚀';
-        $('#btnText').textContent='Generieren';
-      }
+      const res = await fetch(api,{method:'POST',body:new URLSearchParams(fd)});
+      titles = await res.json().catch(()=>[]);
+      render();
+
+      $('#submitBtn').disabled=false; $('#btnIcon').textContent='🚀'; $('#btnText').textContent='Generieren';
     };
   </script>
 </body>
