@@ -9,7 +9,7 @@
 <body>
 <div class="app-container">
   <!-- Linker Bereich: Eingabe -->
-  <div class="panel">
+  <div class="panel compact-panel">
     <img src="assets/logo.png" alt="Expoya Logo" class="logo" />
     <h1>AI-Content-Engine</h1>
     <form id="myForm" autocomplete="off">
@@ -21,7 +21,7 @@
         <label for="website">Website</label>
         <input type="url" id="website" name="website">
       </div>
-      <div class="form-group" style="display: flex; gap:12px;">
+      <div class="form-group" style="display: flex; gap:7px;">
         <div style="flex:1;">
           <label for="expoCount"># Expos</label>
           <input type="number" id="expoCount" name="expoCount" min="1" required>
@@ -30,25 +30,24 @@
           <label for="branche">Branche</label>
           <select id="branche" name="branche" required>
             <option value="">– wählen –</option>
-            <!-- Branchen-Optionen werden von Script geladen -->
           </select>
         </div>
       </div>
       <div class="form-group">
         <label for="regionen">Regionen <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="regionen" name="regionen" placeholder="OÖ; NÖ; Wien"></textarea>
+        <textarea id="regionen" name="regionen" rows="1" placeholder="OÖ; NÖ; Wien"></textarea>
       </div>
       <div class="form-group">
         <label for="zielgruppen">Zielgruppen <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="zielgruppen" name="zielgruppen" placeholder="Architekten; Bauträger"></textarea>
+        <textarea id="zielgruppen" name="zielgruppen" rows="1" placeholder="Architekten; Bauträger"></textarea>
       </div>
       <div class="form-group">
         <label for="produkte">Produkte / DL <span style="color:#6366f1;">( , / ; )</span></label>
-        <textarea id="produkte" name="produkte" placeholder="Fenster; Türen"></textarea>
+        <textarea id="produkte" name="produkte" rows="1" placeholder="Fenster; Türen"></textarea>
       </div>
       <div class="form-group">
         <label for="zielsetzung">Zielsetzung der Expos</label>
-        <textarea id="zielsetzung" name="zielsetzung" placeholder="z. B. 'Mehr Leads für regionale Fensterbauer'"></textarea>
+        <textarea id="zielsetzung" name="zielsetzung" rows="2" placeholder="z. B. 'Mehr Leads für regionale Fensterbauer'"></textarea>
       </div>
       <div class="form-group tonality-row">
         <span class="tonality-label">Tonalität</span>
@@ -62,6 +61,14 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div class="form-group toggle-row">
+        <label style="margin:0 4px 0 0;">Ansprache</label>
+        <label class="switch">
+          <input type="checkbox" id="ansprache" name="ansprache" checked>
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label" id="ansprache-label" style="margin-left:8px;">Du</span>
+      </div>
       <button type="submit">🚀 Generieren</button>
     </form>
   </div>
@@ -74,7 +81,7 @@
 </div>
 
 <script>
-  // Branchen dynamisch laden (aus deiner JSON-Datei)
+  // Branchen dynamisch laden
   fetch("assets/gmb_categories.json")
     .then(r => r.json())
     .then(list => {
@@ -87,7 +94,7 @@
       });
     });
 
-  // Tonality Label Mapping
+  // Tonalität Mapping
   const tonalityMap = {
     1: "Locker",
     2: "Eher locker",
@@ -100,6 +107,15 @@
   tonalitySlider.addEventListener("input", () => {
     tonalityLabel.textContent = tonalityMap[tonalitySlider.value];
   });
+
+  // Du/Sie Toggle
+  const anspracheToggle = document.getElementById("ansprache");
+  const anspracheLabel = document.getElementById("ansprache-label");
+  function updateAnsprache() {
+    anspracheLabel.textContent = anspracheToggle.checked ? "Du" : "Sie";
+  }
+  anspracheToggle.addEventListener("input", updateAnsprache);
+  updateAnsprache();
 
   // Form Handling
   document.getElementById("myForm").addEventListener("submit", async function(event) {
@@ -115,26 +131,24 @@
       produkte: document.getElementById("produkte").value,
       zielsetzung: document.getElementById("zielsetzung").value,
       tonalitaet: tonalitySlider.value,
-      mitOrtsbezug: document.getElementById("mitOrtsbezug").checked
+      mitOrtsbezug: document.getElementById("mitOrtsbezug").checked,
+      ansprache: anspracheToggle.checked ? "Du" : "Sie"
     };
 
     // TEST-WEBHOOK URL, für PROD einfach wechseln!
     const webhookURL = "https://expoya.app.n8n.cloud/webhook-test/03796224-cbe0-443a-adeb-e91f64514773";
 
     try {
-      // Optional: Button Loading Feedback
       const btn = this.querySelector('button[type="submit"]');
       btn.disabled = true;
       btn.textContent = "Wird generiert...";
 
-      // POST
       const resp = await fetch(webhookURL, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(data)
       });
 
-      // Ergebnis
       let text = "";
       try { text = await resp.text(); } catch(e){}
       document.getElementById("titlesList").innerText = text || "Erfolgreich gesendet!";
