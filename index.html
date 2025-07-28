@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=600, initial-scale=1">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="icon" type="image/png" href="assets/logo.png">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <div class="compact-panel">
-      <img src="assets/logo.png" alt="Expoya Logo" class="logo" style="max-width:120px; margin:0 auto 6px auto; display:block;">
+      <img src="assets/logo.png" alt="Expoya Logo" class="logo">
       <h2 class="headline">AI-Content-Engine</h2>
 
       <form id="myForm" autocomplete="off">
@@ -22,13 +23,9 @@
         </div>
         <div class="form-row">
           <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
-          <select name="branche" required style="flex:3;">
+          <select id="brancheSelect" name="branche" required style="flex:3;">
             <option value="">– wählen –</option>
-            <option>Bankfiliale</option>
-            <option>Architekt</option>
-            <option>Apotheke</option>
-            <option>Bäckerei</option>
-            <!-- ... weitere Branchen wie in deiner JSON ... -->
+            <!-- Branchen werden dynamisch eingefügt -->
           </select>
         </div>
         <div class="form-group">
@@ -41,7 +38,7 @@
           <textarea name="produkte" placeholder="Produkte / DL (mit , oder ; trennen)" rows="1"></textarea>
         </div>
         <div class="form-group">
-          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="1"></textarea>
+          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
         <div class="form-group tonality-row">
           <span class="tonality-label">Tonalität</span>
@@ -50,19 +47,19 @@
         </div>
         <div class="form-group toggle-row-group">
           <div class="toggle-row">
-            <label class="toggle-label" for="mitOrtsbezug" style="margin-right:2px;">Mit Ortsbezug</label>
+            <label class="toggle-label" for="mitOrtsbezug">Mit Ortsbezug</label>
             <label class="switch switch-small">
               <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
               <span class="slider"></span>
             </label>
           </div>
           <div class="toggle-row">
-            <label class="toggle-label" for="ansprache" style="margin-right:2px;">Ansprache</label>
+            <label class="toggle-label" for="ansprache">Ansprache</label>
             <label class="switch switch-small">
               <input type="checkbox" id="ansprache" name="ansprache" checked>
               <span class="slider"></span>
             </label>
-            <span class="toggle-label" id="ansprache-label" style="margin-left:4px;">Du</span>
+            <span class="toggle-label" id="ansprache-label">Du</span>
           </div>
         </div>
         <button class="btn-primary" type="submit">🚀 Generieren</button>
@@ -73,8 +70,30 @@
       <div id="outputArea" class="output-area"></div>
     </div>
   </div>
-
   <script>
+    // Branchen dynamisch aus JSON laden
+    fetch('assets/gmb_categories.json')
+      .then(response => response.json())
+      .then(categories => {
+        const select = document.getElementById('brancheSelect');
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          select.appendChild(opt);
+        });
+      })
+      .catch(() => {
+        // Fehlerbehandlung: Optionale Fallback-Liste
+        const select = document.getElementById('brancheSelect');
+        ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          select.appendChild(opt);
+        });
+      });
+
     // Tonalität
     const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
     const tonalityInput = document.getElementById('tonality');
@@ -99,9 +118,6 @@
       data['mitOrtsbezug'] = document.getElementById('mitOrtsbezug').checked;
       data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
       data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
-
-      // Optional: Debug-Ausgabe
-      // document.getElementById("outputArea").innerText = JSON.stringify(data, null, 2);
 
       // Hier die Webhook-URL eintragen:
       const webhookUrl = "https://expoya.app.n8n.cloud/webhook-test/03796224-cbe0-443a-adeb-e91f64514773";
