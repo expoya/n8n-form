@@ -59,8 +59,9 @@ input, select, textarea {
   color: #e5e8ef;
   border: 1px solid #444a63;
   border-radius: 6px;
-  padding: 7px 10px;
-  font-size: 13px;
+  padding: 9px 12px;
+  font-size: 15px;
+  font-family: 'Inter', Arial, sans-serif;
   outline: none;
   resize: none;
 }
@@ -68,10 +69,19 @@ input:focus, select:focus, textarea:focus {
   border: 1.5px solid #9ea7f7;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: #8e96b8;
+  opacity: 1;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+}
+
 textarea {
-  min-height: 26px;
-  max-height: 80px;
-  font-size: 13px;
+  min-height: 28px;
+  max-height: 90px;
+  font-size: 15px;
 }
 
 .btn-primary {
@@ -80,11 +90,11 @@ textarea {
   color: #fff;
   border: none;
   border-radius: 9px;
-  padding: 12px;
+  padding: 15px;
   font-size: 1.18rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 6px;
+  margin-top: 10px;
   margin-bottom: 0;
   transition: background 0.13s;
 }
@@ -95,25 +105,27 @@ textarea {
 .tonality-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 3px;
+  justify-content: space-between;
 }
 .tonality-label {
-  width: 60px;
-  font-size: 12px;
+  flex: 0 0 80px;
+  text-align: right;
+  font-size: 13px;
   color: #bbc1f4;
 }
 .tonality-slider {
-  flex: 1 1 0;
-  min-width: 70px;
-  max-width: 120px;
+  flex: 1 1 auto;
+  min-width: 0;
   accent-color: #7d82fa;
-  margin: 0 3px;
+  margin: 0 6px;
+  width: 100%;
 }
 .tonality-value {
-  min-width: 80px;
+  flex: 0 0 90px;
   text-align: left;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
 }
@@ -121,18 +133,18 @@ textarea {
 /* Toggles nebeneinander & kleiner */
 .toggle-row-group {
   display: flex;
-  gap: 18px;
+  gap: 24px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   justify-content: flex-start;
 }
 .toggle-row {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 7px;
 }
 .toggle-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #bbc1f4;
 }
 
@@ -181,7 +193,7 @@ input:checked + .slider:before {
   padding: 20px 26px;
 }
 .output-area {
-  font-size: 13px;
+  font-size: 15px;
   white-space: pre-wrap;
   color: #e5e8ef;
   margin-top: 6px;
