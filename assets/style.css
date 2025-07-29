@@ -109,39 +109,48 @@ textarea {
   background: #7077fa;
 }
 
-.tonality-container {
+.form-group {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   gap: 0;
-  margin-bottom: 10px;
-  margin-top: 18px;
+  margin-bottom: 8px;
 }
+
+.tonality-container {
+  margin-bottom: 10px;
+  margin-top: 4px; /* nur minimal Abstand nach oben */
+}
+
 .tonality-label {
   font-size: 15px;
-  color: #bbc1f4;
-  font-weight: 500;
-  margin-bottom: 0px;
-  margin-left: 2px;
+  color: #8e96b8; /* gleiche Farbe wie Placeholder! */
+  font-weight: 400;
+  margin-bottom: 4px; /* nur minimal Abstand zum Slider */
+  margin-top: 0;
   text-align: left;
+  letter-spacing: 0.01em;
 }
+
 .tonality-slider {
   width: 100%;
-  margin-top: 3px;
-  margin-bottom: 2px;
+  margin-top: 0;
+  margin-bottom: 0;
   accent-color: #7d82fa;
   box-sizing: border-box;
   min-width: 0;
+  height: 4px;
 }
+
 .tonality-value {
   text-align: center;
   font-size: 13px;
   color: #bbc1f4;
   font-weight: 600;
   letter-spacing: 0.01em;
-  margin-top: 4px;
+  margin-top: 3px;
   margin-bottom: 0;
 }
+
 
 /* Toggles nebeneinander und kompakt */
 .toggles-row {
