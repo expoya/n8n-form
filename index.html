@@ -164,6 +164,8 @@
           body: JSON.stringify(data)
         });
         const result = await response.json();
+        console.log("RAW RESULT:", result);
+        alert("RAW RESULT: " + JSON.stringify(result));
 
         list.innerHTML = "";
         expoTitelArray = [];
