@@ -109,37 +109,38 @@ textarea {
   background: #7077fa;
 }
 
-.tonality-row {
+.tonality-container {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 10px;
   margin-top: 18px;
 }
-
 .tonality-label {
-  flex: 0 0 80px;
   font-size: 15px;
   color: #bbc1f4;
   font-weight: 500;
+  margin-bottom: 0px;
+  margin-left: 2px;
   text-align: left;
 }
-
 .tonality-slider {
-  flex: 1 1 auto;
+  width: 100%;
+  margin-top: 3px;
+  margin-bottom: 2px;
   accent-color: #7d82fa;
-  margin: 0;
+  box-sizing: border-box;
   min-width: 0;
 }
-
 .tonality-value {
-  flex: 0 0 70px;
+  text-align: center;
   font-size: 13px;
   color: #bbc1f4;
-  text-align: left;
-  margin-left: 5px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  margin-top: 4px;
+  margin-bottom: 0;
 }
 
 /* Toggles nebeneinander und kompakt */
