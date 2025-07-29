@@ -122,20 +122,28 @@
 
     // Flexibler Titel-Extractor
     function extractExpoTitel(result) {
-      // Probier alle sinnvollen Felder durch
-      if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
-        return result.titel_bisher;
-      }
-      if (result.output) {
-        if (Array.isArray(result.output.titel_bisher) && result.output.titel_bisher.length > 0) {
-          return result.output.titel_bisher;
-        }
-        if (Array.isArray(result.output.Titel) && result.output.Titel.length > 0) {
-          return result.output.Titel;
-        }
-      }
-      return [];
+  // direkte Arrays
+  if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
+    return result.titel_bisher;
+  }
+  if (Array.isArray(result.Titel) && result.Titel.length > 0) {
+    return result.Titel;
+  }
+  // Output-Objekt
+  if (result.output) {
+    if (Array.isArray(result.output.titel_bisher) && result.output.titel_bisher.length > 0) {
+      return result.output.titel_bisher;
     }
+    if (Array.isArray(result.output.Titel) && result.output.Titel.length > 0) {
+      return result.output.Titel;
+    }
+    if (Array.isArray(result.output.titel) && result.output.titel.length > 0) {
+      return result.output.titel;
+    }
+  }
+  return [];
+}
+
 
     // Formular Handling
     document.getElementById("myForm").addEventListener("submit", async function(event) {
