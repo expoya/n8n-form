@@ -120,6 +120,23 @@
     // Expo-Titel (CSV) – speichern im Scope
     let expoTitelArray = [];
 
+    // Flexibler Titel-Extractor
+    function extractExpoTitel(result) {
+      // Probier alle sinnvollen Felder durch
+      if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
+        return result.titel_bisher;
+      }
+      if (result.output) {
+        if (Array.isArray(result.output.titel_bisher) && result.output.titel_bisher.length > 0) {
+          return result.output.titel_bisher;
+        }
+        if (Array.isArray(result.output.Titel) && result.output.Titel.length > 0) {
+          return result.output.Titel;
+        }
+      }
+      return [];
+    }
+
     // Formular Handling
     document.getElementById("myForm").addEventListener("submit", async function(event) {
       event.preventDefault();
@@ -151,8 +168,10 @@
         list.innerHTML = "";
         expoTitelArray = [];
 
-        if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
-          result.titel_bisher.forEach(titel => {
+        const expoTitel = extractExpoTitel(result);
+
+        if (expoTitel.length > 0) {
+          expoTitel.forEach(titel => {
             const li = document.createElement("li");
             li.textContent = titel;
             list.appendChild(li);
