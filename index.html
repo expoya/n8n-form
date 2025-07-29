@@ -41,15 +41,14 @@
         </div>
 
 
-        <!-- Tonalität (eine Zeile: Label und Slider) -->
+        <!-- Tonalität: Label, Slider, Wert direkt rechts nebeneinander -->
 <div class="form-group tonality-row">
   <span class="tonality-label">Tonalität</span>
   <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
+  <span class="tonality-value" id="tonality-value">Neutral</span>
 </div>
-<!-- Wertanzeige unter dem Slider, zentriert -->
-<div class="tonality-value" id="tonality-value">Neutral</div>
 
-<!-- Toggles nebeneinander, zentriert -->
+<!-- Toggles nebeneinander -->
 <div class="form-group toggles-row">
   <div class="toggle-combo">
     <span class="toggle-label">Mit Ortsbezug</span>
@@ -67,6 +66,10 @@
     <span class="toggle-label" id="ansprache-label">Du</span>
   </div>
 </div>
+
+<!-- Der Button bleibt unten! -->
+<button class="btn-primary" type="submit">🚀 Generieren</button>
+
 
   <script>
     // Branchen dynamisch aus JSON laden
