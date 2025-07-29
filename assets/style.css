@@ -108,45 +108,49 @@ textarea {
 .btn-primary:hover {
   background: #7077fa;
 }
+
 .tonality-row {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 0;
+  gap: 10px;
+  margin-bottom: 14px;
   margin-top: 18px;
 }
+
 .tonality-label {
-  flex: 0 0 90px;
+  flex: 0 0 80px;
   font-size: 15px;
   color: #bbc1f4;
-  text-align: left;
   font-weight: 500;
+  text-align: left;
 }
+
 .tonality-slider {
   flex: 1 1 auto;
   accent-color: #7d82fa;
   margin: 0;
   min-width: 0;
 }
+
 .tonality-value {
-  width: 100%;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: 7px;
-  margin-bottom: 15px;
-  color: #fff;
-  letter-spacing: 0.02em;
+  flex: 0 0 70px;
+  font-size: 13px;
+  color: #bbc1f4;
+  text-align: left;
+  margin-left: 5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
+/* Toggles nebeneinander und kompakt */
 .toggles-row {
   display: flex;
   flex-direction: row;
-  gap: 32px;
+  gap: 30px;
   justify-content: center;
   align-items: center;
-  margin-bottom: 18px;
-  margin-top: 5px;
+  margin-bottom: 20px;
+  margin-top: 0;
 }
 .toggle-combo {
   display: flex;
@@ -159,7 +163,6 @@ textarea {
   color: #bbc1f4;
   font-weight: 400;
 }
-
 .switch {
   position: relative;
   display: inline-block;
