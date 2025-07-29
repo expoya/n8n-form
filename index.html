@@ -10,6 +10,7 @@
 </head>
 <body>
   <div class="container">
+    <!-- Input Panel -->
     <div class="compact-panel">
       <img src="assets/logo.png" alt="Expoya Logo" class="logo">
       <h2 class="headline">AI-Content-Engine</h2>
@@ -39,38 +40,43 @@
         <div class="form-group">
           <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
+        <!-- Tonalität Block -->
+        <div class="form-group tonality-container">
+          <label class="tonality-label" for="tonality">Tonalität</label>
+          <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
+          <div class="tonality-value" id="tonality-value">Neutral</div>
+        </div>
+        <!-- Toggles -->
+        <div class="form-group toggles-row">
+          <div class="toggle-combo">
+            <span class="toggle-label">Mit Ortsbezug</span>
+            <label class="switch switch-small">
+              <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-combo">
+            <span class="toggle-label">Ansprache</span>
+            <label class="switch switch-small">
+              <input type="checkbox" id="ansprache" name="ansprache" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="ansprache-label">Du</span>
+          </div>
+        </div>
+        <button class="btn-primary" type="submit">🚀 Generieren</button>
+      </form>
+    </div>
 
-<!-- Tonalität Block, -->
-
-<div class="form-group tonality-container">
-  <label class="tonality-label" for="tonality">Tonalität</label>
-  <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
-  <div class="tonality-value" id="tonality-value">Neutral</div>
-</div>
-
-
-<!-- Toggles nebeneinander -->
-<div class="form-group toggles-row">
-  <div class="toggle-combo">
-    <span class="toggle-label">Mit Ortsbezug</span>
-    <label class="switch switch-small">
-      <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
-      <span class="slider"></span>
-    </label>
+    <!-- Output Panel -->
+    <div class="output-panel" id="outputPanel">
+      <h3 class="output-headline">📝 Generierte Expo-Titel</h3>
+      <ul class="expo-list" id="expoList">
+        <li class="expo-placeholder">Hier erscheinen deine generierten Expo-Titel...</li>
+      </ul>
+      <button id="exportBtn" class="btn-primary" style="margin-top:18px;display:none;">Export als CSV</button>
+    </div>
   </div>
-  <div class="toggle-combo">
-    <span class="toggle-label">Ansprache</span>
-    <label class="switch switch-small">
-      <input type="checkbox" id="ansprache" name="ansprache" checked>
-      <span class="slider"></span>
-    </label>
-    <span class="toggle-label" id="ansprache-label">Du</span>
-  </div>
-</div>
-
-<!-- Der Button bleibt unten! -->
-<button class="btn-primary" type="submit">🚀 Generieren</button>
-
 
   <script>
     // Branchen dynamisch aus JSON laden
@@ -111,6 +117,9 @@
       anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
     });
 
+    // Expo-Titel (CSV) – speichern im Scope
+    let expoTitelArray = [];
+
     // Formular Handling
     document.getElementById("myForm").addEventListener("submit", async function(event) {
       event.preventDefault();
@@ -120,6 +129,16 @@
       data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
       data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
 
+      // UI-Feedback: Liste leeren + Placeholder setzen
+      const list = document.getElementById("expoList");
+      list.innerHTML = '';
+      const liWait = document.createElement("li");
+      liWait.textContent = "🚀 Generierung läuft...";
+      liWait.className = "expo-placeholder";
+      list.appendChild(liWait);
+
+      document.getElementById('exportBtn').style.display = "none";
+
       const webhookUrl = "https://expoya.app.n8n.cloud/webhook-test/03796224-cbe0-443a-adeb-e91f64514773";
       try {
         const response = await fetch(webhookUrl, {
@@ -127,33 +146,57 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-        
-const result = await response.json();
-const list = document.getElementById("expoList");
-list.innerHTML = "";
+        const result = await response.json();
 
-if (Array.isArray(result.titel_bisher)) {
-  result.titel_bisher.forEach(titel => {
-    const li = document.createElement("li");
-    li.textContent = titel;
-    list.appendChild(li);
-  });
-} else {
-  const li = document.createElement("li");
-  li.textContent = "Fehler beim Empfangen der Titel.";
-  li.className = "expo-placeholder";
-  list.appendChild(li);
-}
-       
+        list.innerHTML = "";
+        expoTitelArray = [];
+
+        if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
+          result.titel_bisher.forEach(titel => {
+            const li = document.createElement("li");
+            li.textContent = titel;
+            list.appendChild(li);
+            expoTitelArray.push(titel);
+          });
+          document.getElementById('exportBtn').style.display = "block";
+        } else {
+          const li = document.createElement("li");
+          li.textContent = "Keine Titel erhalten.";
+          li.className = "expo-placeholder";
+          list.appendChild(li);
+        }
+      } catch (error) {
+        list.innerHTML = "";
+        const li = document.createElement("li");
+        li.textContent = "Fehler: " + error.message;
+        li.className = "expo-placeholder";
+        list.appendChild(li);
+      }
+    });
+
+    // CSV-Export-Funktion
+    document.getElementById('exportBtn').addEventListener('click', function() {
+      if (!expoTitelArray || expoTitelArray.length === 0) return;
+
+      // Baue CSV
+      let csv = 'Expo-Titel\n';
+      expoTitelArray.forEach(titel => {
+        // Escape quotes and line breaks for robust CSV
+        let safeTitel = titel.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
+        csv += `"${safeTitel}"\n`;
+      });
+
+      // Download auslösen
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'expo-titel.csv';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
   </script>
-
-<div class="output-panel" id="outputPanel">
-  <h3 class="output-headline">📝 Generierte Expo-Titel</h3>
-  <ul class="expo-list" id="expoList">
-    <li class="expo-placeholder">Hier erscheinen deine generierten Expo-Titel...</li>
-  </ul>
-</div>
-
-
 </body>
 </html>
