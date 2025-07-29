@@ -24,7 +24,7 @@
           <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
           <select id="brancheSelect" name="branche" required style="flex:3;">
             <option value="">– wählen –</option>
-            <!-- Optionen werden per JS eingefügt -->
+            <!-- Branchen werden via JS geladen -->
           </select>
         </div>
         <div class="form-group">
@@ -39,21 +39,25 @@
         <div class="form-group">
           <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
-        <div class="form-group tonality-row">
-          <span class="tonality-label">Tonalität</span>
+
+        <!-- Tonalität kompakt -->
+        <div class="form-group tonality-group">
+          <label class="tonality-label">Tonalität</label>
           <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
-          <span class="tonality-value" id="tonality-value">Neutral</span>
         </div>
-        <div class="form-group toggle-row-group">
-          <div class="toggle-row">
-            <label class="toggle-label" for="mitOrtsbezug">Mit Ortsbezug</label>
+        <div class="tonality-value" id="tonality-value">Neutral</div>
+
+        <!-- Toggles nebeneinander -->
+        <div class="form-group toggles-row">
+          <div class="toggle-combo">
+            <span class="toggle-label">Mit Ortsbezug</span>
             <label class="switch switch-small">
               <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
               <span class="slider"></span>
             </label>
           </div>
-          <div class="toggle-row">
-            <label class="toggle-label" for="ansprache">Ansprache</label>
+          <div class="toggle-combo">
+            <span class="toggle-label">Ansprache</span>
             <label class="switch switch-small">
               <input type="checkbox" id="ansprache" name="ansprache" checked>
               <span class="slider"></span>
@@ -61,6 +65,7 @@
             <span class="toggle-label" id="ansprache-label">Du</span>
           </div>
         </div>
+
         <button class="btn-primary" type="submit">🚀 Generieren</button>
       </form>
     </div>
@@ -69,6 +74,7 @@
       <div id="outputArea" class="output-area"></div>
     </div>
   </div>
+
   <script>
     // Branchen dynamisch aus JSON laden
     fetch('assets/gmb_categories.json')
@@ -83,7 +89,7 @@
         });
       })
       .catch(() => {
-        // Fehlerbehandlung: Optionaler Fallback
+        // Fallback
         const select = document.getElementById('brancheSelect');
         ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
           const opt = document.createElement('option');
