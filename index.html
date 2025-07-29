@@ -40,40 +40,33 @@
           <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
 
-        <!-- Tonalität kompakt -->
-        <div class="form-group tonality-group">
-          <label class="tonality-label">Tonalität</label>
-          <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
-        </div>
-        <div class="tonality-value" id="tonality-value">Neutral</div>
 
-        <!-- Toggles nebeneinander -->
-        <div class="form-group toggles-row">
-          <div class="toggle-combo">
-            <span class="toggle-label">Mit Ortsbezug</span>
-            <label class="switch switch-small">
-              <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="toggle-combo">
-            <span class="toggle-label">Ansprache</span>
-            <label class="switch switch-small">
-              <input type="checkbox" id="ansprache" name="ansprache" checked>
-              <span class="slider"></span>
-            </label>
-            <span class="toggle-label" id="ansprache-label">Du</span>
-          </div>
-        </div>
+        <!-- Tonalität (eine Zeile: Label und Slider) -->
+<div class="form-group tonality-row">
+  <span class="tonality-label">Tonalität</span>
+  <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
+</div>
+<!-- Wertanzeige unter dem Slider, zentriert -->
+<div class="tonality-value" id="tonality-value">Neutral</div>
 
-        <button class="btn-primary" type="submit">🚀 Generieren</button>
-      </form>
-    </div>
-    <div class="output-panel">
-      <h2 class="headline" style="font-size:1.1rem;">Titel-Liste</h2>
-      <div id="outputArea" class="output-area"></div>
-    </div>
+<!-- Toggles nebeneinander, zentriert -->
+<div class="form-group toggles-row">
+  <div class="toggle-combo">
+    <span class="toggle-label">Mit Ortsbezug</span>
+    <label class="switch switch-small">
+      <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
+      <span class="slider"></span>
+    </label>
   </div>
+  <div class="toggle-combo">
+    <span class="toggle-label">Ansprache</span>
+    <label class="switch switch-small">
+      <input type="checkbox" id="ansprache" name="ansprache" checked>
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label" id="ansprache-label">Du</span>
+  </div>
+</div>
 
   <script>
     // Branchen dynamisch aus JSON laden
