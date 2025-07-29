@@ -127,27 +127,33 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-        const result = await response.json();
+        
+const result = await response.json();
+const list = document.getElementById("expoList");
+list.innerHTML = "";
 
-      if (Array.isArray(result.titel_bisher)) {
-  document.getElementById("outputArea").innerHTML = `
-    <h3>📝 Generierte Expo-Titel:</h3>
-    <ul>${result.titel_bisher.map(t => `<li>${t}</li>`).join('')}</ul>
-  `;
+if (Array.isArray(result.titel_bisher)) {
+  result.titel_bisher.forEach(titel => {
+    const li = document.createElement("li");
+    li.textContent = titel;
+    list.appendChild(li);
+  });
 } else {
-  document.getElementById("outputArea").innerText = "Keine Titel erhalten.";
-} 
-      
-      
-      } catch (error) {
-        document.getElementById("outputArea").innerText = "Fehler: " + error.message;
-      }
-    });
+  const li = document.createElement("li");
+  li.textContent = "Fehler beim Empfangen der Titel.";
+  li.className = "expo-placeholder";
+  list.appendChild(li);
+}
+       
   </script>
 
-<div class="output-panel">
-  <div class="output-area" id="outputArea">Hier erscheinen deine generierten Expo-Titel…</div>
+<div class="output-panel" id="outputPanel">
+  <h3 class="output-headline">📝 Generierte Expo-Titel</h3>
+  <ul class="expo-list" id="expoList">
+    <li class="expo-placeholder">Hier erscheinen deine generierten Expo-Titel...</li>
+  </ul>
 </div>
+
 
 </body>
 </html>
