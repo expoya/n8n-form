@@ -250,64 +250,81 @@ function renderExpoListe() {
     item.className = "expo-akkordeon";
     item.innerHTML = `
       <div class="expo-akk-header" data-idx="${idx}">
-        <span style="color:#7d82fa;font-weight:700;min-width:22px;text-align:right;display:inline-block;">${idx + 1}.</span>
+        <span class="expo-akk-index">${idx + 1}.</span>
         <span class="expo-akk-titel"><span class="expo-titel-text">${titel}</span></span>
-        <button class="btn-small btn-edit" title="Bearbeiten" data-idx="${idx}">✏️</button>
-        <button class="btn-small btn-delete" title="Entfernen" data-idx="${idx}">🗑️</button>
+        <button class="btn-icon btn-edit" title="Bearbeiten" data-idx="${idx}">✏️</button>
+        <button class="btn-icon btn-delete" title="Entfernen" data-idx="${idx}">🗑️</button>
         <button class="btn-expand" title="Details anzeigen" data-idx="${idx}">▼</button>
       </div>
       <div class="expo-akk-body">
-        <input class="edit-titel-input" value="${titel}">
-        <button class="btn-save btn-small" data-idx="${idx}">Speichern</button>
-        <button class="btn-generate" data-idx="${idx}">Text generieren</button>
+        <input class="edit-titel-input" value="${titel}" style="display:none;">
+        <div class="akk-btns">
+          <button class="btn-save" style="display:none;" data-idx="${idx}">Speichern</button>
+          <button class="btn-generate" data-idx="${idx}">Text generieren</button>
+        </div>
       </div>
     `;
     list.appendChild(item);
   });
 
-  // Akkordeon öffnen/schließen
+  // Accordion Mechanik
   list.querySelectorAll('.btn-expand').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
       const parent = btn.closest(".expo-akkordeon");
-      parent.classList.toggle("open");
-      btn.textContent = parent.classList.contains("open") ? "▲" : "▼";
-      // Nur ein Akkordeon offen: Schließe alle anderen
-      if (parent.classList.contains("open")) {
-        list.querySelectorAll('.expo-akkordeon').forEach(el => {
-          if (el !== parent) {
-            el.classList.remove("open");
-            el.querySelector('.btn-expand').textContent = "▼";
-          }
-        });
+      const wasOpen = parent.classList.contains("open");
+      // Erst alle schließen
+      list.querySelectorAll('.expo-akkordeon').forEach(el => {
+        el.classList.remove("open");
+        el.querySelector('.btn-expand').textContent = "▼";
+        // Zurücksetzen Editmode im Body:
+        el.querySelector('.edit-titel-input').style.display = "none";
+        el.querySelector('.btn-save').style.display = "none";
+        el.querySelector('.expo-titel-text').style.display = "inline";
+      });
+      // Dann ggf. das aktuelle öffnen
+      if (!wasOpen) {
+        parent.classList.add("open");
+        btn.textContent = "▲";
       }
     };
   });
 
-  // Direkt Editieren
+  // Bearbeiten
   list.querySelectorAll('.btn-edit').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
       const parent = btn.closest(".expo-akkordeon");
       parent.classList.add("open");
-      parent.querySelector('.edit-titel-input').focus();
       parent.querySelector('.btn-expand').textContent = "▲";
+      // Nur Editmodus für diesen Titel:
+      parent.querySelector('.edit-titel-input').style.display = "inline";
+      parent.querySelector('.btn-save').style.display = "inline-block";
+      parent.querySelector('.expo-titel-text').style.display = "none";
+      parent.querySelector('.edit-titel-input').focus();
     };
   });
 
-  // Titel speichern
+  // Speichern
   list.querySelectorAll('.btn-save').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
       const idx = this.getAttribute("data-idx");
-      const val = this.parentNode.querySelector('.edit-titel-input').value.trim();
+      const parent = btn.closest(".expo-akkordeon");
+      const val = parent.querySelector('.edit-titel-input').value.trim();
       if (val.length === 0) return;
       expoTitelArray[idx] = val;
       renderExpoListe();
+      // Offen lassen!
+      setTimeout(()=>{
+        const acc = list.querySelectorAll('.expo-akkordeon')[idx];
+        acc.classList.add("open");
+        acc.querySelector('.btn-expand').textContent = "▲";
+      },0);
     };
   });
 
-  // Titel löschen
+  // Löschen
   list.querySelectorAll('.btn-delete').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
@@ -317,15 +334,19 @@ function renderExpoListe() {
     };
   });
 
-  // Text generieren (später an n8n)
+  // Text generieren
   list.querySelectorAll('.btn-generate').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
       const idx = this.getAttribute("data-idx");
       alert("Text für Expo-Titel " + (parseInt(idx)+1) + " generieren!\n\n(Titel: " + expoTitelArray[idx] + ")");
-      // Hier kann später dein n8n-Aufruf rein!
+      // Hier kommt später dein n8n-Call!
     };
   });
+
+  document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
+}
+
 
     
 
