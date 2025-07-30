@@ -132,7 +132,7 @@
       document.getElementById('exportBtn').style.display = "none";
 
       // STEP 1: Starte Job
-      const jobUrl = "https://expoya.app.n8n.cloud/webhook-test/start-job";
+      const jobUrl = "https://expoya.app.n8n.cloud/webhook/start-job";
       let jobId;
       try {
         const response = await fetch(jobUrl, {
