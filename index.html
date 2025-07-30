@@ -76,32 +76,35 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Branchen dynamisch aus JSON laden
-      fetch('assets/gmb_categories.json')
-        .then(response => {
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Branchen dynamisch aus JSON laden (robust & ohne Duplikate)
+      async function ladeBranchen() {
+        const select = document.getElementById('brancheSelect');
+        select.innerHTML = '<option value="">– wählen –</option>'; // Immer leeren!
+        try {
+          const response = await fetch('assets/gmb_categories.json');
           if (!response.ok) throw new Error("JSON konnte nicht geladen werden");
-          return response.json();
-        })
-        .then(categories => {
-          const select = document.getElementById('brancheSelect');
+          const categories = await response.json();
           categories.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             select.appendChild(opt);
           });
-        })
-        .catch(() => {
+        } catch (err) {
           // Fallback
-          const select = document.getElementById('brancheSelect');
           ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
             opt.textContent = cat;
             select.appendChild(opt);
           });
-        });
+          // Info im Select
+          select.insertAdjacentHTML('beforebegin', `<div style="color:#ff7070;font-size:13px;margin-bottom:3px;">Kategorien konnten nicht geladen werden.</div>`);
+        }
+      }
+      await ladeBranchen();
+
 
       const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
       const tonalityInput = document.getElementById('tonality');
@@ -344,11 +347,7 @@ function renderExpoListe() {
     };
   });
 
-  document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
-}
-
-
-    
+   
 
   // Export-Button nur anzeigen, wenn Titel vorhanden
   document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
