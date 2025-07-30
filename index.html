@@ -112,6 +112,20 @@
       anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
     });
 
+    // Neue Floskeln für Live-Ladefeedback
+    const ladeFloskeln = [
+      "Die AI-Agents hüpfen im Quadrat, um geile Titel zu basteln…",
+      "Unsere KI brainstormt gerade die wildesten Expo-Ideen.",
+      "Es werden noch schnell ein paar Synapsen poliert…",
+      "Gleich sind die besten Titel aus dem neuronalen Backofen!",
+      "Die künstliche Intelligenz schreibt schon am Bestseller.",
+      "Wir optimieren noch für Google – bitte einen kurzen Espresso trinken!",
+      "Noch ein Moment: Kreativität braucht manchmal eine kurze Denkpause.",
+      "Die AI schraubt noch am SEO-Schraubenzieher.",
+      "Expoya-Titelschmiede läuft auf Hochtouren!",
+      "Wir würfeln noch ein paar Wörter zusammen…"
+    ];
+
     let expoTitelArray = [];
     let pollTimer;
 
@@ -141,8 +155,7 @@
           body: JSON.stringify(data)
         });
         const result = await response.json();
-        console.log("RAW Start-Job Result:", result);
-        alert("Start-Job: " + JSON.stringify(result));
+        // Debug: console.log("RAW Start-Job Result:", result);
 
         jobId = result.jobId;
         if (!jobId) throw new Error("Keine Job-ID erhalten!");
@@ -151,13 +164,25 @@
         return;
       }
 
-      // STEP 2: Polling
+      // STEP 2: Polling mit Ladefeedback
       const pollUrl = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=" + encodeURIComponent(jobId);
       let pollTries = 0;
       const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
+      const startedAt = Date.now();
 
       pollTimer = setInterval(async () => {
         pollTries++;
+        const seconds = Math.floor((Date.now() - startedAt) / 1000);
+        // Alle 10 Sekunden nächste Floskel
+        const floskelIndex = Math.floor(seconds / 10) % ladeFloskeln.length;
+        const floskel = ladeFloskeln[floskelIndex];
+        // Ladefeedback
+        list.innerHTML = `
+          <li class="expo-placeholder">
+            🚀 Generierung läuft... (${seconds} Sekunden)<br>
+            <span style="font-size:0.98em;color:#98a4c2;">${floskel}</span>
+          </li>
+        `;
         try {
           const res = await fetch(pollUrl);
           const job = await res.json();
@@ -200,18 +225,4 @@
       if (!expoTitelArray || expoTitelArray.length === 0) return;
       let csv = 'Expo-Titel\n';
       expoTitelArray.forEach(titel => {
-        let safeTitel = titel.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
-        csv += `"${safeTitel}"\n`;
-      });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'expo-titel.csv';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-  </script>
-</body>
-</html>
+        let safeTitel = titel.replace(/"/g, '""').replace(/\r
