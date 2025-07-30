@@ -199,13 +199,8 @@
               }
               if (expoTitelArray.length === 0) {
                 list.innerHTML = `<li>Es wurden keine Titel generiert.</li>`;
-              } else {
-                expoTitelArray.forEach(titel => {
-                  const li = document.createElement("li");
-                  li.textContent = titel;
-                  list.appendChild(li);
-                });
-                document.getElementById('exportBtn').style.display = "block";
+              } else {               
+        renderExpoListe();
               }
             } else if (job.status === "error") {
               clearInterval(pollTimer);
@@ -241,6 +236,92 @@
         link.click();
         document.body.removeChild(link);
       });
+      function renderExpoListe() {
+  const list = document.getElementById("expoList");
+  list.innerHTML = "";
+  if (expoTitelArray.length === 0) {
+    list.innerHTML = `<li class="expo-placeholder">Keine Titel mehr vorhanden.</li>`;
+    document.getElementById('exportBtn').style.display = "none";
+    return;
+  }
+  expoTitelArray.forEach((titel, idx) => {
+    const item = document.createElement("li");
+    item.className = "expo-akkordeon";
+    item.innerHTML = `
+      <div class="expo-akk-header" data-idx="${idx}">
+        <span class="expo-akk-titel"><strong>${idx + 1}.</strong> <span class="expo-titel-text">${titel}</span></span>
+        <button class="btn-small btn-edit" title="Bearbeiten" data-idx="${idx}">✏️</button>
+        <button class="btn-small btn-delete" title="Entfernen" data-idx="${idx}">🗑️</button>
+        <button class="btn-small btn-expand" title="Details anzeigen" data-idx="${idx}">▼</button>
+      </div>
+      <div class="expo-akk-body" style="display:none;">
+        <input class="edit-titel-input" value="${titel}" style="margin-bottom:7px;">
+        <button class="btn-small btn-save" data-idx="${idx}">Speichern</button>
+        <button class="btn-small btn-generate" data-idx="${idx}">Text generieren</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  // Akkordeon-Expandieren/Klappen
+  list.querySelectorAll('.btn-expand').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const idx = this.getAttribute("data-idx");
+      const body = this.parentNode.nextElementSibling;
+      body.style.display = body.style.display === "block" ? "none" : "block";
+      this.textContent = body.style.display === "block" ? "▲" : "▼";
+    };
+  });
+
+  // Titel bearbeiten
+  list.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const idx = this.getAttribute("data-idx");
+      const body = this.parentNode.nextElementSibling;
+      body.style.display = "block";
+      body.querySelector('.edit-titel-input').focus();
+      this.parentNode.querySelector('.btn-expand').textContent = "▲";
+    };
+  });
+
+  // Titel speichern
+  list.querySelectorAll('.btn-save').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const idx = this.getAttribute("data-idx");
+      const val = this.parentNode.querySelector('.edit-titel-input').value.trim();
+      if (val.length === 0) return;
+      expoTitelArray[idx] = val;
+      renderExpoListe();
+    };
+  });
+
+  // Titel löschen
+  list.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const idx = this.getAttribute("data-idx");
+      expoTitelArray.splice(idx, 1);
+      renderExpoListe();
+    };
+  });
+
+  // Text generieren
+  list.querySelectorAll('.btn-generate').forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const idx = this.getAttribute("data-idx");
+      alert("Text für Expo-Titel " + (parseInt(idx)+1) + " generieren!\n\n(Titel: " + expoTitelArray[idx] + ")");
+      // Hier kann später dein n8n-Aufruf rein!
+    };
+  });
+
+  // Export-Button nur anzeigen, wenn Titel vorhanden
+  document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
+}
+
     }); // DOMContentLoaded-Ende
   </script>
 </body>
