@@ -15,7 +15,6 @@
       <img src="assets/logo.png" alt="Expoya Logo" class="logo">
       <h2 class="headline">AI-Content-Engine</h2>
       <form id="myForm" autocomplete="off">
-        <!-- (deine Inputs wie gehabt) -->
         <div class="form-group">
           <input type="text" name="companyName" placeholder="Unternehmensname" required>
         </div>
@@ -117,7 +116,6 @@
         anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
       });
 
-      // Floskeln für Live-Ladefeedback
       const ladeFloskeln = [
         "Die AI-Agents hüpfen im Quadrat, um geile Titel zu basteln…",
         "Unsere KI brainstormt gerade die wildesten Expo-Ideen.",
@@ -172,11 +170,11 @@
         let pollTries = 0;
         const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
         const startedAt = Date.now();
+        let generationComplete = false;
 
         pollTimer = setInterval(async () => {
           pollTries++;
           const seconds = Math.floor((Date.now() - startedAt) / 1000);
-          // Alle 10 Sekunden nächste Floskel
           const floskelIndex = Math.floor(seconds / 10) % ladeFloskeln.length;
           const floskel = ladeFloskeln[floskelIndex];
           // Ladefeedback
@@ -192,9 +190,10 @@
 
             if (job.status === "finished" && job.result) {
               clearInterval(pollTimer);
+              generationComplete = true;
               list.innerHTML = "";
               try {
-                expoTitelArray = JSON.parse(job.result); // falls als JSON-String gespeichert
+                expoTitelArray = JSON.parse(job.result);
               } catch (err) {
                 expoTitelArray = [];
               }
@@ -210,15 +209,17 @@
               }
             } else if (job.status === "error") {
               clearInterval(pollTimer);
+              generationComplete = true;
               list.innerHTML = `<li>Fehler: ${job.error || "Unbekannter Fehler."}</li>`;
             }
           } catch (e) {
+            clearInterval(pollTimer);
+            generationComplete = true;
             list.innerHTML = `<li>Polling-Fehler: ${e.message}</li>`;
-            clearInterval(pollTimer);
           }
-          if (pollTries > maxPolls) {
-            clearInterval(pollTimer);
+          if (pollTries > maxPolls && !generationComplete) {
             list.innerHTML = `<li>Timeout: Die Generierung hat zu lange gedauert.</li>`;
+            clearInterval(pollTimer);
           }
         }, 10000); // alle 10 Sekunden
       });
