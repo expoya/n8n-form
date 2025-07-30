@@ -141,6 +141,9 @@
           body: JSON.stringify(data)
         });
         const result = await response.json();
+        console.log("RAW Start-Job Result:", result);
+        alert("Start-Job: " + JSON.stringify(result));
+
         jobId = result.jobId;
         if (!jobId) throw new Error("Keine Job-ID erhalten!");
       } catch (e) {
