@@ -149,7 +149,7 @@
       }
 
       // STEP 2: Polling
-      const pollUrl = "https://expoya.app.n8n.cloud/webhook-test/get-job?jobId=" + encodeURIComponent(jobId);
+      const pollUrl = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=" + encodeURIComponent(jobId);
       let pollTries = 0;
       const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
 
