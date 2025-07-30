@@ -77,152 +77,170 @@
   </div>
 
   <script>
-    // Branchen dynamisch aus JSON laden
-    fetch('assets/gmb_categories.json')
-      .then(response => response.json())
-      .then(categories => {
-        const select = document.getElementById('brancheSelect');
-        categories.forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          opt.textContent = cat;
-          select.appendChild(opt);
+    document.addEventListener('DOMContentLoaded', function() {
+      // Branchen dynamisch aus JSON laden
+      fetch('assets/gmb_categories.json')
+        .then(response => {
+          if (!response.ok) throw new Error("JSON konnte nicht geladen werden");
+          return response.json();
+        })
+        .then(categories => {
+          const select = document.getElementById('brancheSelect');
+          categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+          });
+        })
+        .catch(() => {
+          // Fallback
+          const select = document.getElementById('brancheSelect');
+          ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+          });
         });
-      })
-      .catch(() => {
-        const select = document.getElementById('brancheSelect');
-        ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          opt.textContent = cat;
-          select.appendChild(opt);
-        });
+
+      const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
+      const tonalityInput = document.getElementById('tonality');
+      const tonalityValue = document.getElementById('tonality-value');
+      tonalityInput.addEventListener('input', function() {
+        tonalityValue.innerText = tonalities[this.value - 1];
       });
 
-    const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
-    const tonalityInput = document.getElementById('tonality');
-    const tonalityValue = document.getElementById('tonality-value');
-    tonalityInput.addEventListener('input', function() {
-      tonalityValue.innerText = tonalities[this.value - 1];
-    });
+      const anspracheInput = document.getElementById('ansprache');
+      const anspracheLabel = document.getElementById('ansprache-label');
+      anspracheInput.addEventListener('change', function() {
+        anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
+      });
 
-    const anspracheInput = document.getElementById('ansprache');
-    const anspracheLabel = document.getElementById('ansprache-label');
-    anspracheInput.addEventListener('change', function() {
-      anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
-    });
+      // Floskeln für Live-Ladefeedback
+      const ladeFloskeln = [
+        "Die AI-Agents hüpfen im Quadrat, um geile Titel zu basteln…",
+        "Unsere KI brainstormt gerade die wildesten Expo-Ideen.",
+        "Es werden noch schnell ein paar Synapsen poliert…",
+        "Gleich sind die besten Titel aus dem neuronalen Backofen!",
+        "Die künstliche Intelligenz schreibt schon am Bestseller.",
+        "Wir optimieren noch für Google – bitte einen kurzen Espresso trinken!",
+        "Noch ein Moment: Kreativität braucht manchmal eine kurze Denkpause.",
+        "Die AI schraubt noch am SEO-Schraubenzieher.",
+        "Expoya-Titelschmiede läuft auf Hochtouren!",
+        "Wir würfeln noch ein paar Wörter zusammen…"
+      ];
 
-    // Neue Floskeln für Live-Ladefeedback
-    const ladeFloskeln = [
-      "Die AI-Agents hüpfen im Quadrat, um geile Titel zu basteln…",
-      "Unsere KI brainstormt gerade die wildesten Expo-Ideen.",
-      "Es werden noch schnell ein paar Synapsen poliert…",
-      "Gleich sind die besten Titel aus dem neuronalen Backofen!",
-      "Die künstliche Intelligenz schreibt schon am Bestseller.",
-      "Wir optimieren noch für Google – bitte einen kurzen Espresso trinken!",
-      "Noch ein Moment: Kreativität braucht manchmal eine kurze Denkpause.",
-      "Die AI schraubt noch am SEO-Schraubenzieher.",
-      "Expoya-Titelschmiede läuft auf Hochtouren!",
-      "Wir würfeln noch ein paar Wörter zusammen…"
-    ];
+      let expoTitelArray = [];
+      let pollTimer;
 
-    let expoTitelArray = [];
-    let pollTimer;
+      document.getElementById("myForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        data['mitOrtsbezug'] = document.getElementById('mitOrtsbezug').checked;
+        data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
+        data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
 
-    document.getElementById("myForm").addEventListener("submit", async function(event) {
-      event.preventDefault();
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData.entries());
-      data['mitOrtsbezug'] = document.getElementById('mitOrtsbezug').checked;
-      data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
-      data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
+        const list = document.getElementById("expoList");
+        list.innerHTML = '';
+        const liWait = document.createElement("li");
+        liWait.textContent = "🚀 Generierung läuft...";
+        liWait.className = "expo-placeholder";
+        list.appendChild(liWait);
+        document.getElementById('exportBtn').style.display = "none";
 
-      const list = document.getElementById("expoList");
-      list.innerHTML = '';
-      const liWait = document.createElement("li");
-      liWait.textContent = "🚀 Generierung läuft...";
-      liWait.className = "expo-placeholder";
-      list.appendChild(liWait);
-      document.getElementById('exportBtn').style.display = "none";
-
-      // STEP 1: Starte Job
-      const jobUrl = "https://expoya.app.n8n.cloud/webhook/start-job";
-      let jobId;
-      try {
-        const response = await fetch(jobUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        // Debug: console.log("RAW Start-Job Result:", result);
-
-        jobId = result.jobId;
-        if (!jobId) throw new Error("Keine Job-ID erhalten!");
-      } catch (e) {
-        list.innerHTML = `<li>Fehler: ${e.message}</li>`;
-        return;
-      }
-
-      // STEP 2: Polling mit Ladefeedback
-      const pollUrl = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=" + encodeURIComponent(jobId);
-      let pollTries = 0;
-      const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
-      const startedAt = Date.now();
-
-      pollTimer = setInterval(async () => {
-        pollTries++;
-        const seconds = Math.floor((Date.now() - startedAt) / 1000);
-        // Alle 10 Sekunden nächste Floskel
-        const floskelIndex = Math.floor(seconds / 10) % ladeFloskeln.length;
-        const floskel = ladeFloskeln[floskelIndex];
-        // Ladefeedback
-        list.innerHTML = `
-          <li class="expo-placeholder">
-            🚀 Generierung läuft... (${seconds} Sekunden)<br>
-            <span style="font-size:0.98em;color:#98a4c2;">${floskel}</span>
-          </li>
-        `;
+        // STEP 1: Starte Job
+        const jobUrl = "https://expoya.app.n8n.cloud/webhook/start-job";
+        let jobId;
         try {
-          const res = await fetch(pollUrl);
-          const job = await res.json();
-
-          if (job.status === "finished" && job.result) {
-            clearInterval(pollTimer);
-            list.innerHTML = "";
-            try {
-              expoTitelArray = JSON.parse(job.result); // falls als JSON-String gespeichert
-            } catch (err) {
-              expoTitelArray = [];
-            }
-            if (expoTitelArray.length === 0) {
-              list.innerHTML = `<li>Es wurden keine Titel generiert.</li>`;
-            } else {
-              expoTitelArray.forEach(titel => {
-                const li = document.createElement("li");
-                li.textContent = titel;
-                list.appendChild(li);
-              });
-              document.getElementById('exportBtn').style.display = "block";
-            }
-          } else if (job.status === "error") {
-            clearInterval(pollTimer);
-            list.innerHTML = `<li>Fehler: ${job.error || "Unbekannter Fehler."}</li>`;
-          }
+          const response = await fetch(jobUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          jobId = result.jobId;
+          if (!jobId) throw new Error("Keine Job-ID erhalten!");
         } catch (e) {
-          list.innerHTML = `<li>Polling-Fehler: ${e.message}</li>`;
-          clearInterval(pollTimer);
+          list.innerHTML = `<li>Fehler: ${e.message}</li>`;
+          return;
         }
-        if (pollTries > maxPolls) {
-          clearInterval(pollTimer);
-          list.innerHTML = `<li>Timeout: Die Generierung hat zu lange gedauert.</li>`;
-        }
-      }, 10000); // alle 10 Sekunden
-    });
 
-    // CSV-Export-Funktion
-    document.getElementById('exportBtn').addEventListener('click', function() {
-      if (!expoTitelArray || expoTitelArray.length === 0) return;
-      let csv = 'Expo-Titel\n';
-      expoTitelArray.forEach(titel => {
-        let safeTitel = titel.replace(/"/g, '""').replace(/\r
+        // STEP 2: Polling mit Ladefeedback
+        const pollUrl = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=" + encodeURIComponent(jobId);
+        let pollTries = 0;
+        const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
+        const startedAt = Date.now();
+
+        pollTimer = setInterval(async () => {
+          pollTries++;
+          const seconds = Math.floor((Date.now() - startedAt) / 1000);
+          // Alle 10 Sekunden nächste Floskel
+          const floskelIndex = Math.floor(seconds / 10) % ladeFloskeln.length;
+          const floskel = ladeFloskeln[floskelIndex];
+          // Ladefeedback
+          list.innerHTML = `
+            <li class="expo-placeholder">
+              🚀 Generierung läuft... (${seconds} Sekunden)<br>
+              <span style="font-size:0.98em;color:#98a4c2;">${floskel}</span>
+            </li>
+          `;
+          try {
+            const res = await fetch(pollUrl);
+            const job = await res.json();
+
+            if (job.status === "finished" && job.result) {
+              clearInterval(pollTimer);
+              list.innerHTML = "";
+              try {
+                expoTitelArray = JSON.parse(job.result); // falls als JSON-String gespeichert
+              } catch (err) {
+                expoTitelArray = [];
+              }
+              if (expoTitelArray.length === 0) {
+                list.innerHTML = `<li>Es wurden keine Titel generiert.</li>`;
+              } else {
+                expoTitelArray.forEach(titel => {
+                  const li = document.createElement("li");
+                  li.textContent = titel;
+                  list.appendChild(li);
+                });
+                document.getElementById('exportBtn').style.display = "block";
+              }
+            } else if (job.status === "error") {
+              clearInterval(pollTimer);
+              list.innerHTML = `<li>Fehler: ${job.error || "Unbekannter Fehler."}</li>`;
+            }
+          } catch (e) {
+            list.innerHTML = `<li>Polling-Fehler: ${e.message}</li>`;
+            clearInterval(pollTimer);
+          }
+          if (pollTries > maxPolls) {
+            clearInterval(pollTimer);
+            list.innerHTML = `<li>Timeout: Die Generierung hat zu lange gedauert.</li>`;
+          }
+        }, 10000); // alle 10 Sekunden
+      });
+
+      // CSV-Export-Funktion
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        if (!expoTitelArray || expoTitelArray.length === 0) return;
+        let csv = 'Expo-Titel\n';
+        expoTitelArray.forEach(titel => {
+          let safeTitel = titel.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
+          csv += `"${safeTitel}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'expo-titel.csv';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }); // DOMContentLoaded-Ende
+  </script>
+</body>
+</html>
