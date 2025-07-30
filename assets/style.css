@@ -109,23 +109,16 @@ textarea {
   background: #7077fa;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 8px;
-}
-
 .tonality-container {
   margin-bottom: 10px;
-  margin-top: 4px; /* nur minimal Abstand nach oben */
+  margin-top: 4px;
 }
 
 .tonality-label {
   font-size: 15px;
   color: #bbc1f4; 
   font-weight: 400;
-  margin-bottom: 6px; /* nur minimal Abstand zum Slider */
+  margin-bottom: 6px;
   margin-top: 7px;
   text-align: center;
   letter-spacing: 0.01em;
@@ -151,7 +144,6 @@ textarea {
   margin-bottom: 10px;
 }
 
-
 /* Toggles nebeneinander und kompakt */
 .toggles-row {
   display: flex;
@@ -160,7 +152,7 @@ textarea {
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-  margin-top: 5;
+  margin-top: 5px;
 }
 .toggle-combo {
   display: flex;
@@ -234,183 +226,30 @@ input:checked + .slider:before {
   margin-top: 6px;
 }
 
-@media (max-width: 950px) {
-  .container {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 0;
-  }
-  .compact-panel,
-  .output-panel {
-    max-width: 100vw;
-    min-width: 0;
-    margin: 0 0 18px 0;
-  }
-  .output-headline {
-  margin: 0;
-  color: #7d82fa;
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-
+/* --------- Expo Titel Liste & Akkordeon ---------- */
 .expo-list {
-  list-style: disc;
-  padding-left: 20px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.expo-list li {
-  font-size: 15px;
-  color: #e5e8ef;
-  line-height: 1.5;
-}
-
-.expo-placeholder {
-  color: #7780a4;
-  font-style: italic;
-}
-
-.expo-list {
-  padding-left: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.expo-akkordeon {
-  background: #242a3b;
-  border-radius: 13px;
-  box-shadow: 0 2px 7px #0002;
-  list-style: none;
-  transition: box-shadow 0.13s;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid #282e44;
-  position: relative;
-}
-
-.expo-akk-header {
-  display: flex;
-  align-items: center;
-  padding: 13px 15px;
-  cursor: pointer;
-  gap: 10px;
-}
-
-.expo-akk-titel {
-  font-size: 15.7px;
-  color: #e5e8ef;
-  font-weight: 500;
-  flex: 1;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.btn-small,
-.btn-generate {
-  background: none;
-  border: none;
-  outline: none;
-  color: #bbc1f4;
-  font-size: 16px;
-  margin-left: 6px;
-  padding: 2px 4px;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: background 0.14s, color 0.13s;
-}
-.btn-small:hover,
-.btn-generate:hover {
-  background: #353b58;
-  color: #fff;
-}
-
-.btn-generate {
-  background: #5a5ef7;
-  color: #fff;
-  padding: 3.5px 14px;
-  font-weight: 600;
-  margin-left: 0;
-  font-size: 15px;
-}
-.btn-generate:hover { background: #7077fa; }
-
-.btn-save {
-  background: #3d4260;
-  color: #fff;
-  font-size: 13.5px;
-  font-weight: 600;
-  padding: 4px 13px;
-  margin-right: 6px;
-  margin-left: 0;
-}
-
-.edit-titel-input {
-  padding: 7px 9px;
-  border: 1px solid #6b76a7;
-  border-radius: 5px;
-  background: #232a3b;
-  color: #e5e8ef;
-  margin: 7px 0 10px 0;
-  font-size: 15.3px;
-  width: 97%;
-  box-sizing: border-box;
-}
-
-.expo-akk-body {
-  display: none;
-  background: #21263a;
-  padding: 14px 17px 13px 17px;
-  border-radius: 0 0 12px 12px;
-  border-top: 1px solid #282e44;
-  animation: fadeInExpoBody 0.22s;
-}
-.expo-akkordeon.open .expo-akk-body {
-  display: block;
-}
-.expo-akkordeon.open .expo-akk-header {
-  border-bottom: 1px solid #282e44;
-}
-
-.expo-akkordeon .btn-expand {
-  font-size: 18px;
-  margin-left: 7px;
-  padding: 0 2px;
-  color: #7d82fa;
-  background: none;
-  border: none;
-  transition: color 0.14s;
-}
-.expo-akkordeon .btn-expand:hover { color: #bbc1f4; }
-
-@keyframes fadeInExpoBody {
-  0% { opacity:0; transform: translateY(-4px);}
-  100% { opacity:1; transform: translateY(0);}
-}
-
-  .expo-list {
   padding-left: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 13px;
 }
+.expo-placeholder {
+  color: #7780a4;
+  font-style: italic;
+}
 
 .expo-akkordeon {
   background: #232a3b;
-  border-radius: 12px;
+  border-radius: 13px;
   box-shadow: 0 2px 8px #0002;
   list-style: none;
   padding: 0;
   margin: 0;
   border: 1px solid #282e44;
   transition: box-shadow 0.13s;
+  position: relative;
+  overflow: hidden;
 }
 
 .expo-akk-header {
@@ -419,6 +258,7 @@ input:checked + .slider:before {
   gap: 10px;
   padding: 12px 14px;
   cursor: pointer;
+  border-radius: 13px 13px 0 0;
 }
 
 .expo-akk-index {
@@ -470,7 +310,7 @@ input:checked + .slider:before {
   display: none;
   background: #21263a;
   padding: 18px 18px 15px 36px;
-  border-radius: 0 0 11px 11px;
+  border-radius: 0 0 13px 13px;
   border-top: 1px solid #282e44;
   animation: fadeInExpoBody 0.18s;
 }
@@ -526,3 +366,17 @@ input:checked + .slider:before {
   100% { opacity:1; transform: translateY(0);}
 }
 
+/* ------ Responsive ------ */
+@media (max-width: 950px) {
+  .container {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 0;
+  }
+  .compact-panel,
+  .output-panel {
+    max-width: 100vw;
+    min-width: 0;
+    margin: 0 0 18px 0;
+  }
+}
