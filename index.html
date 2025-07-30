@@ -15,6 +15,7 @@
       <img src="assets/logo.png" alt="Expoya Logo" class="logo">
       <h2 class="headline">AI-Content-Engine</h2>
       <form id="myForm" autocomplete="off">
+        <!-- (deine Inputs wie gehabt) -->
         <div class="form-group">
           <input type="text" name="companyName" placeholder="Unternehmensname" required>
         </div>
@@ -25,7 +26,6 @@
           <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
           <select id="brancheSelect" name="branche" required style="flex:3;">
             <option value="">– wählen –</option>
-            <!-- Branchen werden via JS geladen -->
           </select>
         </div>
         <div class="form-group">
@@ -40,13 +40,11 @@
         <div class="form-group">
           <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
-        <!-- Tonalität Block -->
         <div class="form-group tonality-container">
           <label class="tonality-label" for="tonality">Tonalität</label>
           <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
           <div class="tonality-value" id="tonality-value">Neutral</div>
         </div>
-        <!-- Toggles -->
         <div class="form-group toggles-row">
           <div class="toggle-combo">
             <span class="toggle-label">Mit Ortsbezug</span>
@@ -92,7 +90,6 @@
         });
       })
       .catch(() => {
-        // Fallback
         const select = document.getElementById('brancheSelect');
         ['Apotheke','Architekt','Bäckerei'].forEach(cat => {
           const opt = document.createElement('option');
@@ -102,7 +99,6 @@
         });
       });
 
-    // Tonalität
     const tonalities = ['Locker', 'Eher locker', 'Neutral', 'Eher formell', 'Sehr formell'];
     const tonalityInput = document.getElementById('tonality');
     const tonalityValue = document.getElementById('tonality-value');
@@ -110,42 +106,15 @@
       tonalityValue.innerText = tonalities[this.value - 1];
     });
 
-    // Ansprache Toggle
     const anspracheInput = document.getElementById('ansprache');
     const anspracheLabel = document.getElementById('ansprache-label');
     anspracheInput.addEventListener('change', function() {
       anspracheLabel.innerText = this.checked ? 'Du' : 'Sie';
     });
 
-    // Expo-Titel (CSV) – speichern im Scope
     let expoTitelArray = [];
+    let pollTimer;
 
-    // Flexibler Titel-Extractor
-    function extractExpoTitel(result) {
-  // direkte Arrays
-  if (Array.isArray(result.titel_bisher) && result.titel_bisher.length > 0) {
-    return result.titel_bisher;
-  }
-  if (Array.isArray(result.Titel) && result.Titel.length > 0) {
-    return result.Titel;
-  }
-  // Output-Objekt
-  if (result.output) {
-    if (Array.isArray(result.output.titel_bisher) && result.output.titel_bisher.length > 0) {
-      return result.output.titel_bisher;
-    }
-    if (Array.isArray(result.output.Titel) && result.output.Titel.length > 0) {
-      return result.output.Titel;
-    }
-    if (Array.isArray(result.output.titel) && result.output.titel.length > 0) {
-      return result.output.titel;
-    }
-  }
-  return [];
-}
-
-
-    // Formular Handling
     document.getElementById("myForm").addEventListener("submit", async function(event) {
       event.preventDefault();
       const formData = new FormData(this);
@@ -154,66 +123,83 @@
       data['ansprache'] = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
       data['tonality'] = tonalities[parseInt(formData.get('tonality')) - 1];
 
-      // UI-Feedback: Liste leeren + Placeholder setzen
       const list = document.getElementById("expoList");
       list.innerHTML = '';
       const liWait = document.createElement("li");
       liWait.textContent = "🚀 Generierung läuft...";
       liWait.className = "expo-placeholder";
       list.appendChild(liWait);
-
       document.getElementById('exportBtn').style.display = "none";
 
-      const webhookUrl = "https://expoya.app.n8n.cloud/webhook-test/start-job";
+      // STEP 1: Starte Job
+      const jobUrl = "https://expoya.app.n8n.cloud/webhook-test/start-job";
+      let jobId;
       try {
-        const response = await fetch(webhookUrl, {
+        const response = await fetch(jobUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
         const result = await response.json();
-
-        list.innerHTML = "";
-        expoTitelArray = [];
-
-        const expoTitel = extractExpoTitel(result);
-
-        if (expoTitel.length > 0) {
-          expoTitel.forEach(titel => {
-            const li = document.createElement("li");
-            li.textContent = titel;
-            list.appendChild(li);
-            expoTitelArray.push(titel);
-          });
-          document.getElementById('exportBtn').style.display = "block";
-        } else {
-          const li = document.createElement("li");
-          li.textContent = "Keine Titel erhalten.";
-          li.className = "expo-placeholder";
-          list.appendChild(li);
-        }
-      } catch (error) {
-        list.innerHTML = "";
-        const li = document.createElement("li");
-        li.textContent = "Fehler: " + error.message;
-        li.className = "expo-placeholder";
-        list.appendChild(li);
+        jobId = result.jobId;
+        if (!jobId) throw new Error("Keine Job-ID erhalten!");
+      } catch (e) {
+        list.innerHTML = `<li>Fehler: ${e.message}</li>`;
+        return;
       }
+
+      // STEP 2: Polling
+      const pollUrl = "https://expoya.app.n8n.cloud/webhook-test/get-job?jobId=" + encodeURIComponent(jobId);
+      let pollTries = 0;
+      const maxPolls = 90; // max. 15 Minuten bei 10 Sek Intervall
+
+      pollTimer = setInterval(async () => {
+        pollTries++;
+        try {
+          const res = await fetch(pollUrl);
+          const job = await res.json();
+
+          if (job.status === "finished" && job.result) {
+            clearInterval(pollTimer);
+            list.innerHTML = "";
+            try {
+              expoTitelArray = JSON.parse(job.result); // falls als JSON-String gespeichert
+            } catch (err) {
+              expoTitelArray = [];
+            }
+            if (expoTitelArray.length === 0) {
+              list.innerHTML = `<li>Es wurden keine Titel generiert.</li>`;
+            } else {
+              expoTitelArray.forEach(titel => {
+                const li = document.createElement("li");
+                li.textContent = titel;
+                list.appendChild(li);
+              });
+              document.getElementById('exportBtn').style.display = "block";
+            }
+          } else if (job.status === "error") {
+            clearInterval(pollTimer);
+            list.innerHTML = `<li>Fehler: ${job.error || "Unbekannter Fehler."}</li>`;
+          }
+        } catch (e) {
+          list.innerHTML = `<li>Polling-Fehler: ${e.message}</li>`;
+          clearInterval(pollTimer);
+        }
+        if (pollTries > maxPolls) {
+          clearInterval(pollTimer);
+          list.innerHTML = `<li>Timeout: Die Generierung hat zu lange gedauert.</li>`;
+        }
+      }, 10000); // alle 10 Sekunden
     });
 
     // CSV-Export-Funktion
     document.getElementById('exportBtn').addEventListener('click', function() {
       if (!expoTitelArray || expoTitelArray.length === 0) return;
-
-      // Baue CSV
       let csv = 'Expo-Titel\n';
       expoTitelArray.forEach(titel => {
-        // Escape quotes and line breaks for robust CSV
         let safeTitel = titel.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
         csv += `"${safeTitel}"\n`;
       });
-
-      // Download auslösen
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -223,7 +209,6 @@
       link.click();
       document.body.removeChild(link);
     });
-
   </script>
 </body>
 </html>
