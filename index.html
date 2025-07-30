@@ -236,7 +236,8 @@
         link.click();
         document.body.removeChild(link);
       });
-      function renderExpoListe() {
+
+function renderExpoListe() {
   const list = document.getElementById("expoList");
   list.innerHTML = "";
   if (expoTitelArray.length === 0) {
@@ -249,40 +250,48 @@
     item.className = "expo-akkordeon";
     item.innerHTML = `
       <div class="expo-akk-header" data-idx="${idx}">
-        <span class="expo-akk-titel"><strong>${idx + 1}.</strong> <span class="expo-titel-text">${titel}</span></span>
+        <span style="color:#7d82fa;font-weight:700;min-width:22px;text-align:right;display:inline-block;">${idx + 1}.</span>
+        <span class="expo-akk-titel"><span class="expo-titel-text">${titel}</span></span>
         <button class="btn-small btn-edit" title="Bearbeiten" data-idx="${idx}">✏️</button>
         <button class="btn-small btn-delete" title="Entfernen" data-idx="${idx}">🗑️</button>
-        <button class="btn-small btn-expand" title="Details anzeigen" data-idx="${idx}">▼</button>
+        <button class="btn-expand" title="Details anzeigen" data-idx="${idx}">▼</button>
       </div>
-      <div class="expo-akk-body" style="display:none;">
-        <input class="edit-titel-input" value="${titel}" style="margin-bottom:7px;">
-        <button class="btn-small btn-save" data-idx="${idx}">Speichern</button>
-        <button class="btn-small btn-generate" data-idx="${idx}">Text generieren</button>
+      <div class="expo-akk-body">
+        <input class="edit-titel-input" value="${titel}">
+        <button class="btn-save btn-small" data-idx="${idx}">Speichern</button>
+        <button class="btn-generate" data-idx="${idx}">Text generieren</button>
       </div>
     `;
     list.appendChild(item);
   });
 
-  // Akkordeon-Expandieren/Klappen
+  // Akkordeon öffnen/schließen
   list.querySelectorAll('.btn-expand').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
-      const idx = this.getAttribute("data-idx");
-      const body = this.parentNode.nextElementSibling;
-      body.style.display = body.style.display === "block" ? "none" : "block";
-      this.textContent = body.style.display === "block" ? "▲" : "▼";
+      const parent = btn.closest(".expo-akkordeon");
+      parent.classList.toggle("open");
+      btn.textContent = parent.classList.contains("open") ? "▲" : "▼";
+      // Nur ein Akkordeon offen: Schließe alle anderen
+      if (parent.classList.contains("open")) {
+        list.querySelectorAll('.expo-akkordeon').forEach(el => {
+          if (el !== parent) {
+            el.classList.remove("open");
+            el.querySelector('.btn-expand').textContent = "▼";
+          }
+        });
+      }
     };
   });
 
-  // Titel bearbeiten
+  // Direkt Editieren
   list.querySelectorAll('.btn-edit').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
-      const idx = this.getAttribute("data-idx");
-      const body = this.parentNode.nextElementSibling;
-      body.style.display = "block";
-      body.querySelector('.edit-titel-input').focus();
-      this.parentNode.querySelector('.btn-expand').textContent = "▲";
+      const parent = btn.closest(".expo-akkordeon");
+      parent.classList.add("open");
+      parent.querySelector('.edit-titel-input').focus();
+      parent.querySelector('.btn-expand').textContent = "▲";
     };
   });
 
@@ -308,7 +317,7 @@
     };
   });
 
-  // Text generieren
+  // Text generieren (später an n8n)
   list.querySelectorAll('.btn-generate').forEach(btn => {
     btn.onclick = function(e) {
       e.stopPropagation();
@@ -317,6 +326,13 @@
       // Hier kann später dein n8n-Aufruf rein!
     };
   });
+
+  document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
+}
+
+
+
+      
 
   // Export-Button nur anzeigen, wenn Titel vorhanden
   document.getElementById('exportBtn').style.display = expoTitelArray.length > 0 ? "block" : "none";
