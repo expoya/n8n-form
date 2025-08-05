@@ -15,6 +15,61 @@
       <img src="assets/logo.png" class="logo" alt="Expoya">
       <h2 class="headline">AI-Content-Engine</h2>
       <!-- Formular-Markup bleibt unverändert ↓↓ -->
+<form id="myForm" autocomplete="off">
+        <div class="form-group">
+          <input type="text" name="companyName" placeholder="Unternehmensname" required>
+        </div>
+        <div class="form-group">
+          <input type="url" name="website" placeholder="Website">
+        </div>
+<div class="form-row">
+  <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
+  <input type="text"   name="branche"   placeholder="Branche"   required style="flex:3;">
+</div>
+        <div class="form-group">
+          <textarea name="regionen" placeholder="Regionen (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+          <textarea name="zielgruppen" placeholder="Zielgruppen (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+          <textarea name="produkte" placeholder="Produkte / Dienstleistungen (mit , oder ; trennen)" rows="1"></textarea>
+        </div>
+        <div class="form-group">
+  <textarea name="attribute" placeholder="Attribute (z.B. preiswert, luxuriös, exklusiv) (mit , oder ; trennen)" rows="1"></textarea>
+</div>
+
+        <div class="form-group">
+          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z.B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
+        </div>
+
+        <div class="form-group tonality-container">
+          <label class="tonality-label" for="tonality">Tonalität</label>
+          <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
+          <div class="tonality-value" id="tonality-value">Neutral</div>
+        </div>
+
+        <div class="form-group toggles-row">
+          <div class="toggle-combo">
+            <span class="toggle-label">Mit Ortsbezug</span>
+            <label class="switch switch-small">
+              <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-combo">
+            <span class="toggle-label">Ansprache</span>
+            <label class="switch switch-small">
+              <input type="checkbox" id="ansprache" name="ansprache" checked>
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="ansprache-label">Du</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" type="submit">🚀 Generieren</button>
+      </form>
+      
       <!-- 👉 kopiere deinen <form>…</form>-Block hier hinein  -->
     </div>
 
