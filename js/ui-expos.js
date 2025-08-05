@@ -21,7 +21,7 @@ export function renderExpoList(){
     list.appendChild(li);
   });
 
-  /* ---------- Text generieren ---------- */
+  /* ---------- Text generieren ----------- */
   list.querySelectorAll('.btn-generate').forEach(btn=>btn.onclick=async e=>{
     const idx = btn.dataset.idx;
     btn.disabled=true; btn.textContent="Lädt…";
