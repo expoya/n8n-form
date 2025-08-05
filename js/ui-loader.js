@@ -15,17 +15,30 @@ const floskeln = [
         "Noch ein letzter Schwung mit dem Titel-Zauberstab…"
 ];
 
-export function showLoader(msg){
-  placeholder = document.querySelector('.expo-placeholder') ||
-                document.querySelector('#expoList').firstElementChild;
-  placeholder.innerHTML = msg;
+export function showLoader(text = "🚀 Läuft …") {
+  const list = document.getElementById("expoList");
+
+  // Placeholder neu anlegen oder wiederverwenden
+  if (!placeholder) {
+    placeholder = document.createElement("li");
+    placeholder.className = "expo-placeholder";
+    list.innerHTML = "";              // sicher leeren
+    list.appendChild(placeholder);
+  }
+  placeholder.innerHTML = text;
 }
 
-export function updateLoader(t){
-  const sec  = t*10;
-  placeholder.innerHTML = `🚀 Generierung läuft … (${sec}s)<br><span style="font-size:0.9em;color:#98a4c2;">${floskeln[t%floskeln.length]}</span>`;
+export function updateLoader(tick) {
+  const sec = tick * 10;
+  const fl = floskeln[tick % floskeln.length];
+  if (placeholder) {
+    placeholder.innerHTML =
+      `🚀 Generierung läuft … (${sec}s)<br>` +
+      `<span style="font-size:0.9em;color:#98a4c2;">${fl}</span>`;
+  }
 }
 
-export function hideLoader(){
-  // nichts – wird von renderExpoList überschrieben.
+export function hideLoader() {
+  // Placeholder wird von renderExpoList ersetzt – einfach zurücksetzen
+  placeholder = null;
 }
