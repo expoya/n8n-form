@@ -18,7 +18,7 @@ export function initForm(){
               document.getElementById('ansprache-label').innerText = e.target.checked ? 'Du' : 'Sie';
           });
 
-  // Submit-Handler --------------------------------------------------------------
+  // Submit-Handler ---------------------------------------------------------------
   form.addEventListener('submit', async e=>{
     e.preventDefault();
 
