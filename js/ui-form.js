@@ -43,7 +43,7 @@ export function initForm(){
   });
 }
 
-/* ---------- internes Polling ---------- */
+/* ---------- internes Polling ----------- */
 async function pollUntilDone(jobId){
   let tries=0;
   const maxTries=90;
