@@ -22,12 +22,10 @@
         <div class="form-group">
           <input type="url" name="website" placeholder="Website">
         </div>
-        <div class="form-row">
-          <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
-          <select id="brancheSelect" name="branche" required style="flex:3;">
-            <option value="">– wählen –</option>
-          </select>
-        </div>
+<div class="form-row">
+  <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
+  <input type="text"   name="branche"   placeholder="Branche"   required style="flex:3;">
+</div>
         <div class="form-group">
           <textarea name="regionen" placeholder="Regionen (mit , oder ; trennen)" rows="1"></textarea>
         </div>
@@ -35,10 +33,14 @@
           <textarea name="zielgruppen" placeholder="Zielgruppen (mit , oder ; trennen)" rows="1"></textarea>
         </div>
         <div class="form-group">
-          <textarea name="produkte" placeholder="Produkte / DL (mit , oder ; trennen)" rows="1"></textarea>
+          <textarea name="produkte" placeholder="Produkte / Dienstleistungen (mit , oder ; trennen)" rows="1"></textarea>
         </div>
         <div class="form-group">
-          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z. B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
+  <textarea name="attribute" placeholder="Attribute (z.B. preiswert, luxuriös, exklusiv) (mit , oder ; trennen)" rows="1"></textarea>
+</div>
+
+        <div class="form-group">
+          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z.B. 'Mehr Leads für regionale Dienstleistung')" rows="2"></textarea>
         </div>
 
         <div class="form-group tonality-container">
@@ -110,27 +112,6 @@
       let expoTitelArray  = [];      // [ "Titel1", "Titel2", ... ]
       let expoTextArray   = [];      // paralleles Array für Texte
 
-      /*************************************************
-       *        BRANCHENLISTE DYNAMISCH LADEN          *
-       *************************************************/
-      async function ladeBranchen(){
-        const select = document.getElementById('brancheSelect');
-        select.innerHTML = '<option value="">– wählen –</option>';
-        try {
-          const res = await fetch('assets/gmb_categories.json');
-          if(!res.ok) throw new Error("JSON konnte nicht geladen werden");
-          const cats = await res.json();
-          cats.forEach(c=>{
-            const o=document.createElement('option');o.value=c;o.textContent=c;select.appendChild(o);
-          });
-        } catch(err){
-          ['Apotheke','Architekt','Bäckerei'].forEach(c=>{
-            const o=document.createElement('option');o.value=c;o.textContent=c;select.appendChild(o);
-          });
-          select.insertAdjacentHTML('beforebegin','<div style="color:#ff7070;font-size:13px;margin-bottom:3px;">Kategorien konnten nicht geladen werden.</div>');
-        }
-      }
-      await ladeBranchen();
 
       /*************************************************
        *              UI-KLEINKRAM (Slider)            *
