@@ -27,5 +27,5 @@ export function updateLoader(t){
 }
 
 export function hideLoader(){
-  // nichts – wird von renderExpoList überschrieben
+  // nichts – wird von renderExpoList überschrieben.
 }
