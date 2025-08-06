@@ -1,72 +1,86 @@
 import { state } from './state.js';
-import { startTitleJob } from './api.js';
+import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader } from './ui-loader.js';
 import { renderExpoList } from './ui-expos.js';
-import { pollTitleJob } from './api.js';
-
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
 export function initForm(){
   const form = document.getElementById('myForm');
 
-  // Tonalität & Ansprache-Slider ------------------------------------------------
+  /* ---------- Slider & Toggle ---------- */
   document.getElementById('tonality')
           .addEventListener('input',e=>{
-              document.getElementById('tonality-value').innerText = tonalities[e.target.value-1];
+              document.getElementById('tonality-value').innerText =
+                tonalities[e.target.value-1];
           });
   document.getElementById('ansprache')
           .addEventListener('change',e=>{
-              document.getElementById('ansprache-label').innerText = e.target.checked ? 'Du' : 'Sie';
+              document.getElementById('ansprache-label').innerText =
+                e.target.checked ? 'Du' : 'Sie';
           });
 
-  // Submit-Handler ---------------------------------------------------------------
+  /* ---------- Submit ---------- */
   form.addEventListener('submit', async e=>{
     e.preventDefault();
 
-    // 1) Daten einsammeln
+    /* 1) Daten einsammeln */
     const fd = new FormData(form);
     state.companyData = Object.fromEntries(fd.entries());
     state.companyData.mitOrtsbezug = document.getElementById('mitOrtsbezug').checked;
     state.companyData.ansprache    = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
     state.companyData.tonality     = tonalities[parseInt(fd.get('tonality'))-1];
 
-    // 2) UI Feedback
+    /* 2) UI – Loader + Reset */
     showLoader("Titel werden generiert …");
     state.titles = [];
     state.texts  = [];
 
-    // 3) Start Job
-    const { jobId } = await startTitleJob(state.companyData);
-    state.runningJobId = jobId;
+    /* 3) Job starten – robust mit try/catch */
+    let jobId;
+    try{
+      ({ jobId } = await startTitleJob(state.companyData));
+      if(!jobId) throw new Error("Keine Job-ID erhalten");
+    }catch(err){
+      hideLoader();
+      document.getElementById('expoList').innerHTML =
+        `<li class="expo-placeholder">Fehler: ${err.message}</li>`;
+      return;                        // Abbruch
+    }
 
-    // 4) Polling
+    /* 4) Polling */
+    state.runningJobId = jobId;
     pollUntilDone(jobId);
   });
 }
 
-/* ---------- internes Polling ----------- */
+/* ---------- Poll-Loop ---------- */
 async function pollUntilDone(jobId){
-  let tries=0;
-  const maxTries=90;
-  const timer=setInterval(async ()=>{
+  let tries = 0;
+  const maxTries = 90;
+
+  const timer = setInterval(async ()=>{
     tries++;
-    updateLoader(tries);          // Floskel + Zeit
+    updateLoader(tries);
 
-    const job = await pollTitleJob(jobId);
-
-
-    // <<< hier eigentlich  const job = await pollTitleJob(jobId);
-
-    if(job.status==="finished"){
+    let job;
+    try{
+      job = await pollTitleJob(jobId);
+    }catch(err){
       clearInterval(timer); hideLoader();
-      state.titles = JSON.parse(job.result||"[]");
+      alert("Polling-Fehler: "+err.message);
+      return;
+    }
+
+    if(job.status === "finished"){
+      clearInterval(timer); hideLoader();
+      state.titles = JSON.parse(job.result || "[]");
       state.texts  = new Array(state.titles.length).fill("");
       renderExpoList();
     }
-    if(job.status==="error"||tries>maxTries){
+    if(job.status === "error" || tries > maxTries){
       clearInterval(timer); hideLoader();
       alert("Titel-Generierung fehlgeschlagen oder Timeout.");
     }
-  },10000);
+  }, 10_000);
 }
