@@ -18,7 +18,7 @@ const floskeln = [
   "Noch ein letzter Schwung mit dem Titel-Zauberstab…"
 ];
 
-/* ----------- Loader API (wird von ui-form.js aufgerufen) ----------- */
+/* ----------- Loader API (wird von ui-form.js aufgerufen) ------------ */
 export function showLoader(text = "🚀 Generierung läuft …") {
   const list = document.getElementById("expoList");
 
