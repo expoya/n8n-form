@@ -70,14 +70,41 @@ input::placeholder,textarea::placeholder{
 /* ---------- Slider / Toggles ---------- */
 .tonality-container{margin:10px 0;}
 .tonality-label,.tonality-value{font-size:15px;color:#bbc1f4;text-align:center;}
+
+/* ===== Tonalitäts-Slider | komplett eigene Optik ===== */
 .tonality-slider{
-  width:calc(100% + 16px);   /* 8 px links + 8 px rechts Überhang */
-  margin:0 -8px;             /* gleicht den Überhang aus        */
-  display:block;
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
   height:4px;
-  accent-color:#7d82fa;
-  box-sizing:border-box;     /* verhindert weiteres Überlaufen  */
+  background:#585e7a;        /* Track */
+  border-radius:2px;
+  outline:none;
+  margin:6px 0 0;
+  cursor:pointer;
 }
+
+/* WebKit Thumb */
+.tonality-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#7d82fa;
+  cursor:pointer;
+  margin-top:-6px;           /* zentriert Thumb über Track */
+}
+/* Firefox Thumb */
+.tonality-slider::-moz-range-thumb{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#7d82fa;
+  border:none;
+  cursor:pointer;
+}
+
+
 .toggles-row{ /* --- Du/Sie & Ortsbezug in EINER Zeile ---------------- */
   display:flex;
   flex-direction:row;
