@@ -35,19 +35,33 @@ list.querySelectorAll('.btn-expand').forEach(btn => {
     btn.textContent = acc.classList.contains('open') ? '▲' : '▼';
   };
 });
-  /* ---------- Text generieren im Akkordeon ---------- */
+/* ---------- Text generieren ---------- */
 list.querySelectorAll('.btn-generate-text').forEach(btn=>{
   btn.onclick = async e => {
     e.stopPropagation();
-    const idx = btn.dataset.idx;
+    const idx   = +btn.dataset.idx;
     btn.disabled = true; btn.textContent = '⏳ …';
-    const payload = { ...state.companyData, h1Title: state.titles[idx], expoIdx: idx };
-    const { html } = await generateText(payload);
-    state.texts[idx] = html;
-    btn.remove();                                           // Button ausblenden
-    btn.closest('.expo-akk-body').querySelector('.text-preview').innerHTML = html;
+
+    /* Payload an Webhook */
+    const payload = {
+      ...state.companyData,
+      h1Title: state.titles[idx],
+      expoIdx: idx
+    };
+
+    try{
+      const { html } = await generateText(payload);   // ↖ kommt aus api.js
+      state.texts[idx] = html;
+      btn.remove();     // Button ausblenden
+      btn.closest('.expo-akk-body')
+         .querySelector('.text-preview').innerHTML = html;
+    }catch(err){
+      alert("Text-Webhook Fehler: "+err.message);
+      btn.disabled = false; btn.textContent = 'Text generieren';
+    }
   };
 });
+
 
 /* ---------- show/hide Body beim Akkordeon-Toggle ---------- */
 list.querySelectorAll('.expo-akkordeon').forEach(acc => {
@@ -93,6 +107,17 @@ list.querySelectorAll('.btn-edit-title').forEach(btn => {
     saveBtn.onclick    = commit;
     input.onkeydown    = ev => { if (ev.key === 'Enter'){ ev.preventDefault(); commit(); } };
     input.onblur       = commit;
+  };
+});
+
+  /* ---------- Titel löschen ---------- */
+list.querySelectorAll('.btn-delete').forEach(btn=>{
+  btn.onclick = e => {
+    e.stopPropagation();
+    const idx = +btn.dataset.idx;
+    state.titles.splice(idx, 1);     // Titel entfernen
+    state.texts.splice(idx, 1);      // zugehörigen Text entfernen
+    renderExpoList();                // Liste neu zeichnen
   };
 });
 
