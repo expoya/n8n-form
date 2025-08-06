@@ -73,15 +73,24 @@ list.querySelectorAll('.btn-edit-title').forEach(btn => {
     span.replaceWith(input);
     input.focus();
 
-    input.onblur = () => {
-      const val = input.value.trim();
-      if (val) {
-        state.titles[idx] = val;
-        input.replaceWith(span);
-        span.textContent = val;
-      } else {
-        input.replaceWith(span);
-      }
+    /* Mini-Save Button anlegen */
+const saveBtn = document.createElement('button');
+saveBtn.textContent = '✔️';
+saveBtn.className   = 'btn-icon btn-save-inline';
+span.parentNode.insertBefore(saveBtn, input.nextSibling);
+
+function commit(){
+  const val = input.value.trim();
+  if(val) state.titles[idx] = val;
+  input.replaceWith(span);
+  span.textContent = val || span.textContent;
+  saveBtn.remove();
+}
+
+saveBtn.onclick = commit;
+input.onkeydown = e => { if(e.key==='Enter') { e.preventDefault(); commit(); } };
+input.onblur    = commit;
+
     };
   };
 });
