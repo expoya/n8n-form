@@ -2,6 +2,8 @@ import { state } from './state.js';
 import { startTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader } from './ui-loader.js';
 import { renderExpoList } from './ui-expos.js';
+import { pollTitleJob } from './api.js';
+
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
@@ -51,7 +53,8 @@ async function pollUntilDone(jobId){
     tries++;
     updateLoader(tries);          // Floskel + Zeit
 
-    const job = await fetch(`/js/no-cache`, { cache: "no-store" }); // Dummy – ersetzt gleich pollTitleJob
+    const job = await pollTitleJob(jobId);
+
 
     // <<< hier eigentlich  const job = await pollTitleJob(jobId);
 
