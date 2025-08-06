@@ -71,12 +71,12 @@ input::placeholder,textarea::placeholder{
 .tonality-container{margin:10px 0;}
 .tonality-label,.tonality-value{font-size:15px;color:#bbc1f4;text-align:center;}
 .tonality-slider{
-  width:100%;
-  display:block;          /* verhindert “inline” Überlauf */
-  accent-color:#7d82fa;
+  width:calc(100% + 16px);   /* 8 px links + 8 px rechts Überhang */
+  margin:0 -8px;             /* gleicht den Überhang aus        */
+  display:block;
   height:4px;
-  box-sizing:border-box;  /* NEU – verhindert Überlauf */
-  margin-top:6px;         /* etwas Luft zum Label */
+  accent-color:#7d82fa;
+  box-sizing:border-box;     /* verhindert weiteres Überlaufen  */
 }
 .toggles-row{ /* --- Du/Sie & Ortsbezug in EINER Zeile ---------------- */
   display:flex;
