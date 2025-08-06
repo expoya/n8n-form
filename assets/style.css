@@ -72,38 +72,15 @@ input::placeholder,textarea::placeholder{
 .tonality-label,.tonality-value{font-size:15px;color:#bbc1f4;text-align:center;}
 
 /* ===== Tonalitäts-Slider | komplett eigene Optik ===== */
+/* ----- Tonalitäts-Slider (zurück zur Standard-Optik) ----- */
 .tonality-slider{
-  -webkit-appearance:none;
-  appearance:none;
   width:100%;
+  display:block;           /* verhindert Überlauf */
   height:4px;
-  background:#585e7a;        /* Track */
-  border-radius:2px;
-  outline:none;
+  accent-color:#7d82fa;    /* Daumen + Track in Lila */
+  box-sizing:border-box;   /* bleibt – stoppt das alte Rausragen */
   margin:6px 0 0;
-  cursor:pointer;
 }
-
-/* WebKit Thumb */
-.tonality-slider::-webkit-slider-thumb{
-  -webkit-appearance:none;
-  width:16px;
-  height:16px;
-  border-radius:50%;
-  background:#7d82fa;
-  cursor:pointer;
-  margin-top:-6px;           /* zentriert Thumb über Track */
-}
-/* Firefox Thumb */
-.tonality-slider::-moz-range-thumb{
-  width:16px;
-  height:16px;
-  border-radius:50%;
-  background:#7d82fa;
-  border:none;
-  cursor:pointer;
-}
-
 
 .toggles-row{ /* --- Du/Sie & Ortsbezug in EINER Zeile ---------------- */
   display:flex;
