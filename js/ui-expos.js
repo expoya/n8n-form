@@ -64,36 +64,38 @@ list.querySelectorAll('.expo-akkordeon').forEach(acc => {
 list.querySelectorAll('.btn-edit-title').forEach(btn => {
   btn.onclick = e => {
     e.stopPropagation();
+
     const idx   = btn.dataset.idx;
     const acc   = btn.closest('.expo-akkordeon');
     const span  = acc.querySelector('.expo-titel-text');
+
+    // Eingabefeld
     const input = document.createElement('input');
     input.value = span.textContent;
     input.className = 'edit-inline';
     span.replaceWith(input);
     input.focus();
 
-    /* Mini-Save Button anlegen */
-const saveBtn = document.createElement('button');
-saveBtn.textContent = '✔️';
-saveBtn.className   = 'btn-icon btn-save-inline';
-span.parentNode.insertBefore(saveBtn, input.nextSibling);
+    // Save-Button
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '✔️';
+    saveBtn.className   = 'btn-icon btn-save-inline';
+    input.after(saveBtn);
 
-function commit(){
-  const val = input.value.trim();
-  if(val) state.titles[idx] = val;
-  input.replaceWith(span);
-  span.textContent = val || span.textContent;
-  saveBtn.remove();
-}
+    function commit(){
+      const val = input.value.trim();
+      if (val) state.titles[idx] = val;
+      input.replaceWith(span);
+      span.textContent = val || span.textContent;
+      saveBtn.remove();
+    }
 
-saveBtn.onclick = commit;
-input.onkeydown = e => { if(e.key==='Enter') { e.preventDefault(); commit(); } };
-input.onblur    = commit;
-
-    };
+    saveBtn.onclick    = commit;
+    input.onkeydown    = ev => { if (ev.key === 'Enter'){ ev.preventDefault(); commit(); } };
+    input.onblur       = commit;
   };
 });
+
 
 /* ---------- Weitere Event-Handler (Delete, Edit …) später ergänzen ---------- */
 }
