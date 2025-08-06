@@ -1,4 +1,4 @@
-let placeholder;
+let placeholder, spinner;
 const floskeln = [
 "Die AI-Agents hüpfen im Quadrat, um geile Titel zu basteln…",
         "Die KI brainstormt gerade die wildesten Expo-Ideen.",
@@ -15,30 +15,39 @@ const floskeln = [
         "Noch ein letzter Schwung mit dem Titel-Zauberstab…"
 ];
 
-export function showLoader(text = "🚀 Läuft …") {
-  const list = document.getElementById("expoList");
+/* ...bestehender Code... */
+let placeholder, spinner;
 
-  // Placeholder neu anlegen oder wiederverwenden
-  if (!placeholder) {
-    placeholder = document.createElement("li");
-    placeholder.className = "expo-placeholder";
-    list.innerHTML = "";              // sicher leeren
-    list.appendChild(placeholder);
-  }
-  placeholder.innerHTML = text;
+export function showLoader(text="🚀 Generierung läuft …"){
+  const list=document.getElementById("expoList");
+
+  // Placeholder neu erzeugen
+  placeholder=document.createElement("li");
+  placeholder.className="expo-placeholder";
+  list.innerHTML="";              // alles leeren
+  list.appendChild(placeholder);
+
+  // Spinner bauen
+  spinner=document.createElement("div");
+  spinner.className="loader-spinner";
+  const wrap  =document.createElement("div");
+  wrap.className="loader-wrap";
+  wrap.appendChild(spinner);
+  const txt   =document.createElement("span");
+  txt.textContent=text;
+  wrap.appendChild(txt);
+  placeholder.appendChild(wrap);
 }
 
-export function updateLoader(tick) {
-  const sec = tick * 10;
-  const fl = floskeln[tick % floskeln.length];
-  if (placeholder) {
-    placeholder.innerHTML =
-      `🚀 Generierung läuft … (${sec}s)<br>` +
-      `<span style="font-size:0.9em;color:#98a4c2;">${fl}</span>`;
-  }
+export function updateLoader(sec){
+  const frases=[ /* deine Floskeln */ ];
+  placeholder.querySelector("span").innerHTML =
+    `🚀 Generierung läuft … (${sec}s)<br>`+
+    `<span style="font-size:0.9em;color:#98a4c2;">${frases[sec%frases.length]}</span>`;
 }
 
-export function hideLoader() {
-  // Placeholder wird von renderExpoList ersetzt – einfach zurücksetzen
+export function hideLoader(){
+  if(spinner) spinner.remove();
   placeholder = null;
 }
+
