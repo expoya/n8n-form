@@ -6,7 +6,7 @@ export function renderExpoList(){
   list.innerHTML="";
   state.titles.forEach((titel,idx)=>{
     const li=document.createElement('li');
-    li.className="expo-akkordeon";
+    li.className="expo-akkordeon";//j
     li.innerHTML=`
      
   <div class="expo-akk-header" data-idx="${idx}">
