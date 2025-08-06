@@ -366,6 +366,12 @@ input:checked + .slider:before {
   100% { opacity:1; transform: translateY(0);}
 }
 
+.expo-akk-body { display:none; }
+.expo-akkordeon.open .expo-akk-body { display:block; }
+
+.expo-akkordeon          { padding:6px 12px; margin-bottom:4px; background:#1d2236; border-radius:6px; }
+.expo-akk-header span    { line-height:1.4; }
+
 /* ------ Responsive ------ */
 @media (max-width: 950px) {
   .container {
