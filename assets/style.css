@@ -240,7 +240,7 @@ input:checked + .slider:before {
 }
 
 .expo-akkordeon {
-  background: #232a3b;
+  background: #1d2236;
   border-radius: 13px;
   box-shadow: 0 2px 8px #0002;
   list-style: none;
@@ -256,7 +256,7 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 3px 2px;
   cursor: pointer;
   border-radius: 13px 13px 0 0;
 }
@@ -265,12 +265,12 @@ input:checked + .slider:before {
   color: #7d82fa;
   font-weight: 700;
   min-width: 28px;
-  font-size: 17px;
+  font-size: 14px;
   text-align: right;
 }
 
 .expo-akk-titel {
-  font-size: 16px;
+  font-size: 14px;
   color: #e5e8ef;
   font-weight: 500;
   flex: 1;
