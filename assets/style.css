@@ -70,8 +70,20 @@ input::placeholder,textarea::placeholder{
 /* ---------- Slider / Toggles ---------- */
 .tonality-container{margin:10px 0;}
 .tonality-label,.tonality-value{font-size:15px;color:#bbc1f4;text-align:center;}
-.tonality-slider{width:100%;accent-color:#7d82fa;height:4px;}
-.toggles-row{display:flex;gap:30px;justify-content:center;align-items:center;margin:20px 0 10px;}
+.tonality-slider{
+  width:100%;
+  display:block;          /* verhindert “inline” Überlauf */
+  accent-color:#7d82fa;
+  height:4px;
+}
+.toggles-row{ /* --- Du/Sie & Ortsbezug in EINER Zeile ---------------- */
+  display:flex;
+  flex-direction:row;
+  gap:30px;
+  justify-content:center;
+  align-items:center;
+  margin:18px 0 20px;
+}
 .toggle-combo{display:flex;align-items:center;gap:7px;}
 .toggle-label{font-size:15px;color:#bbc1f4;}
 .switch{position:relative;display:inline-block;width:34px;height:18px;}
@@ -88,15 +100,27 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
   flex:1 1 0;margin-top:11px;margin-left:10px;background:#232a3b;
   border-radius:18px;min-height:50vh;padding:20px 26px;display:flex;flex-direction:column;
 }
-.expo-list{padding-left:0;margin:0;display:flex;flex-direction:column;gap:13px;}
+.expo-list{
+  list-style:none;
+  padding-left:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:13px
+  ;}
 .expo-placeholder{color:#7780a4;font-style:italic;}
 
 /* ====================================================== */
 /* ================  EXPOS – AKKORDEON  ================= */
 /* ====================================================== */
 .expo-akkordeon{
-  background:#222c45;border-radius:13px;box-shadow:0 2px 8px #0002;
-  border:1px solid #282e44;transition:box-shadow .13s;padding:6px 12px;margin-bottom:4px;
+  background:#222c45;
+  border-radius:13px;
+  box-shadow:0 2px 8px #0002;
+  border:1px solid #282e44;
+  transition:box-shadow .13s;
+  padding:0px 0px;
+  margin-bottom:4px;
 }
 
 .expo-akk-header{
@@ -130,9 +154,17 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 
 /* ---------- Inline-Edit Feld & Save-Icon ---------- */
 .edit-inline{
-  flex:1;min-width:0;padding:4px 6px;font:inherit;color:#fff;
-  background:#28324d;border:1px solid #3a4769;border-radius:4px;
+  flex:1;
+  width:100%;              /* füllt gesamte Titelzeile */
+  min-width:0;
+  padding:4px 6px;
+  font:inherit;
+  color:#fff;
+  background:#28324d;
+  border:1px solid #3a4769;
+  border-radius:4px;
 }
+
 /* --- Inline-Save (✔️) ---------------------- */
 .btn-save-inline{
   margin-left:8px;
