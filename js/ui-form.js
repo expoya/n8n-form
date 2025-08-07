@@ -68,7 +68,7 @@ async function pollUntilDone(jobId){
       job = await pollTitleJob(jobId);
     }catch(err){
       clearInterval(timer); hideLoader();
-      alert("Polling-Fehler: "+err.message);
+      showToast("Polling-Fehler: "+err.message);
       return;
     }
 
@@ -80,7 +80,7 @@ async function pollUntilDone(jobId){
     }
     if(job.status === "error" || tries > maxTries){
       clearInterval(timer); hideLoader();
-      alert("Titel-Generierung fehlgeschlagen oder Timeout.");
+      showToast("Titel-Generierung fehlgeschlagen oder Timeout.");
     }
   }, 10_000);
 }
