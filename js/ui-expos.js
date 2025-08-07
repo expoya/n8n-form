@@ -67,7 +67,7 @@ list.querySelectorAll('.btn-generate-text').forEach(btn=>{
 list.querySelectorAll('.expo-akkordeon').forEach(acc => {
   acc.addEventListener('click', e => {
     if (e.target.closest('.expo-akk-header')) {
-      const body = acc.querySelector('.text-section');
+      const body = acc.querySelector('.expo-akk-body');
       if (acc.classList.contains('open')) body.style.display = 'block';
       else body.style.display = 'none';
     }
