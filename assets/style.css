@@ -237,3 +237,14 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
                        to  {opacity:1;transform:translateY(0)}}
 @keyframes toast-out {to  {opacity:0;transform:translateY(20px)}}
 
+/* ——— Experten-Auswahl ——— */
+.expert-box          { margin-top:18px; }
+.expert-box summary  {
+  cursor:pointer; font-weight:600; list-style:none; outline:none; position:relative;
+  padding:6px 0;
+}
+.expert-box summary::after            { content:"▼"; position:absolute; right:0; }
+.expert-box[open] summary::after      { content:"▲"; }
+.expert-fields label                  { display:block; margin:6px 0 10px; font-size:.9em; }
+.expert-fields select                 { width:100%; padding:6px; border-radius:4px; }
+
