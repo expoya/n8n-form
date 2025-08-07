@@ -221,3 +221,19 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
   align-items:center;
   gap:10px;
 }
+/* ——— Toast / Fehlermeldung ——— */
+.toast{
+  position:fixed;
+  bottom:20px; right:20px;
+  background:#e74c3c;              /* roter Hintergrund */
+  color:#fff; font-size:.95em;
+  padding:12px 18px; border-radius:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  z-index:1000; opacity:0;
+  animation:toast-in .3s forwards,
+             toast-out .3s 3s forwards; /* 3 s sichtbar, dann ausblenden */
+}
+@keyframes toast-in  {from{opacity:0;transform:translateY(20px)}
+                       to  {opacity:1;transform:translateY(0)}}
+@keyframes toast-out {to  {opacity:0;transform:translateY(20px)}}
+``` :contentReference[oaicite:0]{index=0}
