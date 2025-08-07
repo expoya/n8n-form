@@ -1,4 +1,4 @@
-/* -------------- Loader & Spinner ------------------- */
+/* -------------- Loader & Spinner ------------------ */
 let placeholder, spinner;
 
 /* Floskeln für updateLoader */
