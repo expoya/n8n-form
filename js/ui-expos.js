@@ -29,11 +29,12 @@ export function renderExpoList(){
   /* ---------- Akkordeon öffnen / schließen ---------- */
 list.querySelectorAll('.btn-expand').forEach(btn => {
   btn.onclick = e => {
-    e.stopPropagation();
-    const acc = btn.closest('.expo-akkordeon');
-    acc.classList.toggle('open');
-    btn.textContent = acc.classList.contains('open') ? '▲' : '▼';
-  };
+  e.stopPropagation();
+  const acc    = btn.closest('.expo-akkordeon');
+  const isOpen = acc.classList.toggle('open');   // ⇄ auf/zu
+  btn.textContent = isOpen ? '▲' : '▼';          // Pfeil anpassen
+  // Anzeige übernimmt nun rein die CSS-Regel .open .expo-akk-body{display:block;}
+};
 });
 /* ---------- Text generieren ---------- */
 list.querySelectorAll('.btn-generate-text').forEach(btn=>{
@@ -66,12 +67,13 @@ list.querySelectorAll('.btn-generate-text').forEach(btn=>{
 /* ---------- show/hide Body beim Akkordeon-Toggle ---------- */
 list.querySelectorAll('.expo-akkordeon').forEach(acc => {
   acc.addEventListener('click', e => {
-    if (e.target.closest('.expo-akk-header')) {
-      const body = acc.querySelector('.expo-akk-body');
-      if (acc.classList.contains('open')) body.style.display = 'block';
-      else body.style.display = 'none';
-    }
-  });
+  if (e.target.closest('.expo-akk-header')) {
+    const isOpen    = acc.classList.toggle('open');          // ⇄ auf/zu
+    const btnExpand = acc.querySelector('.btn-expand');
+    if (btnExpand) btnExpand.textContent = isOpen ? '▲' : '▼'; // Pfeil synchron halten
+    // Keine weiteren Styles nötig – CSS steuert die Sichtbarkeit.
+  }
+});
 });
 
 /* ---------- Titel bearbeiten ---------- */
