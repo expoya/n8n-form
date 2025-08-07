@@ -8,6 +8,24 @@ const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formel
 export function initForm(){
   const form = document.getElementById('myForm');
 
+  /* ---------- Experten-Auswahl initialisieren ---------- */
+function initExpertSelects(){
+  const map = {
+    modelSeoStrategist : 'seoStrategist',
+    modelMicroTexter   : 'microTexter',
+    modelSeoVeredler   : 'seoVeredler',
+    modelSeoAuditor    : 'seoAuditor'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    state.agentModels[key] = el.value;         // Startwert speichern
+    el.onchange = () => state.agentModels[key] = el.value;  // Änderungen nachführen
+  });
+}
+initExpertSelects();
+
+  
   /* ---------- Slider & Toggle ---------- */
   document.getElementById('tonality')
           .addEventListener('input',e=>{
