@@ -56,3 +56,11 @@ export function hideLoader() {
   if (spinner) spinner.remove();
   placeholder = null;
 }
+/* ---------- kleines Toast-Popup ---------- */
+export function showToast(message){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = message;
+  document.body.appendChild(t);
+  setTimeout(()=> t.remove(), 4000);  // 4 s später wieder weg
+}
