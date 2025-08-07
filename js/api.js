@@ -1,3 +1,5 @@
+import { state } from './state.js';
+
 const TITLE_START_URL = "https://expoya.app.n8n.cloud/webhook/start-job";
 const TITLE_POLL_URL  = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=";
 const TEXT_WEBHOOK_URL= "https://expoya.app.n8n.cloud/webhook/Text-Job-Starter";
@@ -25,10 +27,11 @@ export async function pollTitleJob(jobId){
 }
 
 export async function generateText(payload){
-  const r = await fetch(TEXT_WEBHOOK_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload)
-  });
+ const r = await fetch(TEXT_WEBHOOK_URL, {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify(payload,
+     agentModels: state.agentModels) //  ← jetzt korrekt IN der Payload    })
+ });
   return safeJson(r);          // { html }
 }
