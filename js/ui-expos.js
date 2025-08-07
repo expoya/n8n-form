@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { generateText } from './api.js';
 
 export function renderExpoList(){
-  const list=document.getElementById('expoList');
+  const list=document.getElementById('expoList');//
   list.innerHTML="";
   state.titles.forEach((titel,idx)=>{
     const li=document.createElement('li');
