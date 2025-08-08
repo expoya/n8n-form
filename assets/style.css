@@ -71,7 +71,6 @@ input::placeholder,textarea::placeholder{
 .tonality-container{margin:10px 0;}
 .tonality-label,.tonality-value{font-size:15px;color:#bbc1f4;text-align:center;}
 
-/* ===== Tonalitäts-Slider | komplett eigene Optik ===== */
 /* ----- Tonalitäts-Slider (zurück zur Standard-Optik) ----- */
 .tonality-slider{
   width:100%;
@@ -253,6 +252,11 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 }
 .expert-box summary::after            { content:"▼"; position:absolute; right:0; }
 .expert-box[open] summary::after      { content:"▲"; }
-.expert-fields label                  { display:block; margin:6px 0 10px; font-size:.9em; }
+.expert-fields label                  { 
+  display:flex; 
+  flexdirection:column;
+  gap:4px;
+  margin:6px 0 10px; 
+  font-size:.7em; }
 .expert-fields select                 { width:100%; padding:6px; border-radius:4px; }
 
