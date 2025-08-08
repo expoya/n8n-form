@@ -1,17 +1,17 @@
 /* ---------- Agent-Erklärungen ---------- */
 export const agentInfo = {
   titleGenerator: `
-  <p>
+  p>
         Der <b>Title-Generator</b> ist der "Ideen-Sprudler". Er erstellt eine Liste von kreativen, SEO-optimierten H1-Titeln basierend auf deinem Briefing.
     </p>
     <h4>Modelle zur Auswahl:</h4>
     
     <details>
-        <summary><b>ChatGPT 4.1</b> (Effizienz-Basis)</summary>
+        <summary><b>ChatGPT 4.1 mini</b> (Effizienz-Basis)</summary>
         <table class="model-table">
             <tr><td class="category">Kreativität & Stil:</td><td>★★★☆☆</td></tr>
-            <tr><td class="category">Logik & Reasoning:</td><td>★★★☆☆</td></tr>
-            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★★</td></tr>
             <tr><td class="category">Geschwindigkeit:</td><td>★★★★★</td></tr>
             <tr><td class="category">Kosten-Effizienz:</td><td>★★★★★</td></tr>
         </table>
@@ -58,10 +58,10 @@ export const agentInfo = {
     <h4>Modelle zur Auswahl:</h4>
 
     <details>
-        <summary><b>ChatGPT 4o-mini</b> (Effizienz-Basis)</summary>
+        <summary><b>ChatGPT 4.1 mini</b> (Effizienz-Basis)</summary>
         <table class="model-table">
-            <tr><td class="category">Logik & Reasoning:</td><td>★★★☆☆</td></tr>
-            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★★</td></tr>
             <tr><td class="category">Geschwindigkeit:</td><td>★★★★★</td></tr>
             <tr><td class="category">Kosten-Effizienz:</td><td>★★★★★</td></tr>
         </table>
