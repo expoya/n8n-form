@@ -6,26 +6,22 @@ import { agentInfo } from '../assets/agentInfo.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
-
-
 /* ---------- Modal verdrahten ---------- */
 export function initAgentModals() {
   const modal     = document.getElementById('infoModal');
   const modalText = document.getElementById('modalText');
   const closeBtn  = modal.querySelector('.close');
 
-  // jedem ℹ️-Button den Klick-Handler verpassen
   document.querySelectorAll('.info-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const key = btn.dataset.agent;                       // z.B. "seoStrategist"
-      modalText.innerHTML = agentInfo[key] ??              // Text einfügen …
-                         'Noch keine Infos hinterlegt.';   // Fallback
-      modal.style.display = 'block';                       // Modal zeigen
+      const key = btn.dataset.agent;
+      modalText.innerHTML =
+        agentInfo[key] ?? 'Noch keine Infos hinterlegt.';
+      modal.style.display = 'block';
     });
   });
 
-  // Modal schließen (X-Button oder Klick daneben)
-  closeBtn.addEventListener('click',  () => modal.style.display = 'none');
+  closeBtn.addEventListener('click', () =>  modal.style.display = 'none');
   modal    .addEventListener('click', e => {
     if (e.target === modal) modal.style.display = 'none';
   });
@@ -34,12 +30,9 @@ export function initAgentModals() {
 /* ---------- Formular-Handling ---------- */
 export function initForm() {
   const form = document.getElementById('myForm');
-  // … dein restlicher Code bleibt hier unverändert …
-}
 
-
-  /* ---------- Experten-Auswahl initialisieren ---------- */
-  function initExpertSelects(){
+  /* --- Experten-Auswahl initialisieren --- */
+  function initExpertSelects() {
     const map = {
       modelTitleGenerator : 'titleGenerator',
       modelTitleController: 'titleController',
@@ -48,91 +41,94 @@ export function initForm() {
       modelSeoVeredler    : 'seoVeredler',
       modelSeoAuditor     : 'seoAuditor'
     };
-    Object.entries(map).forEach(([id,key])=>{
+    Object.entries(map).forEach(([id,key]) => {
       const el = document.getElementById(id);
-      if(!el) return;
-      state.agentModels[key] = el.value;             // Startwert speichern
-      el.onchange = () => state.agentModels[key] = el.value;  // Änderungen nachführen
+      if (!el) return;
+      state.agentModels[key] = el.value;          // Startwert
+      el.onchange = () => state.agentModels[key] = el.value;
     });
- 
+  }
 
   initExpertSelects();   // Dropdowns verdrahten
   initAgentModals();     // Info-Buttons & Modal verdrahten
- }
-  
+
   /* ---------- Slider & Toggle ---------- */
   document.getElementById('tonality')
-          .addEventListener('input',e=>{
-              document.getElementById('tonality-value').innerText =
-                tonalities[e.target.value-1];
+          .addEventListener('input', e => {
+            document.getElementById('tonality-value').innerText =
+              tonalities[e.target.value - 1];
           });
+
   document.getElementById('ansprache')
-          .addEventListener('change',e=>{
-              document.getElementById('ansprache-label').innerText =
-                e.target.checked ? 'Du' : 'Sie';
+          .addEventListener('change', e => {
+            document.getElementById('ansprache-label').innerText =
+              e.target.checked ? 'Du' : 'Sie';
           });
 
   /* ---------- Submit ---------- */
-  form.addEventListener('submit', async e=>{
+  form.addEventListener('submit', async e => {
     e.preventDefault();
 
     /* 1) Daten einsammeln */
     const fd = new FormData(form);
     state.companyData = Object.fromEntries(fd.entries());
-    state.companyData.mitOrtsbezug = document.getElementById('mitOrtsbezug').checked;
-    state.companyData.ansprache    = document.getElementById('ansprache').checked ? 'Du' : 'Sie';
-    state.companyData.tonality     = tonalities[parseInt(fd.get('tonality'))-1];
+    state.companyData.mitOrtsbezug =
+      document.getElementById('mitOrtsbezug').checked;
+    state.companyData.ansprache =
+      document.getElementById('ansprache').checked ? 'Du' : 'Sie';
+    state.companyData.tonality =
+      tonalities[parseInt(fd.get('tonality')) - 1];
 
     /* 2) UI – Loader + Reset */
-    showLoader("Titel werden generiert …");
+    showLoader('Titel werden generiert …');
     state.titles = [];
     state.texts  = [];
 
-    /* 3) Job starten – robust mit try/catch */
+    /* 3) Job starten */
     let jobId;
-    try{
+    try {
       ({ jobId } = await startTitleJob(state.companyData));
-      if(!jobId) throw new Error("Keine Job-ID erhalten");
-    }catch(err){
+      if (!jobId) throw new Error('Keine Job-ID erhalten');
+    } catch (err) {
       hideLoader();
       document.getElementById('expoList').innerHTML =
         `<li class="expo-placeholder">Fehler: ${err.message}</li>`;
-      return;                        // Abbruch
+      return;
     }
 
     /* 4) Polling */
     state.runningJobId = jobId;
     pollUntilDone(jobId);
   });
-}
+} //  ←  HIER wird initForm erst geschlossen ‼
 
 /* ---------- Poll-Loop ---------- */
-async function pollUntilDone(jobId){
+async function pollUntilDone(jobId) {
   let tries = 0;
   const maxTries = 90;
 
-  const timer = setInterval(async ()=>{
+  const timer = setInterval(async () => {
     tries++;
     updateLoader(tries);
 
     let job;
-    try{
+    try {
       job = await pollTitleJob(jobId);
-    }catch(err){
+    } catch (err) {
       clearInterval(timer); hideLoader();
-      showToast("Polling-Fehler: "+err.message);
+      showToast('Polling-Fehler: ' + err.message);
       return;
     }
 
-    if(job.status === "finished"){
+    if (job.status === 'finished') {
       clearInterval(timer); hideLoader();
-      state.titles = JSON.parse(job.result || "[]");
-      state.texts  = new Array(state.titles.length).fill("");
+      state.titles = JSON.parse(job.result || '[]');
+      state.texts  = new Array(state.titles.length).fill('');
       renderExpoList();
     }
-    if(job.status === "error" || tries > maxTries){
+    if (job.status === 'error' || tries > maxTries) {
       clearInterval(timer); hideLoader();
-      showToast("Titel-Generierung fehlgeschlagen oder Timeout.");
+      showToast('Titel-Generierung fehlgeschlagen oder Timeout.');
     }
   }, 10_000);
 }
