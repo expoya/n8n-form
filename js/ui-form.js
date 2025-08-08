@@ -9,24 +9,34 @@ const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formel
 
 
 /* ---------- Modal verdrahten ---------- */
-function initAgentModals(){
+export function initAgentModals() {
   const modal     = document.getElementById('infoModal');
   const modalText = document.getElementById('modalText');
   const closeBtn  = modal.querySelector('.close');
 
-  document.querySelectorAll('.info-btn').forEach(btn=>{
-    btn.onclick = () => {
-      const key = btn.dataset.agent;
-      modalText.innerHTML = agentInfo[key] || 'Noch keine Infos hinterlegt.';
-      modal.style.display = 'block';
-    };
+  // jedem ℹ️-Button den Klick-Handler verpassen
+  document.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.agent;                       // z.B. "seoStrategist"
+      modalText.innerHTML = agentInfo[key] ??              // Text einfügen …
+                         'Noch keine Infos hinterlegt.';   // Fallback
+      modal.style.display = 'block';                       // Modal zeigen
+    });
   });
-  closeBtn.onclick = () => modal.style.display = 'none';
-  modal.onclick    = e => { if(e.target === modal) modal.style.display = 'none'; };
+
+  // Modal schließen (X-Button oder Klick daneben)
+  closeBtn.addEventListener('click',  () => modal.style.display = 'none');
+  modal    .addEventListener('click', e => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
 }
 
-export function initForm(){
+/* ---------- Formular-Handling ---------- */
+export function initForm() {
   const form = document.getElementById('myForm');
+  // … dein restlicher Code bleibt hier unverändert …
+}
+
 
   /* ---------- Experten-Auswahl initialisieren ---------- */
   function initExpertSelects(){
