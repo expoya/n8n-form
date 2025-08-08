@@ -2,11 +2,11 @@ import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
 import { renderExpoList } from './ui-expos.js';
+import { agentInfo } from '@/assets/agentInfo.js';   //  ← exakt diese Zeile ergänzen
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
-/* ---------- Agent-Erklärungen ---------- */
-+ import { agentInfo } from '@/assets/agentInfo.js';
+
 
 /* ---------- Modal verdrahten ---------- */
 function initAgentModals(){
