@@ -1,9 +1,102 @@
 /* ---------- Agent-Erklärungen ---------- */
 export const agentInfo = {
-  titleGenerator: `Erstellt eine Liste potenzieller Expo-Titel basierend auf deinen Eingaben.
-Verfügbare Modelle:\n• Gemini 2.5 Pro\n• Claude Sonnet 4\n• ChatGPT 4.1\n• ChatGPT o4 mini`,
+  titleGenerator: `
+  <p>
+        Der <b>Title-Generator</b> ist der "Ideen-Sprudler". Er erstellt eine Liste von kreativen, SEO-optimierten H1-Titeln basierend auf deinem Briefing.
+    </p>
+    <h4>Modelle zur Auswahl:</h4>
+    
+    <details>
+        <summary><b>ChatGPT 4.1</b> (Effizienz-Basis)</summary>
+        <table class="model-table">
+            <tr><td class="category">Kreativität & Stil:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★★★</td></tr>
+        </table>
+    </details>
 
-  titleController: `Prüft generierte Titel auf Länge, Click-Through-Rate und Keyword-Abdeckung …`,
+    <details>
+        <summary><b>GPT-4o</b> (Allrounder)</summary>
+        <table class="model-table">
+            <tr><td class="category">Kreativität & Stil:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★☆☆</td></tr>
+        </table>
+    </details>
+    
+    <details>
+        <summary><b>Claude 3.5 Sonnet</b> (Kreativ-Spezialist)</summary>
+        <table class="model-table">
+            <tr><td class="category">Kreativität & Stil:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★☆☆</td></tr>
+        </table>
+    </details>
+    
+    <details>
+        <summary><b>Gemini 2.5 Pro</b> (Brainstorming-Kraftwerk)</summary>
+        <table class="model-table">
+            <tr><td class="category">Kreativität & Stil:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★☆☆☆</td></tr>
+        </table>
+    </details>
+    `,
+
+  titleController: `
+  <p>
+        Der <b>Titel-Kontrolleur</b> ist der "Türsteher". Er prüft die generierten Titel anhand einer harten Checkliste auf Qualität, Länge, Duplikate und SEO-Vorgaben.
+    </p>
+    <h4>Modelle zur Auswahl:</h4>
+
+    <details>
+        <summary><b>ChatGPT 4o-mini</b> (Effizienz-Basis)</summary>
+        <table class="model-table">
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★★★</td></tr>
+        </table>
+    </details>
+
+    <details>
+        <summary><b>Gemini 2.5 Flash</b> (Speed-Konkurrent)</summary>
+        <table class="model-table">
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★★★</td></tr>
+        </table>
+    </details>
+
+    <details>
+        <summary><b>GPT-4o</b> (Zuverlässigkeits-Garantie)</summary>
+        <table class="model-table">
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★★☆</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★★☆☆</td></tr>
+        </table>
+    </details>
+    
+    <details>
+        <summary><b>Gemini 2.5 Pro</b> (Logik-Referenz)</summary>
+        <table class="model-table">
+            <tr><td class="category">Logik & Reasoning:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Zuverlässigkeit & Regel-Treue:</td><td>★★★★★</td></tr>
+            <tr><td class="category">Geschwindigkeit:</td><td>★★★☆☆</td></tr>
+            <tr><td class="category">Kosten-Effizienz:</td><td>★★☆☆☆</td></tr>
+        </table>
+    </details>
+  `,
 
 
   seoStrategist  : /* html */ `
