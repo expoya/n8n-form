@@ -44,11 +44,11 @@ export function initForm(){
       state.agentModels[key] = el.value;             // Startwert speichern
       el.onchange = () => state.agentModels[key] = el.value;  // Änderungen nachführen
     });
-  }
+ 
 
   initExpertSelects();   // Dropdowns verdrahten
   initAgentModals();     // Info-Buttons & Modal verdrahten
-
+ }
   
   /* ---------- Slider & Toggle ---------- */
   document.getElementById('tonality')
