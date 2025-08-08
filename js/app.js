@@ -1,5 +1,9 @@
 import { initForm }      from './ui-form.js';
+import { initForm, initAgentModals } from './ui-form.js';
 import { renderExpoList} from './ui-expos.js';
 
-initForm();              // startet alles
-renderExpoList();        // initiale Placeholder-Anzeige 
+document.addEventListener('DOMContentLoaded', () => {
+  initForm();
+  initAgentModals();
+  renderExpoList();
+});
