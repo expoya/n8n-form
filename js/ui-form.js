@@ -5,6 +5,41 @@ import { renderExpoList } from './ui-expos.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
+/* ---------- Agent-Erklärungen ---------- */
+const agentInfo = {
+  titleGenerator : `Erstellt eine Liste potenzieller Expo-Titel basierend auf deinen Eingaben.
+Verfügbare Modelle:\n• Gemini 2.5 Pro\n• Claude Sonnet 4\n• ChatGPT 4.1\n• ChatGPT o4 mini`,
+
+  titleController: `Prüft generierte Titel auf Länge, Click-Through-Rate und Keyword-Abdeckung …`,
+
+  seoStrategist  : `Erstellt einen strukturierten SEO-Plan für jeden Titel …`,
+
+  microTexter    : `Formuliert kurze, aufmerksamkeitsstarke Snippets …`,
+
+  seoVeredler    : `Optimiert den Langtext semantisch & stilistisch …`,
+
+  seoAuditor     : `Validiert den finalen Text mit On-Page-SEO-Metriken …`
+};
+
+/* ---------- Modal verdrahten ---------- */
+function initAgentModals(){
+  const modal     = document.getElementById('infoModal');
+  const modalText = document.getElementById('modalText');
+  const closeBtn  = modal.querySelector('.close');
+
+  document.querySelectorAll('.info-btn').forEach(btn=>{
+    btn.onclick = () => {
+      const key = btn.dataset.agent;
+      modalText.textContent = agentInfo[key] || 'Noch keine Infos hinterlegt.';
+      modal.style.display = 'block';
+    };
+  });
+  closeBtn.onclick = () => modal.style.display = 'none';
+  modal.onclick    = e => { if(e.target === modal) modal.style.display = 'none'; };
+}
+initAgentModals();
+
+
 export function initForm(){
   const form = document.getElementById('myForm');
 
