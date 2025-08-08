@@ -233,7 +233,7 @@ export const agentInfo = {
   `,
   seoAuditor  : `
   <p>
-        Der <b>SEO Auditor</b> ist die unbestechliche "Endkontrolle". Er prüft den finalen Text anhand einer harten Checkliste und fällt ein maschinenlesbares Urteil (`approved`/`rejected`).
+        Der <b>SEO Auditor</b> ist die unbestechliche "Endkontrolle". Er prüft den finalen Text anhand einer harten Checkliste und fällt ein maschinenlesbares Urteil (approved/rejected).
     </p>
     <h4>Modelle zur Auswahl:</h4>
 
