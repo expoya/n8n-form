@@ -105,7 +105,8 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .output-panel{
   flex:1 1 0;
   margin-top:0px;
-  margin-left:0px;
+  margin-left:10px;
+  margin-right:20px;
   background:#232a3b;
   border-radius:18px;
   min-height:50vh;
