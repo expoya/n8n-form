@@ -11,6 +11,8 @@ export function initForm(){
   /* ---------- Experten-Auswahl initialisieren ---------- */
 function initExpertSelects(){
   const map = {
+    modeltitleGenerator: 'titleGenerator',
+    modeltitleController: 'titleController',
     modelSeoStrategist : 'seoStrategist',
     modelMicroTexter   : 'microTexter',
     modelSeoVeredler   : 'seoVeredler',
