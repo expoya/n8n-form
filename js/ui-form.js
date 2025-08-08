@@ -37,30 +37,30 @@ function initAgentModals(){
   closeBtn.onclick = () => modal.style.display = 'none';
   modal.onclick    = e => { if(e.target === modal) modal.style.display = 'none'; };
 }
-initAgentModals();
-
 
 export function initForm(){
   const form = document.getElementById('myForm');
 
   /* ---------- Experten-Auswahl initialisieren ---------- */
-function initExpertSelects(){
-  const map = {
-    modeltitleGenerator: 'titleGenerator',
-    modeltitleController: 'titleController',
-    modelSeoStrategist : 'seoStrategist',
-    modelMicroTexter   : 'microTexter',
-    modelSeoVeredler   : 'seoVeredler',
-    modelSeoAuditor    : 'seoAuditor'
-  };
-  Object.entries(map).forEach(([id,key])=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    state.agentModels[key] = el.value;         // Startwert speichern
-    el.onchange = () => state.agentModels[key] = el.value;  // Änderungen nachführen
-  });
-}
-initExpertSelects();
+  function initExpertSelects(){
+    const map = {
+      modelTitleGenerator : 'titleGenerator',
+      modelTitleController: 'titleController',
+      modelSeoStrategist  : 'seoStrategist',
+      modelMicroTexter    : 'microTexter',
+      modelSeoVeredler    : 'seoVeredler',
+      modelSeoAuditor     : 'seoAuditor'
+    };
+    Object.entries(map).forEach(([id,key])=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      state.agentModels[key] = el.value;             // Startwert speichern
+      el.onchange = () => state.agentModels[key] = el.value;  // Änderungen nachführen
+    });
+  }
+
+  initExpertSelects();   // Dropdowns verdrahten
+  initAgentModals();     // Info-Buttons & Modal verdrahten
 
   
   /* ---------- Slider & Toggle ---------- */
