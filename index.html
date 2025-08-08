@@ -76,6 +76,7 @@
 
   <div class="expert-fields">
     <label>Titel-Generator
+      <button type="button" class="info-btn" data-agent="titleGenerator">ℹ️</button>
   <select id="modelTitleGenerator">
     <option>Gemini 2.5 Pro</option>
     <option>Claude Sonnet 4</option>
@@ -84,6 +85,7 @@
   </select>
 </label>
     <label>Titel-Kontrolleur
+      <button type="button" class="info-btn" data-agent="titleController">ℹ️</button>
   <select id="modelTitleController">
     <option>Gemini 2.5 Pro</option>
     <option>Claude Sonnet 4</option>
@@ -92,6 +94,7 @@
   </select>
 </label>
     <label>SEO-Stratege
+      <button type="button" class="info-btn" data-agent="SeoStrategist">ℹ️</button>
       <select id="modelSeoStrategist">
         <option>Gemini 2.5 Pro</option>
         <option>Claude Sonnet 4</option>
@@ -101,6 +104,7 @@
     </label>
 
     <label>Mikro-Texter
+      <button type="button" class="info-btn" data-agent="MicroTexter">ℹ️</button>
       <select id="modelMicroTexter">
         <option>Gemini 2.5 Flash</option>
         <option>Gemini 2.5 Pro</option>
@@ -114,6 +118,7 @@
     </label>
 
     <label>SEO-Veredler
+      <button type="button" class="info-btn" data-agent="SeoVeredler">ℹ️</button>
       <select id="modelSeoVeredler">
         <option>ChatGPT 4o</option>
         <option>Claude Sonnet 3.5</option>
@@ -121,6 +126,7 @@
     </label>
 
     <label>SEO-Auditor
+      <button type="button" class="info-btn" data-agent="SeoAuditor">ℹ️</button>
       <select id="modelSeoAuditor">
         <option>ChatGPT o4 mini</option>
         <option>Gemini 2.5 Pro</option>
@@ -128,7 +134,14 @@
     </label>
   </div>
 </details>
-    
+    <!-- ——— Info-Modal ——— -->
+<div id="infoModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="modalText"></div>
+  </div>
+</div>
+
       <!-- 👉 kopiere deinen <form>…</form>-Block hier hinein  -->
     </div>
 
