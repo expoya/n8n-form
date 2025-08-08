@@ -6,20 +6,7 @@ import { renderExpoList } from './ui-expos.js';
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
 /* ---------- Agent-Erklärungen ---------- */
-const agentInfo = {
-  titleGenerator : `Erstellt eine Liste potenzieller Expo-Titel basierend auf deinen Eingaben.
-Verfügbare Modelle:\n• Gemini 2.5 Pro\n• Claude Sonnet 4\n• ChatGPT 4.1\n• ChatGPT o4 mini`,
-
-  titleController: `Prüft generierte Titel auf Länge, Click-Through-Rate und Keyword-Abdeckung …`,
-
-  seoStrategist  : `Erstellt einen strukturierten SEO-Plan für jeden Titel …`,
-
-  microTexter    : `Formuliert kurze, aufmerksamkeitsstarke Snippets …`,
-
-  seoVeredler    : `Optimiert den Langtext semantisch & stilistisch …`,
-
-  seoAuditor     : `Validiert den finalen Text mit On-Page-SEO-Metriken …`
-};
++ import { agentInfo } from '@/assets/agentInfo.js';
 
 /* ---------- Modal verdrahten ---------- */
 function initAgentModals(){
