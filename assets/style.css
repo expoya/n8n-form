@@ -287,4 +287,7 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .modal .close{
   float:right; font-size:1.4em; cursor:pointer; margin-top:-8px;
 }
+.model-table           { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.model-table td        { padding: 4px 8px; border: 1px solid #ddd; }
+.model-table .category { font-weight: bold; width: 180px; }
 
