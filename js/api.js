@@ -1,44 +1,89 @@
-import { state } from './state.js';
+import { state } from "./state.js";
 
+/*
+ * -----------------------------
+ *  Endpoints
+ * -----------------------------
+ * Derzeit brauchen wir nur den Webhook, der einen Titel‑Job startet
+ * und den Poll‑Endpoint, um dessen Fortschritt abzurufen.
+ *
+ * Der Text‑Endpoint bleibt schon vorbereitet, kommt aber erst zum
+ * Einsatz, wenn später die Text‑Generierung integriert wird.
+ */
 const TITLE_START_URL = "https://expoya.app.n8n.cloud/webhook/start-job";
 const TITLE_POLL_URL  = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=";
-const TEXT_WEBHOOK_URL= "https://expoya.app.n8n.cloud/webhook/Text-Job-Starter";
+const TEXT_WEBHOOK_URL = "https://expoya.app.n8n.cloud/webhook/Text-Job-Starter"; // (noch ungenutzt)
 
-/* Hilfsfunktion: liefert JSON oder wirft den Roh-Text */
-async function safeJson(res){
+/*
+ * --------------------------------------
+ *  Hilfsfunktion: robuste JSON‑Antworten
+ * --------------------------------------
+ * Wirft eine aussagekräftige Fehlermeldung, falls der Server keine
+ * gültige JSON‑Antwort liefert.
+ */
+async function safeJson (res) {
   const type = res.headers.get("content-type") || "";
-  if(type.includes("application/json")) return res.json();
+  if (type.includes("application/json")) return res.json();
+
   const text = await res.text();
-  throw new Error(`Unerwartete API-Antwort (${res.status}): ${text.slice(0,120)}`);
+  throw new Error(`Unerwartete API-Antwort (${res.status}): ${text.slice(0, 120)}`);
 }
 
-export async function startTitleJob(payload){
-  const r = await fetch(TITLE_START_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload)
+/*
+ * -------------------------------------------------
+ *  1) Titel‑Job anstoßen
+ * -------------------------------------------------
+ * Erwartet lediglich das Objekt mit den Unternehmens‑/Formular­daten.
+ * Die aktuell gewählten LLM‑Modelle hängen wir hier zentral an, damit
+ * sich der UI‑Code nicht darum kümmern muss und wir die Struktur der
+ * Payload nur an einer Stelle pflegen.
+ */
+export async function startTitleJob (companyData) {
+  const finalPayload = {
+    ...companyData,              // alle Felder aus dem Formular
+    agentModels: state.agentModels,
+    titleModel : state.agentModels.titleGenerator // optionales Extra‑Feld
+  };
+
+  const res = await fetch(TITLE_START_URL, {
+    method  : "POST",
+    headers : { "Content-Type": "application/json" },
+    body    : JSON.stringify(finalPayload)
   });
-  return safeJson(r);          // { jobId }
+
+  return safeJson(res); // { jobId: "…" }
 }
 
-export async function pollTitleJob(jobId){
-  const r = await fetch(TITLE_POLL_URL + encodeURIComponent(jobId));
-  return safeJson(r);          // { status, result? }
+/*
+ * -------------------------------------------------
+ *  2) Titel‑Job pollen
+ * -------------------------------------------------
+ * Gibt { status: "running" | "finished" | "error", result? } zurück.
+ */
+export async function pollTitleJob (jobId) {
+  const res = await fetch(TITLE_POLL_URL + encodeURIComponent(jobId));
+  return safeJson(res);
 }
 
-export async function generateText(payload){
-  // 1) Payload erweitern
+/*
+ * -------------------------------------------------
+ *  3) Text‑Job (für später)
+ * -------------------------------------------------
+ * Wird im aktuellen Flow noch nicht verwendet, bleibt aber als Vorlage
+ * erhalten.
+ */
+export async function generateText (payload) {
   const completePayload = {
     ...payload,
     agentModels: state.agentModels,
-    titleModel : state.agentModels.titleGenerator   // falls n8n das extra Feld braucht
+    titleModel : state.agentModels.titleGenerator
   };
 
-  // 2) Fetch ausführen
-  const r = await fetch(TEXT_WEBHOOK_URL, {
-    method : "POST",
-    headers: { "Content-Type": "application/json" },
-    body   : JSON.stringify(completePayload)
+  const res = await fetch(TEXT_WEBHOOK_URL, {
+    method  : "POST",
+    headers : { "Content-Type": "application/json" },
+    body    : JSON.stringify(completePayload)
   });
-  return safeJson(r);          // { html }
+
+  return safeJson(res); // { html }
 }
