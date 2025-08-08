@@ -87,7 +87,12 @@ export function initForm() {
     /* 3) Job starten */
     let jobId;
     try {
-      ({ jobId } = await startTitleJob(state.companyData));
+    const payload = {
+    ...state.companyData,          // bisherige Formulardaten
+    agentModels: state.agentModels // neu: ausgewählte Modelle
+    };
+      
+      ({ jobId } = await startTitleJob(state.payload));
       if (!jobId) throw new Error('Keine Job-ID erhalten');
     } catch (err) {
       hideLoader();
