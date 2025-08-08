@@ -252,13 +252,20 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 }
 .expert-box summary::after            { content:"▼"; position:absolute; right:0; }
 .expert-box[open] summary::after      { content:"▲"; }
-.expert-fields label                  { 
-  display:flex; 
-  flexdirection:column;
-  gap:4px;
-  margin:6px 0 10px; 
-  font-size:.7em; }
-.expert-fields select                 { width:100%; padding:6px; border-radius:4px; }
+/* ——— Experten-Feld: Text | Select | Button ——— */
+.expert-fields label{
+  display:flex;
+  align-items:center;
+  gap:8px;                  /* Abstand zwischen den drei Teilen */
+  margin:6px 0 10px;
+  font-size:.9em;
+}
+.expert-fields select{
+  flex:1 1 auto;            /* alle Selects füllen die Breite gleich aus */
+}
+.info-btn{                  /* evtl. vorhandene Margin löschen */
+  margin-left:0;
+}
 
 /* ——— Info-Button ——— */
 .info-btn{
