@@ -31,7 +31,7 @@ export async function generateText(payload){
    method: "POST",
    headers: { "Content-Type": "application/json" },
    body: JSON.stringify(payload,
-     agentModels: state.agentModels) //  ← jetzt korrekt IN der Payload    })
+     agentModels: state.agentModels,titleModel : state.agentModels.titleGenerator) //  ← jetzt korrekt IN der Payload    })
  });
   return safeJson(r);          // { html }
 }
