@@ -27,11 +27,18 @@ export async function pollTitleJob(jobId){
 }
 
 export async function generateText(payload){
- const r = await fetch(TEXT_WEBHOOK_URL, {
-   method: "POST",
-   headers: { "Content-Type": "application/json" },
-   body: JSON.stringify(payload,
-     agentModels: state.agentModels,titleModel : state.agentModels.titleGenerator) //  ← jetzt korrekt IN der Payload    })
- });
+  // 1) Payload erweitern
+  const completePayload = {
+    ...payload,
+    agentModels: state.agentModels,
+    titleModel : state.agentModels.titleGenerator   // falls n8n das extra Feld braucht
+  };
+
+  // 2) Fetch ausführen
+  const r = await fetch(TEXT_WEBHOOK_URL, {
+    method : "POST",
+    headers: { "Content-Type": "application/json" },
+    body   : JSON.stringify(completePayload)
+  });
   return safeJson(r);          // { html }
 }
