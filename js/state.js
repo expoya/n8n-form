@@ -6,6 +6,8 @@ export const state = {
   runningJobId  : null, // aktuelle Titel-Generierung
 
   agentModels   : {     //  ← jetzt sauber eingebettet
+    titleGenerator: 'ChatGPT 4.1 mini',
+    titleController: 'ChatGPT 4.1 mini',
     seoStrategist : 'Gemini 2.5 Pro',
     microTexter   : 'Gemini 2.5 Flash',
     seoVeredler   : 'ChatGPT 4o',
