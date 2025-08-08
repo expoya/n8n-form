@@ -1,7 +1,7 @@
 /* ---------- Agent-Erklärungen ---------- */
 export const agentInfo = {
   titleGenerator: `
-  p>
+  <p>
         Der <b>Title-Generator</b> ist der "Ideen-Sprudler". Er erstellt eine Liste von kreativen, SEO-optimierten H1-Titeln basierend auf deinem Briefing.
     </p>
     <h4>Modelle zur Auswahl:</h4>
