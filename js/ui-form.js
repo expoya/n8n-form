@@ -17,7 +17,7 @@ function initAgentModals(){
   document.querySelectorAll('.info-btn').forEach(btn=>{
     btn.onclick = () => {
       const key = btn.dataset.agent;
-      modalText.textContent = agentInfo[key] || 'Noch keine Infos hinterlegt.';
+      modalText.innerHTML = agentInfo[key] || 'Noch keine Infos hinterlegt.';
       modal.style.display = 'block';
     };
   });
