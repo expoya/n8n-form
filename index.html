@@ -74,6 +74,14 @@
   <summary>🧑‍💻 Experten Auswahl</summary>
 
   <div class="expert-fields">
+    <label>Preset
+  <select id="modelPreset">
+    <option value="">— Preset wählen —</option>
+    <option>Low Budget</option>
+    <option>Quality first</option>
+    <option>Benutzerdefiniert</option>
+  </select>
+</label>
     <label>Titel-Generator
      <select id="modelTitleGenerator">
     <option>Gemini 2.5 Pro</option>
@@ -156,6 +164,7 @@
 
     </div>
   </div>
+<script type="module" src="./assets/presets.js"></script>
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>
