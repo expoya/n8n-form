@@ -2,9 +2,58 @@ import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
 import { renderExpoList } from './ui-expos.js';
-import { agentInfo } from '../assets/agentInfo.js';   
+import { agentInfo } from '../assets/agentInfo.js';
+import { PRESETS } from '../assets/presets.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
+
+/* ---------- Helpers: Presets ---------- */
+function setSelectValue(selectEl, value) {
+  if (!selectEl) return;
+  const texts = Array.from(selectEl.options).map(o => o.text);
+  if (!texts.includes(value)) return;      // Schutz: Option existiert?
+  selectEl.value = value;
+  // change-Event feuern, damit State/Listener sauber aktualisieren
+  selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function applyPreset(name) {
+  const conf = PRESETS?.[name];
+  if (!conf) return;
+
+  // DOM-IDs der Selects ↔ Keys im State
+  const idMap = {
+    titleGenerator : 'modelTitleGenerator',
+    titleController: 'modelTitleController',
+    seoStrategist  : 'modelSeoStrategist',
+    microTexter    : 'modelMicroTexter',
+    seoVeredler    : 'modelSeoVeredler',
+    seoAuditor     : 'modelSeoAuditor'
+  };
+
+  // Werte setzen (inkl. Change-Events)
+  Object.entries(conf).forEach(([key, val]) => {
+    const el = document.getElementById(idMap[key]);
+    setSelectValue(el, val);
+  });
+
+  // UI/State syncen
+  state.selectedPreset = name;
+  const presetEl = document.getElementById('modelPreset');
+  if (presetEl) presetEl.value = name;
+}
+
+function initPresetSelect() {
+  const presetEl = document.getElementById('modelPreset');
+  if (!presetEl) return;
+
+  // Beim Wechsel Preset anwenden (außer Benutzerdefiniert/leer)
+  presetEl.addEventListener('change', () => {
+    const val = presetEl.value;
+    if (!val || val === 'Benutzerdefiniert') return;
+    applyPreset(val);
+  });
+}
 
 /* ---------- Modal verdrahten ---------- */
 export function initAgentModals() {
@@ -15,14 +64,13 @@ export function initAgentModals() {
   document.querySelectorAll('.info-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.agent;
-      modalText.innerHTML =
-        agentInfo[key] ?? 'Noch keine Infos hinterlegt.';
+      modalText.innerHTML = agentInfo[key] ?? 'Noch keine Infos hinterlegt.';
       modal.style.display = 'block';
     });
   });
 
   closeBtn.addEventListener('click', () =>  modal.style.display = 'none');
-  modal    .addEventListener('click', e => {
+  modal.addEventListener('click', e => {
     if (e.target === modal) modal.style.display = 'none';
   });
 }
@@ -41,29 +89,44 @@ export function initForm() {
       modelSeoVeredler    : 'seoVeredler',
       modelSeoAuditor     : 'seoAuditor'
     };
-    Object.entries(map).forEach(([id,key]) => {
+
+    Object.entries(map).forEach(([id, key]) => {
       const el = document.getElementById(id);
       if (!el) return;
-      state.agentModels[key] = el.value;          // Startwert
-      el.onchange = () => state.agentModels[key] = el.value;
+
+      // Startwert in State spiegeln
+      state.agentModels[key] = el.value;
+
+      // Bei manueller Änderung → State updaten & Preset auf "Benutzerdefiniert"
+      el.addEventListener('change', () => {
+        state.agentModels[key] = el.value;
+
+        const presetEl = document.getElementById('modelPreset');
+        // Nur umschalten, wenn zuvor ein Preset aktiv war
+        if (presetEl && state.selectedPreset) {
+          state.selectedPreset = '';
+          presetEl.value = 'Benutzerdefiniert';
+        }
+      });
     });
   }
 
   initExpertSelects();   // Dropdowns verdrahten
+  initPresetSelect();    // Preset-Dropdown verdrahten
   initAgentModals();     // Info-Buttons & Modal verdrahten
 
   /* ---------- Slider & Toggle ---------- */
   document.getElementById('tonality')
-          .addEventListener('input', e => {
-            document.getElementById('tonality-value').innerText =
-              tonalities[e.target.value - 1];
-          });
+    .addEventListener('input', e => {
+      document.getElementById('tonality-value').innerText =
+        tonalities[e.target.value - 1];
+    });
 
   document.getElementById('ansprache')
-          .addEventListener('change', e => {
-            document.getElementById('ansprache-label').innerText =
-              e.target.checked ? 'Du' : 'Sie';
-          });
+    .addEventListener('change', e => {
+      document.getElementById('ansprache-label').innerText =
+        e.target.checked ? 'Du' : 'Sie';
+    });
 
   /* ---------- Submit ---------- */
   form.addEventListener('submit', async e => {
@@ -86,7 +149,7 @@ export function initForm() {
 
     /* 3) Job starten */
     let jobId;
-    try {    
+    try {
       ({ jobId } = await startTitleJob(state.companyData));
       if (!jobId) throw new Error('Keine Job-ID erhalten');
     } catch (err) {
@@ -100,7 +163,7 @@ export function initForm() {
     state.runningJobId = jobId;
     pollUntilDone(jobId);
   });
-} //  ←  HIER wird initForm erst geschlossen ‼
+} //  ←  HIER wird initForm geschlossen
 
 /* ---------- Poll-Loop ---------- */
 async function pollUntilDone(jobId) {
