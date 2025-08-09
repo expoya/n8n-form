@@ -4,6 +4,8 @@ export const state = {
   titles        : [],   // ["Titel 1", …]
   texts         : [],   // ["<html>", …] 1-zu-1 zu titles.
   runningJobId  : null, // aktuelle Titel-Generierung
+  selectedPreset: '',   // aktuelles Preset
+
 
   agentModels   : {     //  ← jetzt sauber eingebettet
     titleGenerator: 'ChatGPT 4.1 mini',
