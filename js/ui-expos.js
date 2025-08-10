@@ -124,26 +124,34 @@ list.querySelectorAll('.btn-delete').forEach(btn=>{
 });
 
   /* ---------- Text generieren (einfach, wie Titel-Polling) ---------- */
-list.querySelectorAll('.btn-gen-text').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
+/* ---------- Text generieren ---------- */
+list.querySelectorAll('.btn-generate-text').forEach(btn=>{
+  btn.onclick = async e => {
     e.stopPropagation();
-    const idx   = +btn.dataset.idx;
-    const title = state.titles[idx];
+    const idx = +btn.dataset.idx;
+    btn.disabled = true; 
+    btn.textContent = '⏳ …';
 
-    // Zielbereich im Akkordeon (falls vorhanden)
-    const content = list.querySelector(`.expo-akk-content[data-idx="${idx}"]`);
-    if (content) content.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
+    // Zielbereich im Akkordeon
+    const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
+    if (preview) preview.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
+
+    // Payload (wie zuvor)
+    const payload = {
+      ...state.companyData,
+      h1Title: state.titles[idx],
+      expoIdx: idx
+    };
 
     try {
       // 1) Job starten
-      const start = await startTextJob({ ...state.companyData, title });
+      const start = await startTextJob({ ...payload, title: state.titles[idx] });
       const jobId = start?.jobId;
       if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
-      // 2) Polling (10s Interval, max. 90 Versuche – analog Titel)
+      // 2) Polling (10s Interval, max. 90 Versuche)
       let tries = 0;
       const maxTries = 90;
-
       while (tries <= maxTries) {
         tries++;
         const job = await pollTextJob(jobId);
@@ -151,7 +159,8 @@ list.querySelectorAll('.btn-gen-text').forEach(btn => {
         if (job.status === 'finished') {
           const html = job.result || '';
           state.texts[idx] = html;
-          if (content) content.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
+          btn.remove(); // Button ausblenden
+          if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
           return;
         }
         if (job.status === 'error') {
@@ -159,14 +168,15 @@ list.querySelectorAll('.btn-gen-text').forEach(btn => {
         }
         await new Promise(r => setTimeout(r, 10_000));
       }
-
       throw new Error('Text-Generierung Timeout.');
     } catch (err) {
-      if (content) content.innerHTML = `<div class="text-error">Fehler: ${err.message}</div>`;
+      alert('Text-Webhook Fehler: ' + err.message);
+      btn.disabled = false; 
+      btn.textContent = 'Text generieren';
+      if (preview) preview.innerHTML = `<div class="text-error">Fehler: ${err.message}</div>`;
     }
-  });
+  };
 });
-
 
 /* ---------- Weitere Event-Handler (Delete, Edit …) später ergänzen ---------- */
 }
