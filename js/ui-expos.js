@@ -40,28 +40,57 @@ list.querySelectorAll('.btn-expand').forEach(btn => {
 list.querySelectorAll('.btn-generate-text').forEach(btn=>{
   btn.onclick = async e => {
     e.stopPropagation();
-    const idx   = +btn.dataset.idx;
-    btn.disabled = true; btn.textContent = '⏳ …';
+    const idx = +btn.dataset.idx;
+    btn.disabled = true; 
+    btn.textContent = '⏳ …';
 
-    /* Payload an Webhook */
+    // Zielbereich im Akkordeon
+    const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
+    if (preview) preview.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
+
+    // Payload an den Starter
     const payload = {
       ...state.companyData,
       h1Title: state.titles[idx],
       expoIdx: idx
     };
 
-    try{
-      const { html } = await generateText(payload);   // ↖ kommt aus api.js
-      state.texts[idx] = html;
-      btn.remove();     // Button ausblenden
-      btn.closest('.expo-akk-body')
-         .querySelector('.text-preview').innerHTML = html;
-    }catch(err){
-      alert("Text-Webhook Fehler: "+err.message);
-      btn.disabled = false; btn.textContent = 'Text generieren';
+    try {
+      // 1) Job starten (Job-ID holen)
+      const start = await startTextJob({ ...payload, title: state.titles[idx] });
+      const jobId = start?.jobId;
+      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
+
+      // 2) Polling (10s Interval, max. 90 Versuche)
+      let tries = 0;
+      const maxTries = 90;
+      while (tries <= maxTries) {
+        tries++;
+        const job = await pollTextJob(jobId);
+
+        if (job.status === 'finished') {
+          const html = job.result || job.html || '';
+          state.texts[idx] = html;
+          btn.remove(); // Button ausblenden
+          if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
+          return;
+        }
+        if (job.status === 'error') {
+          throw new Error('Text-Generierung fehlgeschlagen.');
+        }
+        await new Promise(r => setTimeout(r, 10_000));
+      }
+
+      throw new Error('Text-Generierung Timeout.');
+    } catch (err) {
+      alert('Text-Webhook Fehler: ' + err.message);
+      btn.disabled = false; 
+      btn.textContent = 'Text generieren';
+      if (preview) preview.innerHTML = `<div class="text-error">Fehler: ${err.message}</div>`;
     }
   };
 });
+
 
 
 /* ---------- show/hide Body beim Akkordeon-Toggle ---------- */
@@ -120,61 +149,6 @@ list.querySelectorAll('.btn-delete').forEach(btn=>{
     state.titles.splice(idx, 1);     // Titel entfernen
     state.texts.splice(idx, 1);      // zugehörigen Text entfernen
     renderExpoList();                // Liste neu zeichnen
-  };
-});
-
-  /* ---------- Text generieren (einfach, wie Titel-Polling) ---------- */
-/* ---------- Text generieren ---------- */
-list.querySelectorAll('.btn-generate-text').forEach(btn=>{
-  btn.onclick = async e => {
-    e.stopPropagation();
-    const idx = +btn.dataset.idx;
-    btn.disabled = true; 
-    btn.textContent = '⏳ …';
-
-    // Zielbereich im Akkordeon
-    const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
-    if (preview) preview.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
-
-    // Payload (wie zuvor)
-    const payload = {
-      ...state.companyData,
-      h1Title: state.titles[idx],
-      expoIdx: idx
-    };
-
-    try {
-      // 1) Job starten
-      const start = await startTextJob({ ...payload, title: state.titles[idx] });
-      const jobId = start?.jobId;
-      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
-
-      // 2) Polling (10s Interval, max. 90 Versuche)
-      let tries = 0;
-      const maxTries = 90;
-      while (tries <= maxTries) {
-        tries++;
-        const job = await pollTextJob(jobId);
-
-        if (job.status === 'finished') {
-          const html = job.result || '';
-          state.texts[idx] = html;
-          btn.remove(); // Button ausblenden
-          if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
-          return;
-        }
-        if (job.status === 'error') {
-          throw new Error('Text-Generierung fehlgeschlagen.');
-        }
-        await new Promise(r => setTimeout(r, 10_000));
-      }
-      throw new Error('Text-Generierung Timeout.');
-    } catch (err) {
-      alert('Text-Webhook Fehler: ' + err.message);
-      btn.disabled = false; 
-      btn.textContent = 'Text generieren';
-      if (preview) preview.innerHTML = `<div class="text-error">Fehler: ${err.message}</div>`;
-    }
   };
 });
 
