@@ -12,7 +12,9 @@ import { state } from "./state.js";
  */
 const TITLE_START_URL = "https://expoya.app.n8n.cloud/webhook/start-job";
 const TITLE_POLL_URL  = "https://expoya.app.n8n.cloud/webhook/get-job?jobId=";
-const TEXT_WEBHOOK_URL = "https://expoya.app.n8n.cloud/webhook/Text-Job-Starter"; // (noch ungenutzt)
+const TEXT_WEBHOOK_URL = "https://expoya.app.n8n.cloud/webhook/Text-Job-Starter"; 
+const TEXT_POLL_URL   = "https://expoya.app.n8n.cloud/webhook/text-get-job?jobId=";
+
 
 /*
  * --------------------------------------
@@ -109,7 +111,7 @@ export async function startTextJob(payload = {}) {
 
 export async function pollTextJob(jobId) {
   // Poll-Endpoint ist generisch (gleich wie beim Titel)
-  const res = await fetch(`${TITLE_POLL_URL}${encodeURIComponent(jobId)}`);
+  const res = await fetch(`${TEXT_POLL_URL}${encodeURIComponent(jobId)}`);
   // Erwartet: { status: 'queued'|'running'|'finished'|'error', result? }
   return safeJson(res);
 }
