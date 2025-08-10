@@ -87,3 +87,29 @@ export async function generateText (payload) {
 
   return safeJson(res); // { html }
 }
+// ---------- Text-Job: Start + Poll (analog Titel) ----------
+
+export async function startTextJob(payload = {}) {
+  // Modelle zentral anhängen – genauso wie beim Titel-Job
+  const completePayload = {
+    ...payload,
+    agentModels: state.agentModels,
+    // wenn du ein eigenes Text-Modell im State hast, hier tauschen:
+    textModel  : state.agentModels.seoVeredler
+  };
+
+  const res = await fetch(TEXT_WEBHOOK_URL, {
+    method  : "POST",
+    headers : { "Content-Type": "application/json" },
+    body    : JSON.stringify(completePayload)
+  });
+  // Erwartet: { jobId: "..." }
+  return safeJson(res);
+}
+
+export async function pollTextJob(jobId) {
+  // Poll-Endpoint ist generisch (gleich wie beim Titel)
+  const res = await fetch(`${TITLE_POLL_URL}${encodeURIComponent(jobId)}`);
+  // Erwartet: { status: 'queued'|'running'|'finished'|'error', result? }
+  return safeJson(res);
+}
