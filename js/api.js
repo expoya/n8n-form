@@ -23,13 +23,27 @@ const TEXT_POLL_URL   = "https://expoya.app.n8n.cloud/webhook/text-get-job?jobId
  * Wirft eine aussagekräftige Fehlermeldung, falls der Server keine
  * gültige JSON‑Antwort liefert.
  */
-async function safeJson (res) {
-  const type = res.headers.get("content-type") || "";
-  if (type.includes("application/json")) return res.json();
+// Robust: kommt auch mit leerem Body / falschem Header klar
+async function safeJson(res) {
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  const bodyText = await res.text(); // Body EINMAL lesen
 
-  const text = await res.text();
-  throw new Error(`Unerwartete API-Antwort (${res.status}): ${text.slice(0, 120)}`);
+  // Debug-Log (optional; bei Bedarf später wieder entfernen)
+  console.debug('[safeJson]', res.status, ct, bodyText?.slice(0,200));
+
+  if (ct.includes('application/json')) {
+    if (!bodyText || bodyText.trim() === '') return {};  // leeres JSON zulassen
+    try {
+      return JSON.parse(bodyText);
+    } catch (e) {
+      throw new Error(`Ungültiges JSON (${res.status}): ${bodyText.slice(0,200)}`);
+    }
+  }
+
+  // Kein JSON – Klartext-Fehler mit Body-Auszug
+  throw new Error(`Unerwartete API-Antwort (${res.status} ${res.statusText}): ${bodyText.slice(0,200)}`);
 }
+
 
 /*
  * -------------------------------------------------
@@ -106,6 +120,7 @@ export async function startTextJob(payload = {}) {
     body    : JSON.stringify(completePayload)
   });
   // Erwartet: { jobId: "..." }
+  console.debug('[Text-Start RAW]', res.status, res.headers.get('content-type'));
   return safeJson(res);
 }
 
