@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { generateText } from './api.js';
+import { startTextJob, pollTextJob } from './api.js';
 
 export function renderExpoList(){
   const list=document.getElementById('expoList');//
@@ -121,6 +121,50 @@ list.querySelectorAll('.btn-delete').forEach(btn=>{
     state.texts.splice(idx, 1);      // zugehörigen Text entfernen
     renderExpoList();                // Liste neu zeichnen
   };
+});
+
+  /* ---------- Text generieren (einfach, wie Titel-Polling) ---------- */
+list.querySelectorAll('.btn-gen-text').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const idx   = +btn.dataset.idx;
+    const title = state.titles[idx];
+
+    // Zielbereich im Akkordeon (falls vorhanden)
+    const content = list.querySelector(`.expo-akk-content[data-idx="${idx}"]`);
+    if (content) content.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
+
+    try {
+      // 1) Job starten
+      const start = await startTextJob({ ...state.companyData, title });
+      const jobId = start?.jobId;
+      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
+
+      // 2) Polling (10s Interval, max. 90 Versuche – analog Titel)
+      let tries = 0;
+      const maxTries = 90;
+
+      while (tries <= maxTries) {
+        tries++;
+        const job = await pollTextJob(jobId);
+
+        if (job.status === 'finished') {
+          const html = job.result || '';
+          state.texts[idx] = html;
+          if (content) content.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
+          return;
+        }
+        if (job.status === 'error') {
+          throw new Error('Text-Generierung fehlgeschlagen.');
+        }
+        await new Promise(r => setTimeout(r, 10_000));
+      }
+
+      throw new Error('Text-Generierung Timeout.');
+    } catch (err) {
+      if (content) content.innerHTML = `<div class="text-error">Fehler: ${err.message}</div>`;
+    }
+  });
 });
 
 
