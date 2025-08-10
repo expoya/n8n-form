@@ -125,8 +125,15 @@ export async function startTextJob(payload = {}) {
 }
 
 export async function pollTextJob(jobId) {
-  // Poll-Endpoint ist generisch (gleich wie beim Titel)
-  const res = await fetch(`${TEXT_POLL_URL}${encodeURIComponent(jobId)}`);
-  // Erwartet: { status: 'queued'|'running'|'finished'|'error', result? }
-  return safeJson(res);
+  // Cache-Buster gegen CDN/Proxy/Browser-Caching
+  const url = `${TEXT_POLL_URL}${encodeURIComponent(jobId)}&_=${Date.now()}`;
+
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache'
+    }
+  });
+
+  return safeJson(res); // erwartet Array[0] mit Status/Text in deinem Flow
 }
