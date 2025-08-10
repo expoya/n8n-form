@@ -58,7 +58,7 @@ list.querySelectorAll('.btn-generate-text').forEach(btn=>{
     try {
       // 1) Job starten (Job-ID holen)
       const start = await startTextJob({ ...payload, title: state.titles[idx] });
-      const jobId = start?.jobId;
+      let jobId = (start?.jobId || '').toString().replace(/^=+/, ''); // führende "=" entfernen
       if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
       // 2) Polling (10s Interval, max. 90 Versuche)
