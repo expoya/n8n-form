@@ -61,25 +61,65 @@ list.querySelectorAll('.btn-generate-text').forEach(btn=>{
       let jobId = (start?.jobId || '').toString().replace(/^=+/, ''); // führende "=" entfernen
       if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
-      // 2) Polling (10s Interval, max. 90 Versuche)
-      let tries = 0;
-      const maxTries = 90;
-      while (tries <= maxTries) {
-        tries++;
-        const job = await pollTextJob(jobId);
+// 2) Polling (robust: verschiedene Status-/Feldnamen akzeptieren)
+let tries = 0;
+const maxTries = 90;
 
-        if (job.status === 'finished') {
-          const html = job.result || job.html || '';
-          state.texts[idx] = html;
-          btn.remove(); // Button ausblenden
-          if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
-          return;
-        }
-        if (job.status === 'error') {
-          throw new Error('Text-Generierung fehlgeschlagen.');
-        }
-        await new Promise(r => setTimeout(r, 10_000));
-      }
+while (tries <= maxTries) {
+  tries++;
+
+  const job = await pollTextJob(jobId);
+  console.debug('[pollText] raw:', job);
+
+  // Falls der Poll-Endpoint ein Array liefert (z.B. 1 Row aus Sheets)
+  const data = Array.isArray(job) ? job[0] : job;
+
+  // Status robust normalisieren (Status, status, state, done, completed, ready, finished)
+  const status = (
+    data?.status ??
+    data?.Status ??
+    data?.state ??
+    data?.State ??
+    data?.result?.status ??
+    ''
+  ).toString().toLowerCase();
+
+  // HTML/Text aus verschiedenen möglichen Feldern ziehen
+  const html =
+    data?.result ??
+    data?.html ??
+    data?.HTML ??
+    data?.text ??
+    data?.body ??
+    data?.payload?.html ??
+    data?.payload?.result ??
+    '';
+
+  // 1) Wenn Feld 'status' typische Fertig-Werte hat → fertig
+  if (['finished', 'completed', 'done', 'ready', 'success'].includes(status)) {
+    state.texts[idx] = html || '';
+    btn.remove();
+    if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
+    return;
+  }
+
+  // 2) Falls kein Status kommt, aber bereits HTML/Text vorhanden ist → ebenfalls fertig
+  if (html && typeof html === 'string' && html.trim() !== '') {
+    state.texts[idx] = html;
+    btn.remove();
+    if (preview) preview.innerHTML = html;
+    return;
+  }
+
+  // 3) Fehlerstatus?
+  if (['error', 'failed', 'fail'].includes(status)) {
+    throw new Error('Text-Generierung fehlgeschlagen.');
+  }
+
+  // 10s warten und weiter pollen
+  await new Promise(r => setTimeout(r, 10_000));
+}
+
 
       throw new Error('Text-Generierung Timeout.');
     } catch (err) {
