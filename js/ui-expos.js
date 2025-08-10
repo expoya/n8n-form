@@ -67,73 +67,55 @@ export function renderExpoList () {
         let jobId = (start?.jobId || '').toString().replace(/^=+/, ''); // führende "=" entfernen
         if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
-        // 2) Polling (10s × 90 ≈ 15 min)
-        let tries = 0;
-        const maxTries = 90;
+ // 2) Polling (angepasst an: Array[0] mit Feldern "Status" und "Text")
+let tries = 0;
+const maxTries = 90; // 10 s * 90 = 15 min
 
-        while (tries <= maxTries) {
-          tries++;
+while (tries <= maxTries) {
+  tries++;
 
-          let job;
-          try {
-            job = await pollTextJob(jobId);
-          } catch (pollErr) {
-            // Netzwerk/Zwischenfehler -> kurz warten und weiter versuchen
-            await new Promise(r => setTimeout(r, 10_000));
-            continue;
-          }
+  let job;
+  try {
+    job = await pollTextJob(jobId);
+  } catch (pollErr) {
+    console.debug('[pollText] fetch error:', pollErr?.message || pollErr);
+    await new Promise(r => setTimeout(r, 10_000));
+    continue;
+  }
 
-          // Debug (bei Bedarf in Prod deaktivieren)
-          console.debug('[pollText] tick', tries, 'raw:', job);
+  // Dein Endpoint liefert ein Array mit genau 1 Row
+  const data = Array.isArray(job) ? job[0] : job;
+  console.debug('[pollText] tick', tries, data);
 
-          // Manche Endpoints liefern Arrays (z. B. Sheets-Row)
-          const data = Array.isArray(job) ? job[0] : job;
+  // Status/HTML nach deinem Schema
+  const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
+  const html   = data?.Text ?? '';
 
-          // Status flexibel lesen
-          const status = (
-            data?.status ??
-            data?.Status ??
-            data?.state ??
-            data?.State ??
-            data?.result?.status ??
-            ''
-          ).toString().toLowerCase();
+  // Fertig, wenn Text da ist (bevorzugt)
+  if (typeof html === 'string' && html.trim() !== '') {
+    state.texts[idx] = html;
+    btn.remove();
+    if (preview) preview.innerHTML = html;
+    return;
+  }
 
-          // HTML/Text aus gängigen Feldern ziehen
-          const html =
-            data?.result ??
-            data?.html ??
-            data?.HTML ??
-            data?.text ??
-            data?.body ??
-            data?.payload?.html ??
-            data?.payload?.result ??
-            '';
+  // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
+  if (['finished','completed','done','ready','success'].includes(status)) {
+    state.texts[idx] = html || '';
+    btn.remove();
+    if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
+    return;
+  }
 
-          // Fall A: erkennbarer Fertig-Status
-          if (['finished', 'completed', 'done', 'ready', 'success'].includes(status)) {
-            state.texts[idx] = html || '';
-            btn.remove(); // Button raus, wenn erledigt
-            if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
-            return;
-          }
+  // Fehler?
+  if (['error','failed','fail'].includes(status)) {
+    throw new Error('Text-Generierung fehlgeschlagen.');
+  }
 
-          // Fall B: kein Status, aber Text/HTML vorhanden
-          if (typeof html === 'string' && html.trim() !== '') {
-            state.texts[idx] = html;
-            btn.remove();
-            if (preview) preview.innerHTML = html;
-            return;
-          }
+  // warten und weiter pollen
+  await new Promise(r => setTimeout(r, 10_000));
+}
 
-          // Fall C: Fehlerstatus
-          if (['error', 'failed', 'fail'].includes(status)) {
-            throw new Error('Text-Generierung fehlgeschlagen.');
-          }
-
-          // Weiter warten
-          await new Promise(r => setTimeout(r, 10_000));
-        }
 
         // Timeout
         throw new Error('Text-Generierung Timeout.');
