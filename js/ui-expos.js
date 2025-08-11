@@ -3,6 +3,29 @@ import { state } from './state.js';
 import { startTextJob, pollTextJob } from './api.js';
 import { renderMarkdownToHtml } from './render.js';
 
+const DEFAULT_IMG = "https://business.expoya.com/images/Default/defaultbild.png";
+
+function xmlEscape(s = "") {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function downloadFile(filename, text) {
+  const blob = new Blob([text], { type: "application/xml;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 
 export function renderExpoList () {
   const list = document.getElementById('expoList');
@@ -255,4 +278,54 @@ function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
   preview.style.display = '';
 }
 
+  function buildXmlFromState() {
+  // Wir gehen davon aus, dass du Titel & Texte im state führst
+  // - state.titles:   Array<string>
+  // - state.texts:    Array<string> (bereits "safeHtml")
+  // Falls das bei dir anders heißt, sag kurz Bescheid – ich passe es 1:1 an.
+
+  const titles = state?.titles || [];
+  const texts  = state?.texts  || [];
+
+  const header = `<?xml version="1.0" encoding="UTF-8"?>\n<Items>`;
+  const footer = `\n</Items>`;
+
+  const rows = titles.map((title, i) => {
+    const html = texts[i] || ""; // bereits HTML (sanitized)
+    const titleEsc = xmlEscape(title || "");
+
+    // Description als CDATA → HTML bleibt 1:1 erhalten
+    const description = `<![CDATA[${html}]]>`;
+
+    return [
+      "  <Item>",
+      `    <ObjectID></ObjectID>`,
+      `    <SKU></SKU>`,
+      `    <EAN></EAN>`,
+      `    <Title>${titleEsc}</Title>`,
+      `    <Slug></Slug>`,
+      `    <ShopType></ShopType>`,
+      `    <Currency></Currency>`,
+      `    <Price></Price>`,
+      `    <HasSpecialprice></HasSpecialprice>`,
+      `    <PriceBefore></PriceBefore>`,
+      `    <IsOutOfStock></IsOutOfStock>`,
+      `    <Description>${description}</Description>`,
+      `    <ProductLink></ProductLink>`,
+      `    <Image>${xmlEscape(DEFAULT_IMG)}</Image>`,
+      `    <Image.1></Image.1>`,
+      `    <Image.2></Image.2>`,
+      `    <Image.3></Image.3>`,
+      `    <Image.4></Image.4>`,
+      `    <Tag></Tag>`,
+      `    <Tag.1></Tag.1>`,
+      `    <Tag.2></Tag.2>`,
+      "  </Item>"
+    ].join("\n");
+  });
+
+  return header + "\n" + rows.join("\n") + footer;
+}
+
+  
 }
