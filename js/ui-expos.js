@@ -261,16 +261,15 @@ function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
   preview.style.display = '';
 }
 
-// === Buttons für Export sichtbar machen ===
-const exportBtn = document.getElementById('exportBtn');
+// === Export-Buttons sichtbar machen / verstecken ===
+const exportBtn    = document.getElementById('exportBtn');
 const exportXmlBtn = document.getElementById('exportXmlBtn');
 
-// Nur anzeigen, wenn es mindestens einen Titel gibt
 if (state.titles.length > 0) {
-  if (exportBtn) exportBtn.style.display = 'inline-block';
+  if (exportBtn)    exportBtn.style.display = 'inline-block';
   if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
 } else {
-  if (exportBtn) exportBtn.style.display = 'none';
+  if (exportBtn)    exportBtn.style.display = 'none';
   if (exportXmlBtn) exportXmlBtn.style.display = 'none';
 }
 
