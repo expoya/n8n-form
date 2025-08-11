@@ -1,5 +1,5 @@
 // 1) Webhook-Text normalisieren ("/n", "\\n", CRLF etc.)
-function normalizeLLMText(raw) {
+export function normalizeLLMText(raw) {
   if (!raw) return '';
   let s = String(raw);
 
@@ -19,7 +19,7 @@ function normalizeLLMText(raw) {
 }
 
 // 2) Markdown -> sicheres HTML
-function renderMarkdownToHtml(raw) {
+export function renderMarkdownToHtml(raw) {
   const normalized = normalizeLLMText(raw);
   const html = marked.parse(normalized, { gfm: true, breaks: true });
   return DOMPurify.sanitize(html);
