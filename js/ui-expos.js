@@ -203,22 +203,26 @@ export function renderExpoList () {
   });
 
   // ===== Editiermodus (Text) =====
+
 function startEditMode(preview, idx) {
   const currentHtml = state.texts[idx] || preview.innerHTML;
 
-  // HTML → Plaintext
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = currentHtml;
-  const plainText = tempDiv.textContent;
+  // HTML -> Markdown (Format bleibt erhalten)
+  let markdown = '';
+  try {
+    markdown = window.turndownService ? window.turndownService.turndown(currentHtml) : currentHtml;
+  } catch {
+    markdown = currentHtml; // Fallback
+  }
 
   // existierenden Edit-Button verstecken
   const container = preview.parentNode;
-  const editBtn = container.querySelector(`.edit-btn[data-idx="${idx}"]`);
-  if (editBtn) editBtn.style.display = 'none';
+  const existingEditBtn = container.querySelector(`.edit-btn[data-idx="${idx}"]`);
+  if (existingEditBtn) existingEditBtn.style.display = 'none';
 
   // Textarea
   const textarea = document.createElement('textarea');
-  textarea.value = plainText;
+  textarea.value = markdown;
   textarea.className = 'edit-textarea';
 
   // Aktionen
@@ -245,7 +249,7 @@ function startEditMode(preview, idx) {
 
   // Aktionen binden
   saveBtn.addEventListener('click', () => {
-    const newHtml = renderMarkdownToHtml(textarea.value);
+    const newHtml = renderMarkdownToHtml(textarea.value); // Markdown -> HTML (+sanitize)
     state.texts[idx] = newHtml;
     preview.innerHTML = newHtml;
     cleanupEditMode(preview, textarea, actions, idx);
@@ -256,14 +260,15 @@ function startEditMode(preview, idx) {
   });
 }
 
+  
 function cleanupEditMode(preview, textarea, actions, idx) {
   textarea.remove();
   actions.remove();
   preview.style.display = '';
-  // Edit-Button wieder anzeigen
   const editBtn = preview.parentNode.querySelector(`.edit-btn[data-idx="${idx}"]`);
   if (editBtn) editBtn.style.display = '';
 }
+
 
 
   function ensureEditButton(preview, idx) {
@@ -271,12 +276,11 @@ function cleanupEditMode(preview, textarea, actions, idx) {
     const container = preview.parentNode;
     if (container.querySelector(`.edit-btn[data-idx="${idx}"]`)) return;
 
-    const editBtn = document.createElement('button');
+   const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.textContent = 'Bearbeiten';
-    editBtn.className = 'edit-btn';
+    editBtn.className = 'btn btn-ghost edit-btn';
     editBtn.dataset.idx = idx;
-
     container.insertBefore(editBtn, preview.nextSibling);
     editBtn.addEventListener('click', () => startEditMode(preview, idx));
   }
