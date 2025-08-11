@@ -200,50 +200,68 @@ export function renderExpoList () {
   });
 
   // ===== Editiermodus (Text) =====
-  function startEditMode(preview, idx) {
-    const currentHtml = state.texts[idx] || preview.innerHTML;
+function startEditMode(preview, idx) {
+  const currentHtml = state.texts[idx] || preview.innerHTML;
 
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = currentHtml;
-    const plainText = tempDiv.textContent;
+  // HTML → Plaintext
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = currentHtml;
+  const plainText = tempDiv.textContent;
 
-    const textarea = document.createElement('textarea');
-    textarea.value = plainText;
-    textarea.className = 'edit-textarea';
+  // existierenden Edit-Button verstecken
+  const container = preview.parentNode;
+  const editBtn = container.querySelector(`.edit-btn[data-idx="${idx}"]`);
+  if (editBtn) editBtn.style.display = 'none';
 
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Speichern';
-    saveBtn.className = 'save-btn';
+  // Textarea
+  const textarea = document.createElement('textarea');
+  textarea.value = plainText;
+  textarea.className = 'edit-textarea';
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = 'Abbrechen';
-    cancelBtn.className = 'cancel-btn';
+  // Aktionen
+  const actions = document.createElement('div');
+  actions.className = 'edit-actions';
 
-    preview.style.display = 'none';
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.textContent = 'Speichern';
+  saveBtn.className = 'btn btn-primary';
 
-    preview.parentNode.insertBefore(textarea, preview);
-    preview.parentNode.insertBefore(saveBtn, preview);
-    preview.parentNode.insertBefore(cancelBtn, preview);
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.textContent = 'Abbrechen';
+  cancelBtn.className = 'btn btn-secondary';
 
-    saveBtn.addEventListener('click', () => {
-      const newHtml = renderMarkdownToHtml(textarea.value);
-      state.texts[idx] = newHtml;
-      preview.innerHTML = newHtml;
-      cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
-    });
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
 
-    cancelBtn.addEventListener('click', () => {
-      cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
-    });
-   
-  }
+  // Preview ausblenden & Edit-UI einsetzen
+  preview.style.display = 'none';
+  container.insertBefore(textarea, preview);
+  container.insertBefore(actions, preview);
 
-  function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
-    textarea.remove();
-    saveBtn.remove();
-    cancelBtn.remove();
-    preview.style.display = '';
-  }
+  // Aktionen binden
+  saveBtn.addEventListener('click', () => {
+    const newHtml = renderMarkdownToHtml(textarea.value);
+    state.texts[idx] = newHtml;
+    preview.innerHTML = newHtml;
+    cleanupEditMode(preview, textarea, actions, idx);
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    cleanupEditMode(preview, textarea, actions, idx);
+  });
+}
+
+function cleanupEditMode(preview, textarea, actions, idx) {
+  textarea.remove();
+  actions.remove();
+  preview.style.display = '';
+  // Edit-Button wieder anzeigen
+  const editBtn = preview.parentNode.querySelector(`.edit-btn[data-idx="${idx}"]`);
+  if (editBtn) editBtn.style.display = '';
+}
+
 
   function ensureEditButton(preview, idx) {
     if (!preview) return;
