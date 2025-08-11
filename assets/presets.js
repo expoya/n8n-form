@@ -1,19 +1,48 @@
 // assets/presets.js
 export const PRESETS = {
-  "Low Budget": {
-    titleGenerator : "ChatGPT 4.1 mini",
-    titleController: "ChatGPT 4.1 mini",
-    seoStrategist  : "Gemini 2.5 Pro",
-    microTexter    : "ChatGPT 4.1 mini",
-    seoVeredler    : "ChatGPT 4.1",
-    seoAuditor     : "Gemini 2.5 Pro"
+  "Sprint-Mode": {
+    "titleGenerator": "Gemini 2.5 Flash",
+    "titleController": "ChatGPT o4 mini",
+    "seoStrategist": "ChatGPT o4 mini",
+    "microTexter": "Claude Haiku 3.5",
+    "seoVeredler": "Claude Sonnet 4",
+    "seoAuditor": "ChatGPT o4 mini"
   },
-  "Quality first": {
-    titleGenerator : "Claude Sonnet 4",
-    titleController: "ChatGPT 4.1",
-    seoStrategist  : "Gemini 2.5 Pro",
-    microTexter    : "Claude Sonnet 3.7",
-    seoVeredler    : "ChatGPT 4o",
-    seoAuditor     : "Gemini 2.5 Pro"
+  
+  "Eco-Mode": {
+    "titleGenerator": "ChatGPT 5 mini",
+    "titleController": "ChatGPT 4.1 mini",
+    "seoStrategist": "ChatGPT o4 mini",
+    "microTexter": "Gemini 2.5 Flash",
+    "seoVeredler": "ChatGPT 4.1",
+    "seoAuditor": "ChatGPT o4 mini"
+  },
+  
+  "Prime Heavy": {
+    "titleGenerator": "Claude Sonnet 4",
+    "titleController": "Claude Sonnet 4",
+    "seoStrategist": "Claude Opus 4.1",
+    "microTexter": "ChatGPT 5",
+    "seoVeredler": "Claude Sonnet 4",
+    "seoAuditor": "Claude Opus 4.1"
+  },
+  
+  "Prime": {
+    "titleGenerator": "ChatGPT 5 mini",
+    "titleController": "Gemini 2.5 Pro",
+    "seoStrategist": "Gemini 2.5 Pro",
+    "microTexter": "ChatGPT 5 mini",
+    "seoVeredler": "Claude Sonnet 4",
+    "seoAuditor": "Gemini 2.5 Pro"
+  },
+  
+  "Balanced": {
+    "titleGenerator": "ChatGPT 5 mini",
+    "titleController": "ChatGPT 5 mini",
+    "seoStrategist": "Gemini 2.5 Pro",
+    "microTexter": "ChatGPT 5 mini",
+    "seoVeredler": "Claude Sonnet 4",
+    "seoAuditor": "Gemini 2.5 Pro"
   }
+  
 };
