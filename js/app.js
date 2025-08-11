@@ -1,4 +1,4 @@
-// js/app.js/
+// js/app.js
 import { initForm, initAgentModals } from './ui-form.js';
 import { renderExpoList } from './ui-expos.js';
 import { buildXmlFromState, downloadFile } from './export-utils.js';
@@ -8,16 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initForm();
   initAgentModals();
   renderExpoList();
-  // Markdown-Konverter (HTML -> Markdown) global anlegen
-if (!window.turndownService && window.TurndownService) {
-  window.turndownService = new window.TurndownService({
-    headingStyle: 'atx',
-    bulletListMarker: '-',
-    codeBlockStyle: 'fenced'
-  });
-}
 
-  // XML-Export (einmalig registrieren)
+  // Markdown-Konverter (HTML -> Markdown) global anlegen (für Edit-Modus)
+  if (!window.turndownService && window.TurndownService) {
+    window.turndownService = new window.TurndownService({
+      headingStyle: 'atx',
+      bulletListMarker: '-',
+      codeBlockStyle: 'fenced'
+    });
+  }
+
+  // XML-Export-Listener (einmalig)
   document.getElementById("exportXmlBtn")?.addEventListener("click", () => {
     // Optional: Warnung, wenn Texte fehlen
     const total    = window.state?.titles?.length || 0;
@@ -28,7 +29,7 @@ if (!window.turndownService && window.TurndownService) {
       if (!ok) return;
     }
 
-    const xml = buildXmlFromState(); // oder { onlyWithText: true }
+    const xml = buildXmlFromState(); // oder: buildXmlFromState({ onlyWithText: true })
     const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
     downloadFile(`expoya_import_${ts}.xml`, xml);
   });
