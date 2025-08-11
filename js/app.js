@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initForm();
   initAgentModals();
   renderExpoList();
+  // Markdown-Konverter (HTML -> Markdown) global anlegen
+if (!window.turndownService && window.TurndownService) {
+  window.turndownService = new window.TurndownService({
+    headingStyle: 'atx',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced'
+  });
+}
 
   // XML-Export (einmalig registrieren)
   document.getElementById("exportXmlBtn")?.addEventListener("click", () => {
