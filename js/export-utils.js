@@ -1,4 +1,4 @@
-// js/export-utils.js
+// js/export-utils.js/
 import { state } from './state.js';
 
 const DEFAULT_IMG = "https://business.expoya.com/images/Default/defaultbild.png";
