@@ -254,5 +254,24 @@ function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
   cancelBtn.remove();
   preview.style.display = '';
 }
-
+function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
+  textarea.remove();
+  saveBtn.remove();
+  cancelBtn.remove();
+  preview.style.display = '';
 }
+
+// === Buttons für Export sichtbar machen ===
+const exportBtn = document.getElementById('exportBtn');
+const exportXmlBtn = document.getElementById('exportXmlBtn');
+
+// Nur anzeigen, wenn es mindestens einen Titel gibt
+if (state.titles.length > 0) {
+  if (exportBtn) exportBtn.style.display = 'inline-block';
+  if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
+} else {
+  if (exportBtn) exportBtn.style.display = 'none';
+  if (exportXmlBtn) exportXmlBtn.style.display = 'none';
+}
+
+} // <--- Ende renderExpoList()
