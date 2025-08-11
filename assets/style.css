@@ -291,3 +291,16 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .model-table td        { padding: 4px 8px; border: 1px solid #ddd; }
 .model-table .category { font-weight: bold; width: 180px; }
 
+.edit-textarea {
+  width: 100%;
+  height: 200px;
+  margin: 0.5rem 0;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  margin: 0.25rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}

@@ -104,6 +104,16 @@ if (typeof raw === 'string' && raw.trim() !== '') {
   return;
 }
 
+// Bearbeiten-Button hinzufügen
+const editBtn = document.createElement('button');
+editBtn.textContent = 'Bearbeiten';
+editBtn.className = 'edit-btn';
+preview.parentNode.insertBefore(editBtn, preview.nextSibling);
+
+editBtn.addEventListener('click', () => {
+  startEditMode(preview, idx);
+});
+  
   // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
   if (['finished','completed','done','ready','success'].includes(status)) {
     const safeHtml2 = renderMarkdownToHtml(html || '');
@@ -193,4 +203,56 @@ if (preview) preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em
       renderExpoList();
     };
   });
+
+  function startEditMode(preview, idx) {
+  const currentHtml = state.texts[idx] || preview.innerHTML;
+
+  // HTML → Plaintext (Markdown) um leichter zu editieren
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = currentHtml;
+  const plainText = tempDiv.textContent;
+
+  // Textarea erstellen
+  const textarea = document.createElement('textarea');
+  textarea.value = plainText;
+  textarea.className = 'edit-textarea';
+
+  // Speichern-Button
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Speichern';
+  saveBtn.className = 'save-btn';
+
+  // Abbrechen-Button
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Abbrechen';
+  cancelBtn.className = 'cancel-btn';
+
+  // Preview verstecken
+  preview.style.display = 'none';
+
+  // Buttons & Textarea einfügen
+  preview.parentNode.insertBefore(textarea, preview);
+  preview.parentNode.insertBefore(saveBtn, preview);
+  preview.parentNode.insertBefore(cancelBtn, preview);
+
+  // Klick-Events
+  saveBtn.addEventListener('click', () => {
+    const newHtml = renderMarkdownToHtml(textarea.value);
+    state.texts[idx] = newHtml;
+    preview.innerHTML = newHtml;
+    cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
+  });
+}
+
+function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
+  textarea.remove();
+  saveBtn.remove();
+  cancelBtn.remove();
+  preview.style.display = '';
+}
+
 }
