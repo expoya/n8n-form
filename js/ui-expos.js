@@ -244,15 +244,18 @@ export function renderExpoList () {
     editBtn.addEventListener('click', () => startEditMode(preview, idx));
   }
 
-  // === Export-Buttons sichtbar machen / verstecken ===
-  const exportBtn    = document.getElementById('exportBtn');
-  const exportXmlBtn = document.getElementById('exportXmlBtn');
+  // === Export-Buttons nur zeigen, wenn mind. 1 Text existiert ===
+const exportBtn    = document.getElementById('exportBtn');
+const exportXmlBtn = document.getElementById('exportXmlBtn');
 
-  if (state.titles.length > 0) {
-    if (exportBtn)    exportBtn.style.display = 'inline-block';
-    if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
-  } else {
-    if (exportBtn)    exportBtn.style.display = 'none';
-    if (exportXmlBtn) exportXmlBtn.style.display = 'none';
-  }
+const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
+
+if (hasAnyText) {
+  if (exportBtn)    exportBtn.style.display = 'inline-block';
+  if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
+} else {
+  if (exportBtn)    exportBtn.style.display = 'none';
+  if (exportXmlBtn) exportXmlBtn.style.display = 'none';
+}
+
 } // Ende renderExpoList()
