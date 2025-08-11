@@ -325,6 +325,7 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .loading-fun {
   margin-top: .35rem; font-style: italic; opacity: .9;
 }
+ .loading-fun.fade-out { opacity: .2; }
 /* Konsistente Buttons */
 .btn { 
   display: inline-flex; align-items: center; justify-content: center;
