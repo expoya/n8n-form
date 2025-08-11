@@ -3,6 +3,19 @@ import { state } from './state.js';
 import { startTextJob, pollTextJob } from './api.js';
 import { renderMarkdownToHtml } from './render.js';
 
+const ladeFloskelnTexte = [
+  "Die KI poliert noch schnell ein paar Synapsen …",
+  "Unser Textschmied legt die letzten Wörter aufs Amboss.",
+  "Google bekommt gerade einen kurzen Schönheitsschliff.",
+  "Die Absatzakrobaten machen sich warm …",
+  "Semantik wird sortiert, Satzmelodie gestimmt …",
+  "Wir gießen noch etwas SEO-Glitzer drüber.",
+  "Die Headline übt noch ihren großen Auftritt.",
+  "Kurz noch den CTA wachkitzeln …",
+  "Das Wording zieht sich die Laufschuhe an.",
+  "Der Lesefluss nimmt Anlauf …"
+];
+
 export function renderExpoList () {
   const list = document.getElementById('expoList');
   list.innerHTML = '';
@@ -50,7 +63,8 @@ export function renderExpoList () {
       btn.textContent = '⏳ …';
 
       const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
-      if (preview) preview.innerHTML = '<div class="text-loading">Text wird generiert …</div>';
+     if (preview) startLoading(preview);
+
 
       // Payload für Starter
       const payload = {
@@ -92,6 +106,7 @@ export function renderExpoList () {
             state.texts[idx] = safeHtml;
             btn.remove();
             if (preview) {
+              stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
             }
@@ -104,12 +119,13 @@ export function renderExpoList () {
             state.texts[idx] = safeHtml2 || '';
             btn.remove();
             if (preview) {
+              stopLoading(preview);
               preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
               ensureEditButton(preview, idx);
             }
             return;
           }
-
+     
           if (['error','failed','fail'].includes(status)) {
             throw new Error('Text-Generierung fehlgeschlagen.');
           }
@@ -122,7 +138,10 @@ export function renderExpoList () {
         alert('Text-Webhook Fehler: ' + (err?.message || err));
         btn.disabled = false;
         btn.textContent = oldLabel;
-        if (preview) preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+       if (preview) {
+  stopLoading(preview);
+  preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+}
       }
     };
   });
@@ -220,6 +239,7 @@ export function renderExpoList () {
     cancelBtn.addEventListener('click', () => {
       cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
     });
+   
   }
 
   function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
@@ -257,5 +277,41 @@ if (hasAnyText) {
   if (exportBtn)    exportBtn.style.display = 'none';
   if (exportXmlBtn) exportXmlBtn.style.display = 'none';
 }
+
+  function startLoading(preview) {
+  if (!preview) return;
+
+  // Grundgerüst (Spinner + Hinweis + Fun-Zeile)
+  preview.innerHTML = `
+    <div class="text-loading">
+      <div class="loader"></div>
+      <div>
+        <div><strong>Text wird generiert …</strong></div>
+        <div class="loading-sub">Dieser Vorgang dauert, je nach gewählten Experten, 4-8 Minuten.</div>
+        <div class="loading-fun"></div>
+      </div>
+    </div>
+  `;
+
+  const funEl = preview.querySelector('.loading-fun');
+  let i = 0;
+  funEl.textContent = ladeFloskelnTexte[i % ladeFloskelnTexte.length];
+
+  const intId = setInterval(() => {
+    i++;
+    funEl.textContent = ladeFloskelnTexte[i % ladeFloskelnTexte.length];
+  }, 2500);
+
+  // Timer-ID am Element merken, damit wir ihn später stoppen können
+  preview.dataset.loadingTimer = String(intId);
+}
+
+function stopLoading(preview) {
+  if (!preview) return;
+  const id = Number(preview.dataset.loadingTimer || 0);
+  if (id) clearInterval(id);
+  delete preview.dataset.loadingTimer;
+}
+
 
 } // Ende renderExpoList()
