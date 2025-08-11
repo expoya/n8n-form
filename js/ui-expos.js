@@ -104,6 +104,16 @@ if (typeof raw === 'string' && raw.trim() !== '') {
   return;
 }
 
+// Bearbeiten-Button hinzufügen
+const editBtn = document.createElement('button');
+editBtn.textContent = 'Bearbeiten';
+editBtn.className = 'edit-btn';
+preview.parentNode.insertBefore(editBtn, preview.nextSibling);
+
+editBtn.addEventListener('click', () => {
+  startEditMode(preview, idx);
+});
+  
   // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
   if (['finished','completed','done','ready','success'].includes(status)) {
     const safeHtml2 = renderMarkdownToHtml(html || '');
