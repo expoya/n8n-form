@@ -32,7 +32,7 @@ export function renderExpoList () {
         <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
       </div>
       <div class="expo-akk-body">
-        <button class="btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
+        <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
         <div class="text-preview"></div>
       </div>
     `;
@@ -62,8 +62,7 @@ export function renderExpoList () {
       btn.textContent = '⏳ …';
 
       const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
-     if (preview) startLoading(preview);
-
+      if (preview) startLoading(preview);
 
       // Payload für Starter
       const payload = {
@@ -124,7 +123,7 @@ export function renderExpoList () {
             }
             return;
           }
-     
+
           if (['error','failed','fail'].includes(status)) {
             throw new Error('Text-Generierung fehlgeschlagen.');
           }
@@ -137,10 +136,10 @@ export function renderExpoList () {
         alert('Text-Webhook Fehler: ' + (err?.message || err));
         btn.disabled = false;
         btn.textContent = oldLabel;
-       if (preview) {
-  stopLoading(preview);
-  preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
-}
+        if (preview) {
+          stopLoading(preview);
+          preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+        }
       }
     };
   });
@@ -203,142 +202,136 @@ export function renderExpoList () {
   });
 
   // ===== Editiermodus (Text) =====
+  function startEditMode(preview, idx) {
+    const currentHtml = state.texts[idx] || preview.innerHTML;
 
-function startEditMode(preview, idx) {
-  const currentHtml = state.texts[idx] || preview.innerHTML;
+    // HTML -> Markdown (Format beibehalten)
+    let markdown = '';
+    try {
+      markdown = window.turndownService ? window.turndownService.turndown(currentHtml) : currentHtml;
+    } catch {
+      markdown = currentHtml;
+    }
 
-  // HTML -> Markdown (Format bleibt erhalten)
-  let markdown = '';
-  try {
-    markdown = window.turndownService ? window.turndownService.turndown(currentHtml) : currentHtml;
-  } catch {
-    markdown = currentHtml; // Fallback
+    // existierenden Edit-Button verstecken
+    const container = preview.parentNode;
+    const existingEditBtn = container.querySelector(`.edit-btn[data-idx="${idx}"]`);
+    if (existingEditBtn) existingEditBtn.style.display = 'none';
+
+    // Textarea
+    const textarea = document.createElement('textarea');
+    textarea.value = markdown;
+    textarea.className = 'edit-textarea';
+
+    // Aktionen
+    const actions = document.createElement('div');
+    actions.className = 'edit-actions';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.textContent = 'Speichern';
+    saveBtn.className = 'btn btn-primary';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Abbrechen';
+    cancelBtn.className = 'btn btn-secondary';
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(cancelBtn);
+
+    // Preview ausblenden & Edit-UI einsetzen
+    preview.style.display = 'none';
+    container.insertBefore(textarea, preview);
+    container.insertBefore(actions, preview);
+
+    // Aktionen binden
+    saveBtn.addEventListener('click', () => {
+      const newHtml = renderMarkdownToHtml(textarea.value);
+      state.texts[idx] = newHtml;
+      preview.innerHTML = newHtml;
+      cleanupEditMode(preview, textarea, actions, idx);
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      cleanupEditMode(preview, textarea, actions, idx);
+    });
   }
 
-  // existierenden Edit-Button verstecken
-  const container = preview.parentNode;
-  const existingEditBtn = container.querySelector(`.edit-btn[data-idx="${idx}"]`);
-  if (existingEditBtn) existingEditBtn.style.display = 'none';
-
-  // Textarea
-  const textarea = document.createElement('textarea');
-  textarea.value = markdown;
-  textarea.className = 'edit-textarea';
-
-  // Aktionen
-  const actions = document.createElement('div');
-  actions.className = 'edit-actions';
-
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.textContent = 'Speichern';
-  saveBtn.className = 'btn btn-primary';
-
-  const cancelBtn = document.createElement('button');
-  cancelBtn.type = 'button';
-  cancelBtn.textContent = 'Abbrechen';
-  cancelBtn.className = 'btn btn-secondary';
-
-  actions.appendChild(saveBtn);
-  actions.appendChild(cancelBtn);
-
-  // Preview ausblenden & Edit-UI einsetzen
-  preview.style.display = 'none';
-  container.insertBefore(textarea, preview);
-  container.insertBefore(actions, preview);
-
-  // Aktionen binden
-  saveBtn.addEventListener('click', () => {
-    const newHtml = renderMarkdownToHtml(textarea.value); // Markdown -> HTML (+sanitize)
-    state.texts[idx] = newHtml;
-    preview.innerHTML = newHtml;
-    cleanupEditMode(preview, textarea, actions, idx);
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    cleanupEditMode(preview, textarea, actions, idx);
-  });
-}
-
-  
-function cleanupEditMode(preview, textarea, actions, idx) {
-  textarea.remove();
-  actions.remove();
-  preview.style.display = '';
-  const editBtn = preview.parentNode.querySelector(`.edit-btn[data-idx="${idx}"]`);
-  if (editBtn) editBtn.style.display = '';
-}
-
-
+  function cleanupEditMode(preview, textarea, actions, idx) {
+    textarea.remove();
+    actions.remove();
+    preview.style.display = '';
+    const editBtn = preview.parentNode.querySelector(`.edit-btn[data-idx="${idx}"]`);
+    if (editBtn) editBtn.style.display = '';
+  }
 
   function ensureEditButton(preview, idx) {
     if (!preview) return;
     const container = preview.parentNode;
     if (container.querySelector(`.edit-btn[data-idx="${idx}"]`)) return;
 
-   const editBtn = document.createElement('button');
+    const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.textContent = 'Bearbeiten';
     editBtn.className = 'btn btn-ghost edit-btn';
     editBtn.dataset.idx = idx;
+
     container.insertBefore(editBtn, preview.nextSibling);
     editBtn.addEventListener('click', () => startEditMode(preview, idx));
   }
 
-  // === Export-Buttons nur zeigen, wenn mind. 1 Text existiert ===
-const exportBtn    = document.getElementById('exportBtn');
-const exportXmlBtn = document.getElementById('exportXmlBtn');
+  // === Loading UI ===
+  function startLoading(preview) {
+    if (!preview) return;
 
-const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
-
-if (hasAnyText) {
-  if (exportBtn)    exportBtn.style.display = 'inline-block';
-  if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
-} else {
-  if (exportBtn)    exportBtn.style.display = 'none';
-  if (exportXmlBtn) exportXmlBtn.style.display = 'none';
-}
-
- function startLoading(preview) {
-  if (!preview) return;
-
-  preview.innerHTML = `
-    <div class="text-loading">
-      <div class="loader"></div>
-      <div>
-        <div><strong>Text wird generiert …</strong></div>
-        <div class="loading-sub">Dieser Vorgang dauert, je nach gewählten Experten, 4–8 Minuten.</div>
-        <div class="loading-fun"></div>
+    preview.innerHTML = `
+      <div class="text-loading">
+        <div class="loader"></div>
+        <div>
+          <div><strong>Text wird generiert …</strong></div>
+          <div class="loading-sub">Dieser Vorgang dauert, je nach gewählten Experten, 4–8 Minuten.</div>
+          <div class="loading-fun"></div>
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-  const funEl = preview.querySelector('.loading-fun');
-  const lines = ladeFloskelnTexte;
-  let i = 0;
+    const funEl = preview.querySelector('.loading-fun');
+    const lines = ladeFloskelnTexte;
+    let i = 0;
 
-  // Initialtext
-  funEl.textContent = lines[i % lines.length];
+    funEl.textContent = lines[i % lines.length];
 
-  // Wechsel alle 5s, mit kurzem Fade
-  const intId = setInterval(() => {
-    funEl.classList.add('fade-out');
-    setTimeout(() => {
-      i++;
-      funEl.textContent = lines[i % lines.length];
-      funEl.classList.remove('fade-out');
-    }, 300);
-  }, 5000);
+    // Wechsel alle 5s, mit kurzem Fade
+    const intId = setInterval(() => {
+      funEl.classList.add('fade-out');
+      setTimeout(() => {
+        i++;
+        funEl.textContent = lines[i % lines.length];
+        funEl.classList.remove('fade-out');
+      }, 300);
+    }, 5000);
 
-  preview.dataset.loadingTimer = String(intId);
-}
+    preview.dataset.loadingTimer = String(intId);
+  }
 
-function stopLoading(preview) {
-  if (!preview) return;
-  const id = Number(preview.dataset.loadingTimer || 0);
-  if (id) clearInterval(id);
-  delete preview.dataset.loadingTimer;
-}
+  function stopLoading(preview) {
+    if (!preview) return;
+    const id = Number(preview.dataset.loadingTimer || 0);
+    if (id) clearInterval(id);
+    delete preview.dataset.loadingTimer;
+  }
 
+  // === Export-Buttons nur zeigen, wenn mind. 1 Text existiert ===
+  const exportBtn    = document.getElementById('exportBtn');
+  const exportXmlBtn = document.getElementById('exportXmlBtn');
+  const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
 
+  if (hasAnyText) {
+    if (exportBtn)    exportBtn.style.display = 'inline-block';
+    if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
+  } else {
+    if (exportBtn)    exportBtn.style.display = 'none';
+    if (exportXmlBtn) exportXmlBtn.style.display = 'none';
+  }
 } // Ende renderExpoList()
