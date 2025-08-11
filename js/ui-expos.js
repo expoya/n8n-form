@@ -3,7 +3,6 @@ import { state } from './state.js';
 import { startTextJob, pollTextJob } from './api.js';
 import { renderMarkdownToHtml } from './render.js';
 
-
 export function renderExpoList () {
   const list = document.getElementById('expoList');
   list.innerHTML = '';
@@ -69,208 +68,26 @@ export function renderExpoList () {
         let jobId = (start?.jobId || '').toString().replace(/^=+/, ''); // führende "=" entfernen
         if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
- // 2) Polling (angepasst an: Array[0] mit Feldern "Status" und "Text")
-let tries = 0;
-const maxTries = 90; // 10 s * 90 = 15 min
+        // 2) Polling (angepasst an: Array[0] mit Feldern "Status" und "Text")
+        let tries = 0;
+        const maxTries = 90; // 10 s * 90 = 15 min
 
-while (tries <= maxTries) {
-  tries++;
+        while (tries <= maxTries) {
+          tries++;
 
-  let job;
-  try {
-    job = await pollTextJob(jobId);
-  } catch (pollErr) {
-    console.debug('[pollText] fetch error:', pollErr?.message || pollErr);
-    await new Promise(r => setTimeout(r, 10_000));
-    continue;
-  }
+          let job;
+          try {
+            job = await pollTextJob(jobId);
+          } catch (pollErr) {
+            console.debug('[pollText] fetch error:', pollErr?.message || pollErr);
+            await new Promise(r => setTimeout(r, 10_000));
+            continue;
+          }
 
-  // Dein Endpoint liefert ein Array mit genau 1 Row
-  const data = Array.isArray(job) ? job[0] : job;
-  console.debug('[pollText] tick', tries, data);
+          // Dein Endpoint liefert ein Array mit genau 1 Row
+          const data = Array.isArray(job) ? job[0] : job;
+          console.debug('[pollText] tick', tries, data);
 
-  // Status/HTML nach deinem Schema
-  const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
-  const html   = data?.Text ?? '';
-
-  // Fertig, wenn Text da ist (bevorzugt)
-  const raw = data?.Text ?? '';
-const safeHtml = renderMarkdownToHtml(raw);
-
-if (typeof raw === 'string' && raw.trim() !== '') {
-  state.texts[idx] = safeHtml;
-  btn.remove();
-  if (preview) preview.innerHTML = safeHtml;
-  return;
-}
-
-// Bearbeiten-Button hinzufügen
-const editBtn = document.createElement('button');
-editBtn.textContent = 'Bearbeiten';
-editBtn.className = 'edit-btn';
-preview.parentNode.insertBefore(editBtn, preview.nextSibling);
-
-editBtn.addEventListener('click', () => {
-  startEditMode(preview, idx);
-});
-  
-  // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
-  if (['finished','completed','done','ready','success'].includes(status)) {
-    const safeHtml2 = renderMarkdownToHtml(html || '');
-state.texts[idx] = safeHtml2 || '';
-btn.remove();
-if (preview) preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
-  }
-
-  // Fehler?
-  if (['error','failed','fail'].includes(status)) {
-    throw new Error('Text-Generierung fehlgeschlagen.');
-  }
-
-  // warten und weiter pollen
-  await new Promise(r => setTimeout(r, 10_000));
-}
-
-
-        // Timeout
-        throw new Error('Text-Generierung Timeout.');
-      } catch (err) {
-        alert('Text-Webhook Fehler: ' + (err?.message || err));
-        btn.disabled = false;
-        btn.textContent = oldLabel;
-        if (preview) {
-          preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
-        }
-      }
-    };
-  });
-
-  // --- Header-Klick (komplette Zeile) öffnet/schließt ebenfalls ---
-  list.querySelectorAll('.expo-akkordeon').forEach(acc => {
-    acc.addEventListener('click', e => {
-      if (e.target.closest('.expo-akk-header')) {
-        const isOpen = acc.classList.toggle('open');
-        const btnExpand = acc.querySelector('.btn-expand');
-        if (btnExpand) btnExpand.textContent = isOpen ? '▲' : '▼';
-      }
-    });
-  });
-
-  // --- Titel bearbeiten (Inline) ---
-  list.querySelectorAll('.btn-edit-title').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-
-      const idx  = +btn.dataset.idx;
-      const acc  = btn.closest('.expo-akkordeon');
-      const span = acc.querySelector('.expo-titel-text');
-      if (!span) return;
-
-      const input = document.createElement('input');
-      input.value = span.textContent;
-      input.className = 'edit-inline';
-      span.replaceWith(input);
-      input.focus();
-
-      const saveBtn = document.createElement('button');
-      saveBtn.textContent = '✔️';
-      saveBtn.className   = 'btn-icon btn-save-inline';
-      input.after(saveBtn);
-
-      function commit () {
-        const val = input.value.trim();
-        if (val) state.titles[idx] = val;
-        input.replaceWith(span);
-        span.textContent = val || span.textContent;
-        saveBtn.remove();
-      }
-
-      saveBtn.onclick = commit;
-      input.onkeydown = ev => {
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
-      };
-      input.onblur = commit;
-    };
-  });
-
-  // --- Titel löschen ---
-  list.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-      const idx = +btn.dataset.idx;
-      state.titles.splice(idx, 1);
-      state.texts.splice(idx, 1);
-      renderExpoList();
-    };
-  });
-
-  function startEditMode(preview, idx) {
-  const currentHtml = state.texts[idx] || preview.innerHTML;
-
-  // HTML → Plaintext (Markdown) um leichter zu editieren
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = currentHtml;
-  const plainText = tempDiv.textContent;
-
-  // Textarea erstellen
-  const textarea = document.createElement('textarea');
-  textarea.value = plainText;
-  textarea.className = 'edit-textarea';
-
-  // Speichern-Button
-  const saveBtn = document.createElement('button');
-  saveBtn.textContent = 'Speichern';
-  saveBtn.className = 'save-btn';
-
-  // Abbrechen-Button
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = 'Abbrechen';
-  cancelBtn.className = 'cancel-btn';
-
-  // Preview verstecken
-  preview.style.display = 'none';
-
-  // Buttons & Textarea einfügen
-  preview.parentNode.insertBefore(textarea, preview);
-  preview.parentNode.insertBefore(saveBtn, preview);
-  preview.parentNode.insertBefore(cancelBtn, preview);
-
-  // Klick-Events
-  saveBtn.addEventListener('click', () => {
-    const newHtml = renderMarkdownToHtml(textarea.value);
-    state.texts[idx] = newHtml;
-    preview.innerHTML = newHtml;
-    cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    cleanupEditMode(preview, textarea, saveBtn, cancelBtn);
-  });
-}
-
-function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
-  textarea.remove();
-  saveBtn.remove();
-  cancelBtn.remove();
-  preview.style.display = '';
-}
-function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
-  textarea.remove();
-  saveBtn.remove();
-  cancelBtn.remove();
-  preview.style.display = '';
-}
-
-// === Export-Buttons sichtbar machen / verstecken ===
-const exportBtn    = document.getElementById('exportBtn');
-const exportXmlBtn = document.getElementById('exportXmlBtn');
-
-if (state.titles.length > 0) {
-  if (exportBtn)    exportBtn.style.display = 'inline-block';
-  if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
-} else {
-  if (exportBtn)    exportBtn.style.display = 'none';
-  if (exportXmlBtn) exportXmlBtn.style.display = 'none';
-}
-
-} // <--- Ende renderExpoList()
+          // Status/HTML nach deinem Schema
+          const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
+          const html   = data?.Text ?? '';
