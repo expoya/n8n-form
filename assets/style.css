@@ -325,3 +325,29 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .loading-fun {
   margin-top: .35rem; font-style: italic; opacity: .9;
 }
+/* Konsistente Buttons */
+.btn { 
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: .4rem; padding: .5rem .9rem; border-radius: .6rem;
+  font: 600 0.95rem/1.1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  border: 1px solid rgba(255,255,255,.08); cursor: pointer;
+  transition: transform .02s ease, background .15s ease, border-color .15s ease;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary { background: #6b74ff; color: #fff; border-color: #6b74ff; }
+.btn-primary:hover { filter: brightness(1.05); }
+
+.btn-secondary { background: rgba(255,255,255,.05); color: #fff; }
+.btn-secondary:hover { background: rgba(255,255,255,.08); }
+
+.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.1); }
+.btn-ghost:hover { background: rgba(255,255,255,.06); }
+
+/* Edit-UI */
+.edit-actions { display: flex; gap: .5rem; margin: .5rem 0 .75rem; }
+.edit-textarea {
+  width: 100%; min-height: 180px; margin: .5rem 0; resize: vertical;
+  font: 400 1rem/1.5 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
