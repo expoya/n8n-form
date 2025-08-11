@@ -113,47 +113,45 @@ while (tries <= maxTries) {
   console.debug('[pollText] tick', tries, data);
 
   // Status/HTML nach deinem Schema
-  const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
-  const html   = data?.Text ?? '';
+// Status/HTML nach deinem Schema
+const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
+const html   = data?.Text ?? '';
 
-  // Fertig, wenn Text da ist (bevorzugt)
-  const raw = data?.Text ?? '';
-const safeHtml = renderMarkdownToHtml(raw);
-
-if (typeof raw === 'string' && raw.trim() !== '') {
+// --- A) Sofort-Text (direkt vorhanden) ---
+const raw = (data?.Text ?? '').trim();
+if (raw) {
+  const safeHtml = renderMarkdownToHtml(raw);
   state.texts[idx] = safeHtml;
   btn.remove();
-  if (preview) preview.innerHTML = safeHtml;
-  return;
+  if (preview) {
+    preview.innerHTML = safeHtml;
+    ensureEditButton(preview, idx);  // nur einmal hinzufügen
+  }
+  return; // raus aus dem Polling
 }
 
-// Bearbeiten-Button hinzufügen
-const editBtn = document.createElement('button');
-editBtn.textContent = 'Bearbeiten';
-editBtn.className = 'edit-btn';
-preview.parentNode.insertBefore(editBtn, preview.nextSibling);
+// --- B) Fertig gemeldet über Status ---
+if (['finished','completed','done','ready','success'].includes(status)) {
+  const safeHtml2 = renderMarkdownToHtml(html || '');
+  state.texts[idx] = safeHtml2 || '';
+  btn.remove();
+  if (preview) {
+    preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
+    ensureEditButton(preview, idx);  // nur einmal hinzufügen
+  }
+  return; // raus aus dem Polling
+}
 
-editBtn.addEventListener('click', () => {
-  startEditMode(preview, idx);
-});
+// Fehler?
+if (['error','failed','fail'].includes(status)) {
+  throw new Error('Text-Generierung fehlgeschlagen.');
+}
+
+// warten und weiter pollen
+await new Promise(r => setTimeout(r, 10_000));
+
+
   
-  // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
-  if (['finished','completed','done','ready','success'].includes(status)) {
-    const safeHtml2 = renderMarkdownToHtml(html || '');
-state.texts[idx] = safeHtml2 || '';
-btn.remove();
-if (preview) preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
-  }
-
-  // Fehler?
-  if (['error','failed','fail'].includes(status)) {
-    throw new Error('Text-Generierung fehlgeschlagen.');
-  }
-
-  // warten und weiter pollen
-  await new Promise(r => setTimeout(r, 10_000));
-}
-
 
         // Timeout
         throw new Error('Text-Generierung Timeout.');
@@ -276,6 +274,22 @@ function cleanupEditMode(preview, textarea, saveBtn, cancelBtn) {
   saveBtn.remove();
   cancelBtn.remove();
   preview.style.display = '';
+}
+  
+function ensureEditButton(preview, idx) {
+  if (!preview) return;
+  const container = preview.parentNode;
+  // Schon vorhanden? -> nicht nochmal anlegen
+  if (container.querySelector(`.edit-btn[data-idx="${idx}"]`)) return;
+
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.textContent = 'Bearbeiten';
+  editBtn.className = 'edit-btn';
+  editBtn.dataset.idx = idx;
+
+  container.insertBefore(editBtn, preview.nextSibling);
+  editBtn.addEventListener('click', () => startEditMode(preview, idx));
 }
 
   function buildXmlFromState() {
