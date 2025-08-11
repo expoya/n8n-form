@@ -4,16 +4,12 @@ import { startTextJob, pollTextJob } from './api.js';
 import { renderMarkdownToHtml } from './render.js';
 
 const ladeFloskelnTexte = [
-  "Die KI poliert noch schnell ein paar Synapsen …",
-  "Unser Textschmied legt die letzten Wörter aufs Amboss.",
-  "Google bekommt gerade einen kurzen Schönheitsschliff.",
-  "Die Absatzakrobaten machen sich warm …",
-  "Semantik wird sortiert, Satzmelodie gestimmt …",
-  "Wir gießen noch etwas SEO-Glitzer drüber.",
-  "Die Headline übt noch ihren großen Auftritt.",
-  "Kurz noch den CTA wachkitzeln …",
-  "Das Wording zieht sich die Laufschuhe an.",
-  "Der Lesefluss nimmt Anlauf …"
+  "Der SEO-Stratege kippt gerade einen Eimer voller Keywords über den Besprechungstisch.",
+  "Der Micro-Texter ruft: ‚Wir brauchen mehr Drama!‘ – und haut ein Ausrufezeichen rein.",
+  "Der SEO-Veredler rückt jedes Komma mit der Pinzette zurecht.",
+  "Der SEO-Auditor blättert nervös durch die Google-Richtlinien.",
+  "Der Mikro-Texter tippt mit geschlossenen Augen – der Auditor murmelt: Mutig.",
+  "Der Micro-Texter hat gerade aus Versehen einen Reim geschrieben und ist jetzt sehr stolz.",
 ];
 
 export function renderExpoList () {
