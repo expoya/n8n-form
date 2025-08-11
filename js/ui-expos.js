@@ -1,6 +1,8 @@
 // ui-expos.js
 import { state } from './state.js';
 import { startTextJob, pollTextJob } from './api.js';
+import { renderMarkdownToHtml } from './render.js';
+
 
 export function renderExpoList () {
   const list = document.getElementById('expoList');
@@ -92,19 +94,22 @@ while (tries <= maxTries) {
   const html   = data?.Text ?? '';
 
   // Fertig, wenn Text da ist (bevorzugt)
-  if (typeof html === 'string' && html.trim() !== '') {
-    state.texts[idx] = html;
-    btn.remove();
-    if (preview) preview.innerHTML = html;
-    return;
-  }
+  const raw = data?.Text ?? '';
+const safeHtml = renderMarkdownToHtml(raw);
+
+if (typeof raw === 'string' && raw.trim() !== '') {
+  state.texts[idx] = safeHtml;
+  btn.remove();
+  if (preview) preview.innerHTML = safeHtml;
+  return;
+}
 
   // Oder über Status (falls erst Status "finished", Text direkt danach befüllt wird)
   if (['finished','completed','done','ready','success'].includes(status)) {
-    state.texts[idx] = html || '';
-    btn.remove();
-    if (preview) preview.innerHTML = html || '<em>Kein Text zurückgegeben.</em>';
-    return;
+    const safeHtml2 = renderMarkdownToHtml(html || '');
+state.texts[idx] = safeHtml2 || '';
+btn.remove();
+if (preview) preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
   }
 
   // Fehler?
