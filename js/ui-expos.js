@@ -295,31 +295,37 @@ if (hasAnyText) {
   if (exportXmlBtn) exportXmlBtn.style.display = 'none';
 }
 
-  function startLoading(preview) {
+ function startLoading(preview) {
   if (!preview) return;
 
-  // Grundgerüst (Spinner + Hinweis + Fun-Zeile)
   preview.innerHTML = `
     <div class="text-loading">
       <div class="loader"></div>
       <div>
         <div><strong>Text wird generiert …</strong></div>
-        <div class="loading-sub">Dieser Vorgang dauert, je nach gewählten Experten, 4-8 Minuten.</div>
+        <div class="loading-sub">Dieser Vorgang dauert, je nach gewählten Experten, 4–8 Minuten.</div>
         <div class="loading-fun"></div>
       </div>
     </div>
   `;
 
   const funEl = preview.querySelector('.loading-fun');
+  const lines = ladeFloskelnTexte;
   let i = 0;
-  funEl.textContent = ladeFloskelnTexte[i % ladeFloskelnTexte.length];
 
+  // Initialtext
+  funEl.textContent = lines[i % lines.length];
+
+  // Wechsel alle 5s, mit kurzem Fade
   const intId = setInterval(() => {
-    i++;
-    funEl.textContent = ladeFloskelnTexte[i % ladeFloskelnTexte.length];
-  }, 2500);
+    funEl.classList.add('fade-out');
+    setTimeout(() => {
+      i++;
+      funEl.textContent = lines[i % lines.length];
+      funEl.classList.remove('fade-out');
+    }, 300);
+  }, 5000);
 
-  // Timer-ID am Element merken, damit wir ihn später stoppen können
   preview.dataset.loadingTimer = String(intId);
 }
 
