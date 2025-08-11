@@ -351,3 +351,8 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
   width: 100%; min-height: 180px; margin: .5rem 0; resize: vertical;
   font: 400 1rem/1.5 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
+#exportBtn, #exportXmlBtn {
+  display: inline-flex;  /* statt block */
+  width: auto !important;
+  min-width: 0;
+}
