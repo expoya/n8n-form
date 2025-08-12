@@ -452,7 +452,7 @@ input:checked + .slider:before {
 
 /* --- Bei .open ausklappen --- */
 .expo-akkordeon.open .expo-akk-body{
-  max-height:800px;            /* groß genug für typische Inhalte */
+  max-height:4000px;            /* groß genug für typische Inhalte */
   padding:12px 14px 16px;
   opacity:1;
 }
@@ -531,5 +531,10 @@ input:checked + .slider:before {
 
 .text-editarea { width: 100%; min-height: 220px; }
 .edit-actions { display:flex; gap:8px; margin-top:8px; }
+
+/* „Erneut generieren“ im Body leicht absetzen */
+.expo-akk-body .btn-regenerate-text {
+  margin-top: 8px;
+}
 
 
