@@ -80,9 +80,9 @@ function updateActionButtons(li, idx) {
 
   if (!generate || !regenerate || !cancelBtn) return;
 
-  generate.disabled       = running;
-  cancelBtn.style.display = running ? '' : 'none';
-  regenerate.style.display= hasText && !running ? '' : 'none';
+  generate.disabled        = running;
+  cancelBtn.style.display  = running ? '' : 'none';
+  regenerate.style.display = hasText && !running ? '' : 'none';
 }
 
 function toggleAccordion(li, open, listRoot) {
@@ -94,6 +94,112 @@ function toggleAccordion(li, open, listRoot) {
   } else {
     li.classList.remove('open');
   }
+}
+
+// ---- Titel bearbeiten / löschen ----
+function startTitleEdit(header, idx) {
+  const titleSpan   = header.querySelector('.expo-titel-text');
+  const oldTitle    = titleSpan?.textContent || '';
+  const controlsOld = header.querySelector('.header-controls');
+  if (!titleSpan) return;
+
+  // UI: Input + Save/Cancel inline
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldTitle;
+  input.className = 'title-input';
+  input.style.minWidth = '40%';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary btn-save-title';
+  saveBtn.textContent = 'Speichern';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-secondary btn-cancel-title';
+  cancelBtn.textContent = 'Abbrechen';
+
+  // Temporär ersetzen
+  titleSpan.replaceWith(input);
+
+  // Controls ersetzen (Edit/Delete/Expand → Save/Cancel)
+  const ctrl = document.createElement('span');
+  ctrl.className = 'header-controls';
+  ctrl.style.display = 'inline-flex';
+  ctrl.style.gap = '6px';
+  ctrl.append(saveBtn, cancelBtn);
+
+  if (controlsOld) controlsOld.replaceWith(ctrl);
+  else header.appendChild(ctrl);
+
+  // Handlers
+  const finish = () => {
+    // wiederherstellen
+    const span = document.createElement('span');
+    span.className = 'expo-titel-text';
+    span.textContent = state.titles[idx] || oldTitle;
+    input.replaceWith(span);
+    ctrl.replaceWith(controlsOld || buildHeaderControls(idx));
+  };
+
+  saveBtn.onclick = () => {
+    const v = (input.value || '').trim();
+    if (!v) { input.focus(); return; }
+    state.titles[idx] = v;
+    finish();
+  };
+  cancelBtn.onclick = () => finish();
+
+  input.focus();
+  input.select();
+}
+
+function buildHeaderControls(idx) {
+  const wrap = document.createElement('span');
+  wrap.className = 'header-controls';
+  wrap.style.display = 'inline-flex';
+  wrap.style.gap = '4px';
+
+  const btnEdit = document.createElement('button');
+  btnEdit.className = 'btn-icon btn-edit-title';
+  btnEdit.title = 'Bearbeiten';
+  btnEdit.textContent = '✏️';
+  btnEdit.dataset.idx = String(idx);
+
+  const btnDelete = document.createElement('button');
+  btnDelete.className = 'btn-icon btn-delete';
+  btnDelete.title = 'Entfernen';
+  btnDelete.textContent = '🗑️';
+  btnDelete.dataset.idx = String(idx);
+
+  const btnExpand = document.createElement('button');
+  btnExpand.className = 'btn-expand';
+  btnExpand.title = 'Details';
+  btnExpand.textContent = '▼';
+  btnExpand.dataset.idx = String(idx);
+
+  wrap.append(btnEdit, btnDelete, btnExpand);
+  return wrap;
+}
+
+function deleteTitle(idx) {
+  // Wenn Job läuft: nicht löschen
+  if (window.textJobs[idx]?.running) {
+    alert('Bitte zuerst den laufenden Job abbrechen.');
+    return false;
+  }
+  // entfernen
+  state.titles.splice(idx, 1);
+  if (Array.isArray(state.texts)) state.texts.splice(idx, 1);
+
+  // Reindex: Jobs-Map neu bauen
+  const oldJobs = window.textJobs;
+  window.textJobs = {};
+  state.titles.forEach((_, i) => {
+    // alte Einträge verschieben, falls vorhanden
+    if (i >= idx && oldJobs[i+1]) window.textJobs[i] = oldJobs[i+1];
+    else if (oldJobs[i])          window.textJobs[i] = oldJobs[i];
+  });
+  return true;
 }
 
 // PUBLIC
@@ -123,7 +229,11 @@ export function renderExpoList() {
       <div class="expo-akk-header" data-idx="${idx}" role="button" aria-expanded="false">
         <span class="expo-akk-index">${idx + 1}.</span>
         <span class="expo-akk-titel"><span class="expo-titel-text">${title}</span></span>
-        <span class="chevron" aria-hidden="true"></span>
+        <span class="header-controls">
+          <button class="btn-icon btn-edit-title" data-idx="${idx}" title="Bearbeiten">✏️</button>
+          <button class="btn-icon btn-delete"      data-idx="${idx}" title="Entfernen">🗑️</button>
+          <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
+        </span>
       </div>
 
       <div class="expo-akk-body" data-idx="${idx}">
@@ -154,17 +264,40 @@ function bindAccordionAndActions(list) {
     const el = ev.target;
     if (!(el instanceof HTMLElement)) return;
 
-    // Akkordeon Header toggeln
-    const header = el.closest('.expo-akk-header');
-    if (header) {
-      const li = header.closest('.expo-akkordeon');
+    // Akkordeon toggeln (nur über btn-expand ODER Klick auf Header)
+    const expandBtn = el.closest('.btn-expand');
+    const header    = el.closest('.expo-akk-header');
+    if (expandBtn || (header && !el.closest('.title-input') && !el.closest('.btn-save-title') && !el.closest('.btn-cancel-title'))) {
+      const li = (expandBtn || header).closest('.expo-akkordeon');
       const isOpen = li.classList.contains('open');
       toggleAccordion(li, !isOpen, list);
-      header.setAttribute('aria-expanded', String(!isOpen));
+      header?.setAttribute('aria-expanded', String(!isOpen));
+      if (expandBtn) return; // wenn nur expand geklickt, hier beenden
+    }
+
+    // Titel bearbeiten
+    const btnEditTitle = el.closest('.btn-edit-title');
+    if (btnEditTitle) {
+      const idx = parseInt(btnEditTitle.dataset.idx, 10);
+      const head = btnEditTitle.closest('.expo-akk-header');
+      startTitleEdit(head, idx);
       return;
     }
 
-    // Buttons
+    // Titel löschen
+    const btnDeleteTitle = el.closest('.btn-delete');
+    if (btnDeleteTitle) {
+      const idx = parseInt(btnDeleteTitle.dataset.idx, 10);
+      // Sicherheitsfrage
+      const ok = confirm('Diesen Titel wirklich löschen?');
+      if (!ok) return;
+      if (deleteTitle(idx)) {
+        renderExpoList();
+      }
+      return;
+    }
+
+    // Text-Buttons
     const btn = el.closest('button');
     if (!btn) return;
     const idxAttr = btn.getAttribute('data-idx');
