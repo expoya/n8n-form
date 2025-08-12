@@ -312,6 +312,7 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
   padding: .75rem 1rem; border-radius: .75rem;
   font-size: .95rem;
   margin-bottom: 12px;
+  margin-top: 12px;
 }
 .loader {
   width: 18px; height: 18px; border-radius: 50%;
@@ -326,7 +327,6 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .loading-fun {
   margin-top: .35rem; font-style: italic; opacity: .9;
 }
- .loading-fun.fade-out { opacity: .2; }
 /* Konsistente Buttons */
 .btn { 
   display: inline-flex; align-items: center; justify-content: center;
@@ -357,4 +357,31 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
   display: inline-flex;  /* statt block */
   width: auto !important;
   min-width: 0;
+}
+
+/* === Edit-Buttons Ausrichtung & Breite === */
+.edit-actions {
+  display: inline-flex;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-save,
+.btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;          /* Wichtig: keine volle Breite mehr */
+  padding: 0.5rem 0.9rem;
+  white-space: nowrap;
+}
+
+.btn-save { /* optional: leicht hervorheben */
+  /* falls du btn-primary hast, lass das. Sonst: */
+  /* background: var(--primary); color: #fff; */
+}
+
+.btn-cancel {
+  /* background: #eee; color: #333; */
 }
