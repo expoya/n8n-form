@@ -32,13 +32,27 @@ export function renderExpoList () {
   }
 
   function updateExportButtons() {
-    const exportBtn    = document.getElementById('exportBtn');
     const exportXmlBtn = document.getElementById('exportXmlBtn');
-    const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
-    if (exportBtn)    exportBtn.style.display    = hasAnyText ? 'inline-block' : 'none';
-    if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
+const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
+if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
+
   }
 
+  // Kleine Badge im Header anzeigen, wenn Text vorhanden ist
+function markHasText(headerEl) {
+  if (!headerEl) return;
+  if (!headerEl.querySelector('.text-badge')) {
+    const badge = document.createElement('span');
+    badge.className = 'text-badge';
+    badge.textContent = 'Text';
+    // vor dem Pfeil platzieren
+    const expandBtn = headerEl.querySelector('.btn-expand');
+    headerEl.insertBefore(badge, expandBtn || null);
+  }
+  headerEl.closest('.expo-akkordeon')?.classList.add('has-text');
+}
+
+  
   // --- Items rendern ---
   state.titles.forEach((titel, idx) => {
     const li = document.createElement('li');
@@ -63,8 +77,9 @@ export function renderExpoList () {
     const existingHtml = (state.texts && state.texts[idx]) || '';
     if (existingHtml) {
       previewEl.innerHTML = existingHtml;
-      ensureEditButton(previewEl, idx);
-    }
+  ensureEditButton(previewEl, idx);
+  markHasText(li.querySelector('.expo-akk-header'));
+}
   });
 
   // --- Akkordeon-Button (nur der Pfeil) ---
@@ -179,6 +194,8 @@ export function renderExpoList () {
               stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
+              markHasText(btn.closest('.expo-akkordeon')?.querySelector('.expo-akk-header'));
+
             }
 
             const retry = isRetryText(raw) || safeHtml.trim() === '';
