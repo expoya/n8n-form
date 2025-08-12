@@ -385,3 +385,12 @@ input:checked + .slider:before{transform:translateX(15px);background:#fff;}
 .btn-cancel {
   /* background: #eee; color: #333; */
 }
+/* --- Cancel-Button neben dem Generate-Button --- */
+.form-actions, .expo-akk-body {
+  position: relative;
+}
+
+.btn-cancel-gen {
+  display: none;            /* wir zeigen ihn nur während der Generierung */
+  margin-left: .5rem;
+}

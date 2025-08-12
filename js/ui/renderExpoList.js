@@ -10,6 +10,9 @@ export function renderExpoList () {
   const list = document.getElementById('expoList');
   list.innerHTML = '';
 
+  // Safety: Gen-State initialisieren (falls noch nicht vorhanden)
+  if (!state.gen) state.gen = {};
+
   // --- Items rendern ---
   state.titles.forEach((titel, idx) => {
     const li = document.createElement('li');
@@ -23,7 +26,10 @@ export function renderExpoList () {
         <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
       </div>
       <div class="expo-akk-body">
-        <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
+        <div class="generate-actions">
+          <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
+          <button class="btn btn-light btn-cancel-gen" data-idx="${idx}" style="display:none">Abbrechen</button>
+        </div>
         <div class="text-preview"></div>
       </div>
     `;
@@ -40,20 +46,65 @@ export function renderExpoList () {
     };
   });
 
-  // --- Text generieren ---
+  // --- Text generieren (mit Abbrechen) ---
   list.querySelectorAll('.btn-generate-text').forEach(btn => {
     btn.onclick = async e => {
       e.stopPropagation();
       const idx = +btn.dataset.idx;
       if (Number.isNaN(idx)) return;
 
-      // Button sperren + UI vorbereiten
-      btn.disabled = true;
-      const oldLabel = btn.textContent;
-      btn.textContent = '⏳ …';
+      // Doppelstart verhindern
+      if (state.gen[idx]?.active) return;
 
-      const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
+      const container = btn.closest('.expo-akk-body');
+      const preview   = container?.querySelector('.text-preview');
+      const cancelBtn = container?.querySelector(`.btn-cancel-gen[data-idx="${idx}"]`);
+
+      // UI vorbereiten
+      const oldLabel  = btn.textContent;
+      btn.disabled    = true;
+      btn.textContent = '⏳ …';
+      if (cancelBtn) cancelBtn.style.display = 'inline-flex';
       if (preview) startLoading(preview, ladeFloskelnTexte);
+
+      // State für diesen Index setzen
+      state.gen[idx] = {
+        active   : true,
+        cancelled: false,
+        timer    : null,
+        abortCtrl: (typeof AbortController !== 'undefined') ? new AbortController() : null
+      };
+
+      // Cancel-Handler binden (idempotent)
+      if (cancelBtn) {
+        cancelBtn.onclick = () => {
+          const g = state.gen[idx];
+          if (!g || !g.active) return;
+          g.cancelled = true;
+
+          // Timer stoppen
+          if (g.timer) { clearTimeout(g.timer); g.timer = null; }
+
+          // Laufenden Request abbrechen (wenn möglich)
+          if (g.abortCtrl) {
+            try { g.abortCtrl.abort(); } catch (_) {}
+          }
+
+          // UI: Loader aus, Hinweis rein
+          if (preview) {
+            stopLoading(preview);
+            preview.innerHTML = `<div class="text-warning">Vorgang abgebrochen.</div>`;
+          }
+
+          // Buttons zurücksetzen
+          btn.disabled = false;
+          btn.textContent = oldLabel;
+          cancelBtn.style.display = 'none';
+
+          // State zurücksetzen
+          state.gen[idx].active = false;
+        };
+      }
 
       // Payload für Starter
       const payload = {
@@ -64,41 +115,49 @@ export function renderExpoList () {
 
       try {
         // 1) Job starten
-        const start = await startTextJob({ ...payload, title: state.titles[idx] });
+        // (startTextJob kann ohne signal bleiben; falls du es erweitert hast, signal mitgeben)
+        const start = await startTextJob({ ...payload, title: state.titles[idx] }, state.gen[idx].abortCtrl?.signal);
         let jobId = (start?.jobId || '').toString().replace(/^=+/, '');
         if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
-        // 2) Polling
+        // 2) Polling (mit Cancel)
+        const maxTries = 90; // 90 * 10s = 15 min
         let tries = 0;
-        const maxTries = 90; // 10 s * 90 = 15 min
 
-        while (tries <= maxTries) {
-          tries++;
+        const pollOnce = async () => {
+          const g = state.gen[idx];
+          if (!g || g.cancelled) return; // sauber beendet
 
           let job;
           try {
-            job = await pollTextJob(jobId);
+            // Dein pollTextJob behält Cache-Buster & no-store — wir geben nur optional das signal mit
+            job = await pollTextJob(jobId, g.abortCtrl?.signal);
           } catch (pollErr) {
-            console.debug('[pollText] fetch error:', pollErr?.message || pollErr);
-            await new Promise(r => setTimeout(r, 10_000));
-            continue;
+            // Bei manuellem Abbruch hier raus
+            if (state.gen[idx]?.cancelled) return;
+
+            // Netz-/Fetch-Fehler -> kurzer Retry
+            g.timer = setTimeout(pollOnce, 1500);
+            return;
           }
 
-          const data = Array.isArray(job) ? job[0] : job;
+          const data   = Array.isArray(job) ? job[0] : job;
           const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
+          const raw    = (data?.Text ?? '').trim();
           const html   = data?.Text ?? '';
 
           // --- A) Sofort-Text vorhanden
-          const raw = (data?.Text ?? '').trim();
           if (raw) {
             const safeHtml = renderMarkdownToHtml(raw);
             state.texts[idx] = safeHtml;
-            btn.remove();
             if (preview) {
               stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
             }
+            btn.remove();                               // Generate-Button wie bisher entfernen
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            state.gen[idx].active = false;
             return;
           }
 
@@ -106,30 +165,51 @@ export function renderExpoList () {
           if (['finished','completed','done','ready','success'].includes(status)) {
             const safeHtml2 = renderMarkdownToHtml(html || '');
             state.texts[idx] = safeHtml2 || '';
-            btn.remove();
             if (preview) {
               stopLoading(preview);
               preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
               ensureEditButton(preview, idx);
             }
+            btn.remove();
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            state.gen[idx].active = false;
             return;
           }
 
+          // --- C) Fehlerstatus
           if (['error','failed','fail'].includes(status)) {
             throw new Error('Text-Generierung fehlgeschlagen.');
           }
 
-          await new Promise(r => setTimeout(r, 10_000));
-        }
+          // --- D) Weiter pollen (pending/running)
+          tries++;
+          if (tries > maxTries) throw new Error('Text-Generierung Timeout.');
+          g.timer = setTimeout(pollOnce, 10_000);
+        };
 
-        throw new Error('Text-Generierung Timeout.');
+        await pollOnce();
+
       } catch (err) {
-        alert('Text-Webhook Fehler: ' + (err?.message || err));
-        btn.disabled = false;
-        btn.textContent = oldLabel;
-        if (preview) {
-          stopLoading(preview);
-          preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+        // Nur zeigen, wenn nicht manuell abgebrochen
+        if (!state.gen[idx]?.cancelled) {
+          alert('Text-Webhook Fehler: ' + (err?.message || err));
+          if (preview) {
+            stopLoading(preview);
+            preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+          }
+          btn.disabled = false;
+          btn.textContent = oldLabel;
+          if (container) {
+            const cBtn = container.querySelector(`.btn-cancel-gen[data-idx="${idx}"]`);
+            if (cBtn) cBtn.style.display = 'none';
+          }
+        }
+      } finally {
+        // Aufräumen der Timer/Controller (ohne UI zu überschreiben, das macht der Flow oben)
+        const g = state.gen[idx];
+        if (g) {
+          if (g.timer) { clearTimeout(g.timer); g.timer = null; }
+          g.abortCtrl = null;
         }
       }
     };
@@ -143,65 +223,3 @@ export function renderExpoList () {
         const btnExpand = acc.querySelector('.btn-expand');
         if (btnExpand) btnExpand.textContent = isOpen ? '▲' : '▼';
       }
-    });
-  });
-
-  // --- Titel bearbeiten (Inline) ---
-  list.querySelectorAll('.btn-edit-title').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-
-      const idx  = +btn.dataset.idx;
-      const acc  = btn.closest('.expo-akkordeon');
-      const span = acc.querySelector('.expo-titel-text');
-      if (!span) return;
-
-      const input = document.createElement('input');
-      input.value = span.textContent;
-      input.className = 'edit-inline';
-      span.replaceWith(input);
-      input.focus();
-
-      const saveBtn = document.createElement('button');
-      saveBtn.textContent = '✔️';
-      saveBtn.className   = 'btn-icon btn-save-inline';
-      input.after(saveBtn);
-
-      function commit () {
-        const val = input.value.trim();
-        if (val) state.titles[idx] = val;
-        input.replaceWith(span);
-        span.textContent = val || span.textContent;
-        saveBtn.remove();
-      }
-
-      saveBtn.onclick = commit;
-      input.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); commit(); } };
-      input.onblur = commit;
-    };
-  });
-
-  // --- Titel löschen ---
-  list.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-      const idx = +btn.dataset.idx;
-      state.titles.splice(idx, 1);
-      state.texts.splice(idx, 1);
-      renderExpoList();
-    };
-  });
-
-  // === Export-Buttons nur zeigen, wenn mind. 1 Text existiert ===
-  const exportBtn    = document.getElementById('exportBtn');
-  const exportXmlBtn = document.getElementById('exportXmlBtn');
-  const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
-
-  if (hasAnyText) {
-    if (exportBtn)    exportBtn.style.display = 'inline-block';
-    if (exportXmlBtn) exportXmlBtn.style.display = 'inline-block';
-  } else {
-    if (exportBtn)    exportBtn.style.display = 'none';
-    if (exportXmlBtn) exportXmlBtn.style.display = 'none';
-  }
-}

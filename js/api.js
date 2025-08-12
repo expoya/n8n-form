@@ -105,14 +105,16 @@ export async function generateText (payload) {
 }
 // ---------- Text-Job: Start + Poll (analog Titel) ----------
 
-export async function startTextJob(payload = {}) {
-  // Modelle zentral anhängen – genauso wie beim Titel-Job
-  const completePayload = {
-    ...payload,
-    agentModels: state.agentModels,
-    // wenn du ein eigenes Text-Modell im State hast, hier tauschen:
-    textModel  : state.agentModels.seoVeredler
-  };
+export async function startTextJob(payload, signal) {
+  const res = await fetch('/api/generate/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal // darf undefined sein
+  });
+  if (!res.ok) throw new Error('Start fehlgeschlagen');
+  return res.json();
+};
 
   const res = await fetch(TEXT_WEBHOOK_URL, {
     method  : "POST",
@@ -124,15 +126,33 @@ export async function startTextJob(payload = {}) {
   return safeJson(res);
 }
 
-export async function pollTextJob(jobId) {
+export async function pollTextJob(jobId, signal) {
   // Cache-Buster gegen CDN/Proxy/Browser-Caching
-  const url = `${TEXT_POLL_URL}${encodeURIComponent(jobId)}&_=${Date.now()}`;
+  // Unterstützt sowohl .../status?jobId= als auch .../status?foo=bar&jobId=
+  const sep = TEXT_POLL_URL.includes('?') ? '&' : '?';
+  const cacheBust = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const url = `${TEXT_POLL_URL}${encodeURIComponent(jobId)}${sep}_cb=${cacheBust}`;
 
   const res = await fetch(url, {
-    cache: 'no-store',
+    method: 'GET',
+    signal,                 // <-- optionaler AbortController
+    cache: 'no-store',      // Browser-Cache umgehen
     headers: {
-      'Cache-Control': 'no-cache'
-    }
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Accept': 'application/json'
+    },
+    redirect: 'follow',
+    keepalive: false        // vermeidet zickiges Verhalten bei Abbruch
+  });
+
+  if (!res.ok) {
+    throw new Error(`Polling fehlgeschlagen (${res.status})`);
+  }
+  return res.json();
+}
+
   });
 
   return safeJson(res); // erwartet Array[0] mit Status/Text in deinem Flow
