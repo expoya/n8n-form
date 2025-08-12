@@ -184,3 +184,156 @@ export function renderExpoList () {
             const retry = isRetryText(raw) || safeHtml.trim() === '';
             if (retry) {
               showRegenerate(btn);
+            } else {
+              // normaler Abschluss
+              btn.disabled = false;
+              btn.textContent = oldLabel;
+            }
+
+            if (cancelBtn) cancelBtn.remove();
+            updateExportButtons();
+            break; // fertig – Schleife verlassen
+          }
+
+          // --- B) Kein Text: Status auswerten ---
+          if (status === 'error') {
+            if (preview) {
+              stopLoading(preview);
+              preview.innerHTML = '<div class="text-error">Fehler bei der Generierung.</div>';
+            }
+            btn.disabled = false;
+            btn.textContent = oldLabel;
+            if (cancelBtn) cancelBtn.remove();
+            window.textJobs[idx] = { running: false, cancel: false };
+            break;
+          }
+
+          if (status === 'finished') {
+            // Fertig, aber kein Text -> "Erneut generieren"
+            if (preview) {
+              stopLoading(preview);
+              preview.innerHTML = '<em>Kein Text zurückgegeben.</em>';
+            }
+            showRegenerate(btn);
+            if (cancelBtn) cancelBtn.remove();
+            window.textJobs[idx] = { running: false, cancel: false };
+            updateExportButtons();
+            break;
+          }
+
+          // noch nicht fertig -> warten & weiter
+          await new Promise(r => setTimeout(r, 10_000));
+        } // while
+
+        // --- Timeout-Absicherung ---
+        if (tries > maxTries) {
+          if (preview) {
+            stopLoading(preview);
+            preview.innerHTML = '<div class="text-error">Timeout – bitte erneut versuchen.</div>';
+          }
+          btn.disabled = false;
+          btn.textContent = oldLabel;
+          if (cancelBtn) cancelBtn.remove();
+          window.textJobs[idx] = { running: false, cancel: false };
+        }
+      } catch (err) {
+        if (preview) {
+          stopLoading(preview);
+          preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
+        }
+        btn.disabled = false;
+        btn.textContent = oldLabel;
+        if (cancelBtn) cancelBtn.remove();
+        window.textJobs[idx] = { running: false, cancel: false };
+      }
+    };
+  });
+
+  // --- Titel bearbeiten ---
+  list.querySelectorAll('.btn-edit-title').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx;
+      const header = btn.closest('.expo-akk-header');
+      const titleSpan = header.querySelector('.expo-titel-text');
+      const old = titleSpan?.textContent || '';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = old;
+      input.className = 'title-input';
+      input.style.minWidth = '40%';
+      titleSpan.replaceWith(input);
+
+      const save = document.createElement('button');
+      save.className = 'btn btn-primary btn-save-title';
+      save.textContent = 'Speichern';
+
+      const cancel = document.createElement('button');
+      cancel.className = 'btn btn-secondary btn-cancel-title';
+      cancel.textContent = 'Abbrechen';
+
+      const controls = header.querySelector('.header-controls') || header.appendChild(document.createElement('span'));
+      const oldControls = controls.innerHTML;
+      controls.className = 'header-controls';
+      controls.innerHTML = '';
+      controls.append(save, cancel);
+
+      const finish = () => {
+        const span = document.createElement('span');
+        span.className = 'expo-titel-text';
+        span.textContent = state.titles[idx] || old;
+        input.replaceWith(span);
+        controls.innerHTML = oldControls || `
+          <button class="btn-icon btn-edit-title" data-idx="${idx}" title="Bearbeiten">✏️</button>
+          <button class="btn-icon btn-delete"      data-idx="${idx}" title="Entfernen">🗑️</button>
+          <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
+        `;
+      };
+
+      save.onclick = () => {
+        const v = (input.value || '').trim();
+        if (!v) { input.focus(); return; }
+        state.titles[idx] = v;
+        finish();
+      };
+      cancel.onclick = () => finish();
+
+      input.focus(); input.select();
+    };
+  });
+
+  // --- Titel löschen ---
+  list.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx;
+      if (Number.isNaN(idx)) return;
+      if (!confirm('Diesen Titel wirklich löschen?')) return;
+
+      if (window.textJobs[idx]?.running) {
+        alert('Bitte zuerst den laufenden Job abbrechen.');
+        return;
+      }
+
+      state.titles.splice(idx, 1);
+      if (Array.isArray(state.texts)) state.texts.splice(idx, 1);
+
+      // Jobs neu indexieren
+      const oldJobs = window.textJobs || {};
+      const newJobs = {};
+      Object.keys(oldJobs).forEach(k => {
+        const i = Number(k);
+        if (!Number.isInteger(i)) return;
+        if (i < idx) newJobs[i]   = oldJobs[i];
+        if (i > idx) newJobs[i-1] = oldJobs[i];
+      });
+      window.textJobs = newJobs;
+
+      renderExpoList();
+    };
+  });
+
+  // Export-Buttons initial passend setzen
+  updateExportButtons();
+}
