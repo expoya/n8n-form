@@ -4,6 +4,7 @@ import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js'
 import { renderExpoList } from './ui-expos.js';
 import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
+import { notify } from './ui/notifier.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
@@ -187,6 +188,7 @@ async function pollUntilDone(jobId) {
       clearInterval(timer); hideLoader();
       state.titles = JSON.parse(job.result || '[]');
       state.texts  = new Array(state.titles.length).fill('');
+      notify('Titel fertig', `${state.titles.length} Expo-Titel wurden generiert.`);
       renderExpoList();
     }
     if (job.status === 'error' || tries > maxTries) {
