@@ -494,6 +494,12 @@ input:checked + .slider:before {
   animation: spin 1.2s linear infinite;
 }
 
+/* Abstand unterhalb der Vorschau zum Bearbeiten-Button */
+.expo-akk-body .edit-btn {
+  margin-top: 10px;
+}
+
+
 /* keyframes falls nicht mehr drin */
 @keyframes spin {
   to { transform: rotate(360deg); }
