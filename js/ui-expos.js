@@ -182,23 +182,27 @@ function buildHeaderControls(idx) {
 }
 
 function deleteTitle(idx) {
-  // Wenn Job läuft: nicht löschen
+  // Laufende Jobs blocken das Löschen
   if (window.textJobs[idx]?.running) {
     alert('Bitte zuerst den laufenden Job abbrechen.');
     return false;
   }
-  // entfernen
+
+  // Titel & Text entfernen
   state.titles.splice(idx, 1);
   if (Array.isArray(state.texts)) state.texts.splice(idx, 1);
 
-  // Reindex: Jobs-Map neu bauen
-  const oldJobs = window.textJobs;
-  window.textJobs = {};
-  state.titles.forEach((_, i) => {
-    // alte Einträge verschieben, falls vorhanden
-    if (i >= idx && oldJobs[i+1]) window.textJobs[i] = oldJobs[i+1];
-    else if (oldJobs[i])          window.textJobs[i] = oldJobs[i];
+  // textJobs sauber neu indexieren
+  const oldJobs = window.textJobs || {};
+  const newJobs = {};
+  Object.keys(oldJobs).forEach(k => {
+    const i = Number(k);
+    if (!Number.isInteger(i)) return;
+    if (i < idx) newJobs[i]   = oldJobs[i];
+    if (i > idx) newJobs[i-1] = oldJobs[i];
   });
+  window.textJobs = newJobs;
+
   return true;
 }
 
