@@ -523,3 +523,7 @@ input:checked + .slider:before {
   color: #f29aa3;
 }
 
+.text-editarea { width: 100%; min-height: 220px; }
+.edit-actions { display:flex; gap:8px; margin-top:8px; }
+
+
