@@ -2,6 +2,8 @@
 import { state } from './state.js';
 import { startTextJob, pollTextJob } from './api.js';
 import { renderMarkdownToHtml } from './render.js';
+import { startLoading, stopLoading } from './ui/loading.js';
+import { ladeFloskelnTexte } from './ui/constants.js';
 
 // Runtime Job-Status
 if (!window.textJobs) window.textJobs = {}; // { [idx]: { running: bool, cancel: bool } }
@@ -13,14 +15,6 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const POLL_DELAY = 10_000; // 10s
 const MAX_TRIES  = 90;     // 15 Min
-
-function spinner() {
-  const s = document.createElement('span');
-  s.className = 'mini-spinner';
-  s.textContent = '…';
-  s.setAttribute('aria-busy', 'true');
-  return s;
-}
 
 function isRetryText(s) {
   const t = (s || '').toLowerCase();
@@ -103,7 +97,6 @@ function startTitleEdit(header, idx) {
   const controlsOld = header.querySelector('.header-controls');
   if (!titleSpan) return;
 
-  // UI: Input + Save/Cancel inline
   const input = document.createElement('input');
   input.type = 'text';
   input.value = oldTitle;
@@ -118,10 +111,8 @@ function startTitleEdit(header, idx) {
   cancelBtn.className = 'btn btn-secondary btn-cancel-title';
   cancelBtn.textContent = 'Abbrechen';
 
-  // Temporär ersetzen
   titleSpan.replaceWith(input);
 
-  // Controls ersetzen (Edit/Delete/Expand → Save/Cancel)
   const ctrl = document.createElement('span');
   ctrl.className = 'header-controls';
   ctrl.style.display = 'inline-flex';
@@ -131,14 +122,12 @@ function startTitleEdit(header, idx) {
   if (controlsOld) controlsOld.replaceWith(ctrl);
   else header.appendChild(ctrl);
 
-  // Handlers
   const finish = () => {
-    // wiederherstellen
     const span = document.createElement('span');
     span.className = 'expo-titel-text';
     span.textContent = state.titles[idx] || oldTitle;
     input.replaceWith(span);
-    ctrl.replaceWith(controlsOld || buildHeaderControls(idx));
+    ctrl.replaceWith(buildHeaderControls(idx));
   };
 
   saveBtn.onclick = () => {
@@ -182,17 +171,14 @@ function buildHeaderControls(idx) {
 }
 
 function deleteTitle(idx) {
-  // Laufende Jobs blocken das Löschen
   if (window.textJobs[idx]?.running) {
     alert('Bitte zuerst den laufenden Job abbrechen.');
     return false;
   }
-
-  // Titel & Text entfernen
   state.titles.splice(idx, 1);
   if (Array.isArray(state.texts)) state.texts.splice(idx, 1);
 
-  // textJobs sauber neu indexieren
+  // Reindex textJobs
   const oldJobs = window.textJobs || {};
   const newJobs = {};
   Object.keys(oldJobs).forEach(k => {
@@ -204,6 +190,19 @@ function deleteTitle(idx) {
   window.textJobs = newJobs;
 
   return true;
+}
+
+// --- Robustes Extrahieren des generierten Texts ---
+function pickTextFromStatus(st) {
+  // n8n-Varianten robust abdecken
+  return (
+    st?.html ??
+    st?.text ??
+    st?.result ??
+    st?.content ??
+    st?.payload ??
+    ''
+  );
 }
 
 // PUBLIC
@@ -246,7 +245,7 @@ export function renderExpoList() {
         </div>
 
         <div class="text-actions" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-          <button class="btn btn-primary btn-generate-text"   data-idx="${idx}">Text generieren</button>
+          <button class="btn btn-primary btn-generate-text"    data-idx="${idx}">Text generieren</button>
           <button class="btn btn-secondary btn-regenerate-text" data-idx="${idx}" style="display:none;">Neu generieren</button>
           <button class="btn btn-secondary btn-cancel-text"     data-idx="${idx}" style="display:none;">Abbrechen</button>
         </div>
@@ -263,29 +262,28 @@ export function renderExpoList() {
   if (first) toggleAccordion(first, true, list);
 }
 
+// Single binding + Handler
 function bindAccordionAndActions(list) {
-  // Schon gebunden? Dann nix erneut binden.
   if (list.dataset.bound === '1') return;
   list.dataset.bound = '1';
-
   list.addEventListener('click', onListClick);
 }
+
 async function onListClick(ev) {
   const el = ev.target;
   if (!(el instanceof HTMLElement)) return;
 
-  // --- Akkordeon-Logik ---
-  // 1) Expand-Button: NUR expand/collapse
+  // Expand-Button: nur toggeln
   const expandBtn = el.closest('.btn-expand');
   if (expandBtn) {
     const li = expandBtn.closest('.expo-akkordeon');
     const list = li?.parentElement;
     const isOpen = li.classList.contains('open');
     toggleAccordion(li, !isOpen, list);
-    return; // WICHTIG: nichts weiter tun
+    return;
   }
 
-  // 2) Klick auf Header: nur toggeln, WENN NICHT auf den Header-Controls geklickt wurde
+  // Header-Klick toggelt nur, wenn NICHT auf Controls/Input geklickt
   const header = el.closest('.expo-akk-header');
   if (header && !el.closest('.header-controls') && !el.closest('.title-input')) {
     const li = header.closest('.expo-akkordeon');
@@ -293,10 +291,10 @@ async function onListClick(ev) {
     const isOpen = li.classList.contains('open');
     toggleAccordion(li, !isOpen, list);
     header.setAttribute('aria-expanded', String(!isOpen));
-    return; // WICHTIG: sonst laufen unten noch Button-Actions!
+    return;
   }
 
-  // --- Titel-Buttons im Header ---
+  // Titel bearbeiten
   const btnEditTitle = el.closest('.btn-edit-title');
   if (btnEditTitle) {
     const idx = parseInt(btnEditTitle.dataset.idx, 10);
@@ -305,17 +303,13 @@ async function onListClick(ev) {
     return;
   }
 
+  // Titel löschen
   const btnDeleteTitle = el.closest('.btn-delete');
   if (btnDeleteTitle) {
     const idx = parseInt(btnDeleteTitle.dataset.idx, 10);
-    // Einmalige Abfrage; weil nur EIN Listener existiert, kommt das auch nur 1x
     const ok = confirm('Diesen Titel wirklich löschen?');
     if (!ok) return;
-
-    if (deleteTitle(idx)) {
-      // Nur DOM neu aufbauen – Listener bleibt (einmalig) erhalten
-      renderExpoList();
-    }
+    if (deleteTitle(idx)) renderExpoList();
     return;
   }
 
@@ -344,8 +338,8 @@ async function onListClick(ev) {
   if (btn.classList.contains('btn-generate-text') || btn.classList.contains('btn-regenerate-text')) {
     if (window.textJobs[idx]?.running) return;
 
-    const spin = (function spinner(){ const s=document.createElement('span'); s.className='mini-spinner'; s.textContent='…'; s.setAttribute('aria-busy','true'); return s; })();
-    preview?.appendChild(spin);
+    // Loader mit Floskeln starten
+    startLoading(preview, ladeFloskelnTexte);
 
     const oldLabel = generate.textContent;
     generate.disabled = true;
@@ -358,15 +352,18 @@ async function onListClick(ev) {
     const payload = { ...state.companyData, h1Title: state.titles[idx], expoIdx: idx };
 
     try {
+      // 1) Start
       const start = await startTextJob({ payload, title: state.titles[idx] });
       let jobId = (start?.jobId || '').toString().replace(/^=+/, '');
       if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
+      // 2) Poll
       let tries = 0;
       while (tries++ <= MAX_TRIES) {
         if (window.textJobs[idx]?.cancel) {
           window.textJobs[idx] = { running: false, cancel: false };
-          if (spin.parentNode) spin.parentNode.removeChild(spin);
+          stopLoading(preview);
+          preview.innerHTML = (state.texts[idx] || '').trim() || '<em>Abgebrochen.</em>';
           generate.disabled = false;
           generate.textContent = oldLabel;
           cancelBtn.style.display = 'none';
@@ -378,11 +375,11 @@ async function onListClick(ev) {
         const st = Array.isArray(status) ? status[0] : status;
 
         if (st?.status === 'finished') {
-          const raw = st?.text || st?.html || '';
+          const raw = pickTextFromStatus(st);
           const safeHtml = renderMarkdownToHtml(raw);
           state.texts[idx] = safeHtml;
 
-          if (spin.parentNode) spin.parentNode.removeChild(spin);
+          stopLoading(preview);
           preview.innerHTML = safeHtml;
           ensureEditButton(preview, idx);
 
@@ -397,7 +394,7 @@ async function onListClick(ev) {
         await sleep(POLL_DELAY);
       }
     } catch (e) {
-      if (spin.parentNode) spin.parentNode.removeChild(spin);
+      stopLoading(preview);
       preview.innerHTML = `<div class="error">Fehler: ${e?.message || e}</div>`;
     } finally {
       window.textJobs[idx] = { running: false, cancel: false };
