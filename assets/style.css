@@ -1,13 +1,28 @@
+@media (max-width:950px){
+  .container{flex-direction:column;align-items:stretch;padding:12px 0;}
+  .compact-panel,.output-panel{max-width:100vw;min-width:0;margin:0 0 18px;}
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@keyframes toast-in  {from{opacity:0;transform:translateY(20px)}
+                       to  {opacity:1;transform:translateY(0)}}
+
+@keyframes toast-out {to  {opacity:0;transform:translateY(20px)}}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ====================================================== */
 /* ===============  BASIS-LAYOUT & FONTS  =============== */
 /* ====================================================== */
-body{
+body {
   background:#1d2330;
   font-family:'Inter',Arial,sans-serif;
   margin:0;
   color:#e5e8ef;
 }
-.container{
+
+.container {
   display:flex;
   align-items:flex-start;
   min-height:100vh;
@@ -17,236 +32,352 @@ body{
 /* ====================================================== */
 /* =================  LINKES FORM-PANEL  ================ */
 /* ====================================================== */
-.compact-panel{
-  background:#252c3d;
-  padding:20px;
-  border-radius:10px;
-  width:360px;
-  box-shadow:0 0 15px rgba(0,0,0,0.3);
+.compact-panel {
+  background:#232a3b;
+  border-radius:18px;
+  box-shadow:0 4px 18px #0004;
+  max-width:420px;
+  min-width:340px;
+  width:100%;
+  margin:0 10px 0 18px;
+  padding:25px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
-.logo{
+
+.logo {
   display:block;
-  max-width:100px;
-  margin:0 auto 15px;
+  margin:0 auto 7px;
+  max-width:120px;
 }
-.headline{
+
+.headline {
+  color:#7d82fa;
+  font-size:1.4rem;
+  margin:0 0 13px;
+  font-weight:700;
+  letter-spacing:1px;
   text-align:center;
-  margin-top:0;
 }
-form{
+
+/* ---------- Formularfelder ---------- */
+.form-group,.form-row {
+  display:flex;
+  flex-direction:column;
+  margin-bottom:8px;
+  gap:2px;
+}
+
+.form-row {
+  flex-direction:row;
+  gap:10px;
+}
+
+input,select,textarea {
+  background:#222736;
+  color:#e5e8ef;
+  border:1px solid #444a63;
+  border-radius:6px;
+  padding:10px 13px;
+  font-size:15px;
+  font-family:inherit;
+  outline:none;
+  resize:none;
+}
+
+input:focus,select:focus,textarea:focus {
+  border:1.5px solid #9ea7f7;
+}
+
+input::placeholder,textarea::placeholder {
+  color:#8e96b8;
+  font-size:12px;
+}
+
+/* ---------- Primärer Button ---------- */
+.btn-primary {
+  width:100%;
+  background:#5a5ef7;
+  color:#fff;
+  border:0;
+  border-radius:10px;
+  padding:15px;
+  font-size:1.18rem;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:12px;
+  box-shadow:0 3px 18px #0002;
+  transition:background .13s;
+}
+
+.btn-primary:hover {
+  background:#7077fa;
+}
+
+/* ---------- Slider / Toggles ---------- */
+.tonality-container {
+  margin:10px 0;
+}
+
+.tonality-label,.tonality-value {
+  font-size:15px;
+  color:#bbc1f4;
+  text-align:center;
+}
+
+/* ----- Tonalitäts-Slider ----- */
+.tonality-slider {
+  width:100%;
+  display:block;
+  height:4px;
+  accent-color:#7d82fa;
+  box-sizing:border-box;
+  margin:6px 0 0;
+}
+
+.toggles-row {
+  display:flex;
+  flex-direction:row;
+  gap:30px;
+  justify-content:center;
+  align-items:center;
+  margin:18px 0 20px;
+}
+
+.toggle-combo {
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.toggle-label {
+  font-size:15px;
+  color:#bbc1f4;
+}
+
+.switch {
+  position:relative;
+  display:inline-block;
+  width:34px;
+  height:18px;
+}
+
+.switch input {
+  display:none;
+}
+
+.slider {
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#3c4157;
+  border-radius:16px;
+  transition:.3s;
+}
+
+.slider:before {
+  content:"";
+  position:absolute;
+  height:13px;
+  width:13px;
+  left:3px;
+  bottom:2.5px;
+  background:#e5e8ef;
+  border-radius:50%;
+  transition:.3s;
+}
+
+input:checked + .slider {
+  background:#7d82fa;
+}
+
+input:checked + .slider:before {
+  transform:translateX(15px);
+  background:#fff;
+}
+/* ====================================================== */
+/* =================  RECHTES OUTPUT-PANEL  ============= */
+/* ====================================================== */
+.output-panel {
+  flex:1 1 0;
+  margin-top:0px;
+  margin-left:10px;
+  margin-right:20px;
+  background:#232a3b;
+  border-radius:18px;
+  min-height:50vh;
+  padding:20px 26px;
   display:flex;
   flex-direction:column;
 }
-.form-group{
-  margin-bottom:15px;
-}
-.form-row{
-  display:flex;
-  gap:10px;
-}
 
-/* Inputs, Textareas */
-input[type="text"],
-input[type="url"],
-input[type="number"],
-textarea,
-select{
-  width:100%;
-  padding:8px 10px;
-  border:none;
-  border-radius:6px;
-  background:#1d2330;
-  color:#fff;
-  font-size:14px;
-}
-textarea{
-  resize:vertical;
-}
-
-/* Buttons */
-.btn-primary{
-  background:#4CAF50;
-  border:none;
-  padding:10px 16px;
-  border-radius:6px;
-  color:#fff;
-  font-size:14px;
-  cursor:pointer;
-}
-.btn-primary:hover{
-  background:#45a049;
-}
-.btn{
-  padding:8px 14px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.btn-secondary{
-  background:#3a4155;
-  color:#fff;
-}
-.btn-secondary:hover{
-  background:#4b5269;
-}
-
-/* Toggles */
-.toggles-row{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-}
-.toggle-combo{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.toggle-label{
-  font-size:14px;
-}
-.switch{
-  position:relative;
-  display:inline-block;
-}
-.switch input{
-  display:none;
-}
-.slider{
-  position:absolute;
-  cursor:pointer;
-  top:0; left:0;
-  right:0; bottom:0;
-  background-color:#ccc;
-  transition:.4s;
-  border-radius:20px;
-}
-.slider:before{
-  position:absolute;
-  content:"";
-  height:16px; width:16px;
-  left:2px; bottom:2px;
-  background-color:white;
-  transition:.4s;
-  border-radius:50%;
-}
-input:checked + .slider{
-  background-color:#4CAF50;
-}
-input:checked + .slider:before{
-  transform:translateX(16px);
-}
-.switch-small{
-  width:34px;
-  height:20px;
-}
-
-/* Tonality Slider */
-.tonality-container{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.tonality-label{
-  flex:1;
-}
-.tonality-slider{
-  flex:2;
-}
-.tonality-value{
-  flex:1;
-  text-align:right;
-}
-
-/* ====================================================== */
-/* ==================  OUTPUT PANEL  =================== */
-/* ====================================================== */
-.output-panel{
-  flex:1;
-  margin-left:20px;
-}
-.output-headline{
-  margin-top:0;
-}
-.expo-list{
+.expo-list {
   list-style:none;
-  padding:0;
+  padding-left:0;
   margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:13px;
 }
-.expo-placeholder{
+
+.expo-placeholder {
+  color:#7780a4;
   font-style:italic;
 }
 
-/* ====================================================== */
-/* ====================  MODAL  ======================== */
-/* ====================================================== */
-.modal{
-  display:none;
-  position:fixed;
-  z-index:1000;
-  left:0;
-  top:0;
-  width:100%;
-  height:100%;
-  overflow:auto;
-  background-color:rgba(0,0,0,0.6);
-}
-.modal-content{
-  background-color:#2c3245;
-  margin:10% auto;
-  padding:20px;
-  border-radius:10px;
-  width:80%;
-  max-width:500px;
+.btn-icon:hover {
+  background:#353b58;
   color:#fff;
-}
-.close{
-  color:#aaa;
-  float:right;
-  font-size:28px;
-  font-weight:bold;
-}
-.close:hover,
-.close:focus{
-  color:#fff;
-  text-decoration:none;
-  cursor:pointer;
 }
 
-/* ====================================================== */
-/* ================  EXPERT OPTIONS  =================== */
-/* ====================================================== */
-.expert-box{
-  margin-top:15px;
-  background:#1f2635;
-  padding:10px;
-  border-radius:6px;
+.btn-delete:hover {
+  background:#2e232a;
 }
-.expert-fields{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
+
+.btn-expand:hover {
+  color:#bbc1f4;
 }
-.info-btn{
+
+.btn-save-inline:hover {
+  color:#bbc1f4;
+}
+
+.btn-generate-text:hover {
+  background:#5a5ef7;
+}
+
+/* ——— Experten-Auswahl ——— */
+.expert-box {
+  margin-top:18px;
+}
+
+.expert-box summary {
+  cursor:pointer;
+  font-weight:600;
+  list-style:none;
+  outline:none;
+  position:relative;
+  padding:6px 0;
+}
+
+.expert-box summary::after {
+  content:"▼";
+  position:absolute;
+  right:0;
+}
+
+.expert-box[open] summary::after {
+  content:"▲";
+}
+
+/* ——— Experten-Feld: Text | Select | Button ——— */
+.expert-fields label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:6px 0 10px;
+  font-size:.9em;
+}
+
+.expert-fields select {
+  flex:1 1 auto;
+}
+
+.info-btn {
+  margin-left:0;
+}
+
+/* ——— Info-Button ——— */
+.info-btn {
   background:none;
   border:none;
   cursor:pointer;
-  color:#fff;
-  font-size:14px;
+  color:#bbb;
+  font-size:.9em;
+  margin-left:6px;
+  padding:0;
 }
 
-/* ====================================================== */
-/* ================  RESPONSIVE  ======================= */
-/* ====================================================== */
-@media(max-width:800px){
-  .container{
-    flex-direction:column;
-    align-items:stretch;
-  }
-  .compact-panel{
-    width:100%;
-    margin-bottom:20px;
-  }
-  .output-panel{
-    margin-left:0;
-  }
+.info-btn:hover {
+  color:#fff;
+}
+
+/* ——— Modal ——— */
+.modal {
+  display:none;
+  position:fixed;
+  z-index:2000;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(2px);
+}
+
+.modal-content {
+  background:#1b1e2b;
+  color:#eee;
+  padding:24px;
+  border-radius:8px;
+  max-width:420px;
+  margin:10% auto;
+  box-shadow:0 6px 18px rgba(0,0,0,.4);
+  font-size:.95em;
+  line-height:1.5;
+}
+
+.modal .close {
+  float:right;
+  font-size:1.4em;
+  cursor:pointer;
+  margin-top:-8px;
+}
+
+/* Konsistente Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  padding: .5rem .9rem;
+  border-radius: .6rem;
+  font: 600 0.95rem/1.1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  border: 1px solid rgba(255,255,255,.08);
+  cursor: pointer;
+  transition: transform .02s ease, background .15s ease, border-color .15s ease;
+  user-select: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: #6b74ff;
+  color: #fff;
+  border-color: #6b74ff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,.05);
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,.06);
+}
+
+#exportBtn, #exportXmlBtn {
+  display: inline-flex;
+  width: auto !important;
+  min-width: 0;
 }
