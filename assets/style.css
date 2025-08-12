@@ -472,6 +472,7 @@ input:checked + .slider:before {
 .btn-generate-text{
   align-self:flex-start;
   margin-top:6px;
+  margin-bottom: 12px;
 }
 .btn-generate-text:hover{ filter:brightness(1.05); }
 
@@ -536,5 +537,9 @@ input:checked + .slider:before {
 .expo-akk-body .btn-regenerate-text {
   margin-top: 8px;
 }
-
+.edit-actions .btn-primary {
+  width: auto;
+  min-width: 140px;   /* optional: Mindestbreite */
+  padding: 10px 20px; /* angenehme Größe */
+}
 
