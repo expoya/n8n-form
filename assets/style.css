@@ -503,3 +503,14 @@ input:checked + .slider:before {
   width: auto;
   min-width: 160px; /* oder was dir optisch passt */
 }
+
+/* Cancel-Button */
+.btn-cancel-text { display:inline-flex; }
+
+/* Loading (zu startLoading/stopLoading) */
+.text-loading{ display:flex; gap:12px; color:#9aa3c7; align-items:flex-start; }
+.text-loading .loader{
+  width:18px;height:18px;border:3px solid #7d82fa;border-top-color:transparent;border-radius:50%;
+  animation:spin .9s linear infinite;margin-top:2px;
+}
+@keyframes spin{ to{ transform:rotate(360deg) } }
