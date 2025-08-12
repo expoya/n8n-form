@@ -260,139 +260,147 @@ export function renderExpoList() {
 }
 
 function bindAccordionAndActions(list) {
-  list.addEventListener('click', async (ev) => {
-    const el = ev.target;
-    if (!(el instanceof HTMLElement)) return;
+  // Schon gebunden? Dann nix erneut binden.
+  if (list.dataset.bound === '1') return;
+  list.dataset.bound = '1';
 
-    // Akkordeon toggeln (nur über btn-expand ODER Klick auf Header)
-    const expandBtn = el.closest('.btn-expand');
-    const header    = el.closest('.expo-akk-header');
-    if (expandBtn || (header && !el.closest('.title-input') && !el.closest('.btn-save-title') && !el.closest('.btn-cancel-title'))) {
-      const li = (expandBtn || header).closest('.expo-akkordeon');
-      const isOpen = li.classList.contains('open');
-      toggleAccordion(li, !isOpen, list);
-      header?.setAttribute('aria-expanded', String(!isOpen));
-      if (expandBtn) return; // wenn nur expand geklickt, hier beenden
+  list.addEventListener('click', onListClick);
+}
+async function onListClick(ev) {
+  const el = ev.target;
+  if (!(el instanceof HTMLElement)) return;
+
+  // --- Akkordeon-Logik ---
+  // 1) Expand-Button: NUR expand/collapse
+  const expandBtn = el.closest('.btn-expand');
+  if (expandBtn) {
+    const li = expandBtn.closest('.expo-akkordeon');
+    const list = li?.parentElement;
+    const isOpen = li.classList.contains('open');
+    toggleAccordion(li, !isOpen, list);
+    return; // WICHTIG: nichts weiter tun
+  }
+
+  // 2) Klick auf Header: nur toggeln, WENN NICHT auf den Header-Controls geklickt wurde
+  const header = el.closest('.expo-akk-header');
+  if (header && !el.closest('.header-controls') && !el.closest('.title-input')) {
+    const li = header.closest('.expo-akkordeon');
+    const list = li?.parentElement;
+    const isOpen = li.classList.contains('open');
+    toggleAccordion(li, !isOpen, list);
+    header.setAttribute('aria-expanded', String(!isOpen));
+    return; // WICHTIG: sonst laufen unten noch Button-Actions!
+  }
+
+  // --- Titel-Buttons im Header ---
+  const btnEditTitle = el.closest('.btn-edit-title');
+  if (btnEditTitle) {
+    const idx = parseInt(btnEditTitle.dataset.idx, 10);
+    const head = btnEditTitle.closest('.expo-akk-header');
+    startTitleEdit(head, idx);
+    return;
+  }
+
+  const btnDeleteTitle = el.closest('.btn-delete');
+  if (btnDeleteTitle) {
+    const idx = parseInt(btnDeleteTitle.dataset.idx, 10);
+    // Einmalige Abfrage; weil nur EIN Listener existiert, kommt das auch nur 1x
+    const ok = confirm('Diesen Titel wirklich löschen?');
+    if (!ok) return;
+
+    if (deleteTitle(idx)) {
+      // Nur DOM neu aufbauen – Listener bleibt (einmalig) erhalten
+      renderExpoList();
     }
+    return;
+  }
 
-    // Titel bearbeiten
-    const btnEditTitle = el.closest('.btn-edit-title');
-    if (btnEditTitle) {
-      const idx = parseInt(btnEditTitle.dataset.idx, 10);
-      const head = btnEditTitle.closest('.expo-akk-header');
-      startTitleEdit(head, idx);
-      return;
-    }
+  // --- Text-Buttons im Body ---
+  const btn = el.closest('button');
+  if (!btn) return;
 
-    // Titel löschen
-    const btnDeleteTitle = el.closest('.btn-delete');
-    if (btnDeleteTitle) {
-      const idx = parseInt(btnDeleteTitle.dataset.idx, 10);
-      // Sicherheitsfrage
-      const ok = confirm('Diesen Titel wirklich löschen?');
-      if (!ok) return;
-      if (deleteTitle(idx)) {
-        renderExpoList();
-      }
-      return;
-    }
+  const idxAttr = btn.getAttribute('data-idx');
+  const idx = idxAttr ? parseInt(idxAttr, 10) : -1;
+  if (Number.isNaN(idx) || idx < 0) return;
 
-    // Text-Buttons
-    const btn = el.closest('button');
-    if (!btn) return;
-    const idxAttr = btn.getAttribute('data-idx');
-    const idx = idxAttr ? parseInt(idxAttr, 10) : -1;
-    if (Number.isNaN(idx) || idx < 0) return;
+  const li         = btn.closest('.expo-akkordeon');
+  const preview    = li?.querySelector('.text-preview');
+  const generate   = li?.querySelector('.btn-generate-text');
+  const regenerate = li?.querySelector('.btn-regenerate-text');
+  const cancelBtn  = li?.querySelector('.btn-cancel-text');
 
-    const li         = btn.closest('.expo-akkordeon');
-    const preview    = li?.querySelector('.text-preview');
-    const generate   = li?.querySelector('.btn-generate-text');
-    const regenerate = li?.querySelector('.btn-regenerate-text');
-    const cancelBtn  = li?.querySelector('.btn-cancel-text');
+  // Abbrechen
+  if (btn.classList.contains('btn-cancel-text')) {
+    if (!window.textJobs[idx]?.running) return;
+    window.textJobs[idx] = { running: false, cancel: true };
+    return;
+  }
 
-    // Abbrechen
-    if (btn.classList.contains('btn-cancel-text')) {
-      if (!window.textJobs[idx]?.running) return;
-      window.textJobs[idx] = { running: false, cancel: true };
-      return;
-    }
+  // Generieren / Neu generieren
+  if (btn.classList.contains('btn-generate-text') || btn.classList.contains('btn-regenerate-text')) {
+    if (window.textJobs[idx]?.running) return;
 
-    // Generieren / Neu generieren
-    if (btn.classList.contains('btn-generate-text') || btn.classList.contains('btn-regenerate-text')) {
-      if (window.textJobs[idx]?.running) return;
+    const spin = (function spinner(){ const s=document.createElement('span'); s.className='mini-spinner'; s.textContent='…'; s.setAttribute('aria-busy','true'); return s; })();
+    preview?.appendChild(spin);
 
-      const spin = spinner();
-      preview?.appendChild(spin);
+    const oldLabel = generate.textContent;
+    generate.disabled = true;
+    generate.textContent = btn.classList.contains('btn-regenerate-text') ? 'Generiere neu…' : 'Generiere…';
+    regenerate.style.display = 'none';
+    cancelBtn.style.display  = '';
 
-      const oldLabel = generate.textContent;
-      generate.disabled = true;
-      generate.textContent = btn.classList.contains('btn-regenerate-text') ? 'Generiere neu…' : 'Generiere…';
-      regenerate.style.display = 'none';
-      cancelBtn.style.display  = '';
+    window.textJobs[idx] = { running: true, cancel: false };
 
-      window.textJobs[idx] = { running: true, cancel: false };
+    const payload = { ...state.companyData, h1Title: state.titles[idx], expoIdx: idx };
 
-      const payload = {
-        ...state.companyData,
-        h1Title: state.titles[idx],
-        expoIdx: idx,
-      };
+    try {
+      const start = await startTextJob({ payload, title: state.titles[idx] });
+      let jobId = (start?.jobId || '').toString().replace(/^=+/, '');
+      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
-      try {
-        // 1) Start
-        const start = await startTextJob({ payload, title: state.titles[idx] });
-        let jobId = (start?.jobId || '').toString().replace(/^=+/, '');
-        if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
-
-        // 2) Poll
-        let tries = 0;
-        while (tries++ <= MAX_TRIES) {
-          if (window.textJobs[idx]?.cancel) {
-            window.textJobs[idx] = { running: false, cancel: false };
-            if (spin.parentNode) spin.parentNode.removeChild(spin);
-            generate.disabled = false;
-            generate.textContent = oldLabel;
-            cancelBtn.style.display = 'none';
-            if ((state.texts[idx] || '').trim()) regenerate.style.display = '';
-            return;
-          }
-
-          const status = await pollTextJob(jobId);
-          const st = Array.isArray(status) ? status[0] : status;
-
-          if (st?.status === 'finished') {
-            const raw = st?.text || st?.html || '';
-            const safeHtml = renderMarkdownToHtml(raw);
-            state.texts[idx] = safeHtml;
-
-            if (spin.parentNode) spin.parentNode.removeChild(spin);
-            preview.innerHTML = safeHtml;
-            ensureEditButton(preview, idx);
-
-            if (isRetryText(raw)) {
-              regenerate.style.display = '';
-            } else {
-              regenerate.style.display = (state.texts[idx] || '').trim() ? '' : 'none';
-            }
-            break;
-          }
-
-          if (st?.status === 'error') {
-            throw new Error(st?.message || 'Fehler bei der Text-Generierung');
-          }
-
-          await sleep(POLL_DELAY);
+      let tries = 0;
+      while (tries++ <= MAX_TRIES) {
+        if (window.textJobs[idx]?.cancel) {
+          window.textJobs[idx] = { running: false, cancel: false };
+          if (spin.parentNode) spin.parentNode.removeChild(spin);
+          generate.disabled = false;
+          generate.textContent = oldLabel;
+          cancelBtn.style.display = 'none';
+          if ((state.texts[idx] || '').trim()) regenerate.style.display = '';
+          return;
         }
-      } catch (e) {
-        if (spin.parentNode) spin.parentNode.removeChild(spin);
-        preview.innerHTML = `<div class="error">Fehler: ${e?.message || e}</div>`;
-      } finally {
-        window.textJobs[idx] = { running: false, cancel: false };
-        generate.disabled = false;
-        generate.textContent = 'Text generieren';
-        cancelBtn.style.display = 'none';
-        if ((state.texts[idx] || '').trim()) regenerate.style.display = '';
+
+        const status = await pollTextJob(jobId);
+        const st = Array.isArray(status) ? status[0] : status;
+
+        if (st?.status === 'finished') {
+          const raw = st?.text || st?.html || '';
+          const safeHtml = renderMarkdownToHtml(raw);
+          state.texts[idx] = safeHtml;
+
+          if (spin.parentNode) spin.parentNode.removeChild(spin);
+          preview.innerHTML = safeHtml;
+          ensureEditButton(preview, idx);
+
+          regenerate.style.display = (isRetryText(raw) || (state.texts[idx] || '').trim()) ? '' : 'none';
+          break;
+        }
+
+        if (st?.status === 'error') {
+          throw new Error(st?.message || 'Fehler bei der Text-Generierung');
+        }
+
+        await sleep(POLL_DELAY);
       }
+    } catch (e) {
+      if (spin.parentNode) spin.parentNode.removeChild(spin);
+      preview.innerHTML = `<div class="error">Fehler: ${e?.message || e}</div>`;
+    } finally {
+      window.textJobs[idx] = { running: false, cancel: false };
+      generate.disabled = false;
+      generate.textContent = 'Text generieren';
+      cancelBtn.style.display = 'none';
+      if ((state.texts[idx] || '').trim()) regenerate.style.display = '';
     }
-  });
+  }
 }
