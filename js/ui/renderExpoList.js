@@ -5,6 +5,7 @@ import { renderMarkdownToHtml } from '../render.js';
 import { ladeFloskelnTexte } from './constants.js';
 import { startLoading, stopLoading } from './loading.js';
 import { ensureEditButton } from './edit.js';
+import { notify } from './notifier.js';
 
 // Laufzeitstatus für Text-Jobs pro Index
 if (!window.textJobs) window.textJobs = {}; // { [idx]: { running: bool, cancel: bool } }
@@ -194,6 +195,9 @@ function markHasText(headerEl) {
               stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
+              // Akustischer Hinweis + (optional) System-Notification
+              const t = (state.titles && state.titles[idx]) || `Titel #${idx+1}`;
+              notify('Text fertig', `Der Text für „${t}“ ist da.`);
               markHasText(btn.closest('.expo-akkordeon')?.querySelector('.expo-akk-header'));
 
             }
