@@ -500,6 +500,25 @@ input:checked + .slider:before {
   margin-top: 10px;
 }
 
+/* Badge + visueller Hinweis für Titel mit vorhandenen Texten */
+.expo-akkordeon.has-text .expo-akk-header {
+  border-left: 3px solid #6b74ff;        /* subtiler Akzent */
+  padding-left: 10px;
+}
+
+.text-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin: 0 8px 0 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font: 600 12px/1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: rgba(107, 116, 255, .12);
+  color: #c9ccff;
+  border: 1px solid rgba(107, 116, 255, .35);
+  vertical-align: middle;
+}
 
 /* keyframes falls nicht mehr drin */
 @keyframes spin {
