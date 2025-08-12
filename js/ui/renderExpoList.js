@@ -43,7 +43,17 @@ export function renderExpoList () {
     };
   });
 
-  // --- Text generieren ---
+
+// Hilfsfunktion: Button in "Erneut generieren" verwandeln
+function showRegenerate(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.textContent = 'Erneut generieren';
+  btn.classList.remove('btn-primary');
+  btn.classList.add('btn-secondary', 'btn-regenerate-text');
+  // bleibt im DOM; der vorhandene onclick-Handler startet die Generierung erneut
+}
+  
 // --- Text generieren ---
 list.querySelectorAll('.btn-generate-text').forEach(btn => {
   btn.onclick = async e => {
@@ -150,24 +160,38 @@ list.querySelectorAll('.btn-generate-text').forEach(btn => {
             preview.innerHTML = safeHtml;
             ensureEditButton(preview, idx);
           }
-          btn.remove();
-          if (cancelBtn) cancelBtn.remove();
-          window.textJobs[idx] = { running: false, cancel: false };
-          return;
+         if (needsRetry || safeHtml.trim() === '') {
+    // statt Button zu entfernen: auf "Erneut generieren" umbauen
+    showRegenerate(btn);
+  } else {
+    btn.remove();
+  }
+  return;
         }
 
         // --- B) Über Status als fertig markiert
         if (['finished','completed','done','ready','success'].includes(status)) {
-          const safeHtml2 = renderMarkdownToHtml(data?.Text || '');
-          state.texts[idx] = safeHtml2 || '';
-          if (preview) {
-            stopLoading(preview);
-            preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
-            ensureEditButton(preview, idx);
-          }
-          btn.remove();
-          if (cancelBtn) cancelBtn.remove();
-          window.textJobs[idx] = { running: false, cancel: false };
+  const out = (data?.Text || '').trim();
+  const safeHtml2 = renderMarkdownToHtml(out);
+  state.texts[idx] = safeHtml2 || '';
+
+  if (preview) {
+    stopLoading(preview);
+    preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
+    ensureEditButton(preview, idx);
+  }
+
+  const textPlain = (out || preview?.textContent || '').trim();
+  const needsRetry =
+    !out ||
+    /ich konnte keinen text generieren/i.test(textPlain) ||
+    /kein text zurückgegeben/i.test(textPlain);
+
+  if (needsRetry) {
+    showRegenerate(btn);
+  } else {
+    btn.remove();
+  }
           return;
         }
 
