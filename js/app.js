@@ -1,10 +1,12 @@
 // js/app.js
 import { initForm, initAgentModals } from './ui-form.js';
+import { primeAudioOnUserGesture } from './ui/notifier.js';
 import { renderExpoList } from './ui-expos.js';
 import { buildXmlFromState, downloadFile } from './export-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Seite initialisieren
+  primeAudioOnUserGesture(); // AudioContext früh „freischalten“
   initForm();
   initAgentModals();
   renderExpoList();
