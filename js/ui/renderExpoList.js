@@ -6,6 +6,9 @@ import { ladeFloskelnTexte } from './constants.js';
 import { startLoading, stopLoading } from './loading.js';
 import { ensureEditButton } from './edit.js';
 
+// Laufzeitstatus für Text-Jobs pro Index
+if (!window.textJobs) window.textJobs = {}; // { [idx]: { running: bool, cancel: bool } }
+
 export function renderExpoList () {
   const list = document.getElementById('expoList');
   list.innerHTML = '';
@@ -41,11 +44,16 @@ export function renderExpoList () {
   });
 
   // --- Text generieren ---
+  // --- Text generieren ---
   list.querySelectorAll('.btn-generate-text').forEach(btn => {
     btn.onclick = async e => {
       e.stopPropagation();
       const idx = +btn.dataset.idx;
       if (Number.isNaN(idx)) return;
+
+      // Mehrfachstart verhindern
+      if (window.textJobs[idx]?.running) return;
+      window.textJobs[idx] = { running: true, cancel: false };
 
       // Button sperren + UI vorbereiten
       btn.disabled = true;
@@ -54,6 +62,25 @@ export function renderExpoList () {
 
       const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
       if (preview) startLoading(preview, ladeFloskelnTexte);
+
+      // Abbrechen-Button einfügen/anzeigen
+      let cancelBtn = btn.parentNode.querySelector('.btn-cancel-text');
+      if (!cancelBtn) {
+        cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn btn-secondary btn-cancel-text';
+        cancelBtn.textContent = 'Abbrechen';
+        cancelBtn.style.marginLeft = '8px';
+        btn.after(cancelBtn);
+      }
+      cancelBtn.style.display = 'inline-flex';
+      cancelBtn.disabled = false;
+      cancelBtn.onclick = () => {
+        if (!window.textJobs[idx]) return;
+        window.textJobs[idx].cancel = true;
+        cancelBtn.disabled = true;
+        cancelBtn.textContent = 'Wird abgebrochen…';
+      };
 
       // Payload für Starter
       const payload = {
@@ -73,6 +100,17 @@ export function renderExpoList () {
         const maxTries = 90; // 10 s * 90 = 15 min
 
         while (tries <= maxTries) {
+          // Cancel-Check – bricht UI-seitig ab
+          if (window.textJobs[idx]?.cancel) {
+            if (preview) stopLoading(preview);
+            // UI zurücksetzen
+            btn.disabled = false;
+            btn.textContent = oldLabel;
+            if (cancelBtn) cancelBtn.remove();
+            window.textJobs[idx] = { running: false, cancel: false };
+            return;
+          }
+
           tries++;
 
           let job;
@@ -84,34 +122,38 @@ export function renderExpoList () {
             continue;
           }
 
-          const data = Array.isArray(job) ? job[0] : job;
+          const data   = Array.isArray(job) ? job[0] : job;
           const status = (data?.Status ?? data?.status ?? '').toString().toLowerCase();
-          const html   = data?.Text ?? '';
+          const html   = (data?.Text ?? '').trim();
 
           // --- A) Sofort-Text vorhanden
-          const raw = (data?.Text ?? '').trim();
-          if (raw) {
-            const safeHtml = renderMarkdownToHtml(raw);
+          if (html) {
+            const safeHtml = renderMarkdownToHtml(html);
             state.texts[idx] = safeHtml;
-            btn.remove();
             if (preview) {
               stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
             }
+            // Generate-Button wie bisher entfernen (dein Originalverhalten)
+            btn.remove();
+            if (cancelBtn) cancelBtn.remove();
+            window.textJobs[idx] = { running: false, cancel: false };
             return;
           }
 
           // --- B) Über Status als fertig markiert
           if (['finished','completed','done','ready','success'].includes(status)) {
-            const safeHtml2 = renderMarkdownToHtml(html || '');
+            const safeHtml2 = renderMarkdownToHtml(data?.Text || '');
             state.texts[idx] = safeHtml2 || '';
-            btn.remove();
             if (preview) {
               stopLoading(preview);
               preview.innerHTML = safeHtml2 || '<em>Kein Text zurückgegeben.</em>';
               ensureEditButton(preview, idx);
             }
+            btn.remove();
+            if (cancelBtn) cancelBtn.remove();
+            window.textJobs[idx] = { running: false, cancel: false };
             return;
           }
 
@@ -125,15 +167,22 @@ export function renderExpoList () {
         throw new Error('Text-Generierung Timeout.');
       } catch (err) {
         alert('Text-Webhook Fehler: ' + (err?.message || err));
-        btn.disabled = false;
-        btn.textContent = oldLabel;
         if (preview) {
           stopLoading(preview);
           preview.innerHTML = `<div class="text-error">Fehler: ${err?.message || err}</div>`;
         }
+      } finally {
+        // UI nur zurücksetzen, wenn Button noch existiert (kann bei Erfolg entfernt sein)
+        if (document.body.contains(btn)) {
+          btn.disabled = false;
+          btn.textContent = oldLabel;
+        }
+        if (cancelBtn && document.body.contains(cancelBtn)) cancelBtn.remove();
+        window.textJobs[idx] = { running: false, cancel: false };
       }
     };
   });
+
 
   // --- Header-Klick (komplette Zeile) ---
   list.querySelectorAll('.expo-akkordeon').forEach(acc => {
