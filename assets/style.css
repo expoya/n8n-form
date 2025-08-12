@@ -514,3 +514,12 @@ input:checked + .slider:before {
   animation:spin .9s linear infinite;margin-top:2px;
 }
 @keyframes spin{ to{ transform:rotate(360deg) } }
+
+.text-cancelled {
+  color: #f0c36d;
+  font-style: italic;
+}
+.text-error {
+  color: #f29aa3;
+}
+
