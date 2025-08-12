@@ -381,3 +381,97 @@ input:checked + .slider:before {
   width: auto !important;
   min-width: 0;
 }
+
+/* ====================================================== */
+/* ==================  EXPO-ACCORDION  ================== */
+/* ====================================================== */
+
+.expo-akkordeon{
+  background:#1f2635;
+  border:1px solid #3a415a;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.expo-akk-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  background:#262d40;
+  border-bottom:1px solid #3a415a;
+}
+
+.expo-akk-index{
+  color:#9aa3c7;
+  min-width:24px;
+  text-align:right;
+}
+
+.expo-akk-titel{
+  flex:1 1 auto;
+  font-weight:600;
+  color:#e6e9f3;
+  line-height:1.3;
+}
+.expo-titel-text{ display:inline; }
+
+.btn-icon{
+  border:none;
+  background:transparent;
+  color:#c7cce6;
+  cursor:pointer;
+  padding:6px 8px;
+  border-radius:8px;
+}
+.btn-icon:hover{ background:#353b58; color:#fff; }
+
+.btn-edit-title{}
+.btn-delete{ color:#f0b7c4; }
+.btn-delete:hover{ background:#402b35; color:#fff; }
+
+.btn-expand{
+  border:none;
+  background:transparent;
+  color:#c7cce6;
+  cursor:pointer;
+  padding:4px 6px;
+  border-radius:6px;
+  font-weight:700;
+}
+
+/* --- Body standardmäßig einklappen --- */
+.expo-akk-body{
+  max-height:0;
+  overflow:hidden;
+  padding:0 14px;
+  opacity:0;
+  transition:max-height .25s ease, padding .25s ease, opacity .2s ease;
+  background:#232a3b;
+}
+
+/* --- Bei .open ausklappen --- */
+.expo-akkordeon.open .expo-akk-body{
+  max-height:800px;            /* groß genug für typische Inhalte */
+  padding:12px 14px 16px;
+  opacity:1;
+}
+
+/* Inhalt im Body */
+.text-preview{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #3a415a;
+  border-radius:10px;
+  background:#1b2030;
+  color:#e8ebf5;
+  min-height:42px;
+}
+
+/* Button im Body (Text generieren) */
+.btn-generate-text{
+  align-self:flex-start;
+  margin-top:6px;
+}
+.btn-generate-text:hover{ filter:brightness(1.05); }
+
