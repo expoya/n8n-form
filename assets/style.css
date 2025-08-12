@@ -97,7 +97,8 @@ input::placeholder,textarea::placeholder {
 
 /* ---------- Primärer Button ---------- */
 .btn-primary {
-  width:100%;
+  width: auto;
+  min-width: 160px;
   background:#5a5ef7;
   color:#fff;
   border:0;
@@ -475,3 +476,26 @@ input:checked + .slider:before {
 }
 .btn-generate-text:hover{ filter:brightness(1.05); }
 
+/* Lade-Animation im Preview-Bereich */
+.text-preview.loading {
+  position: relative;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  color: #9aa3c7;
+  font-style: italic;
+}
+
+/* kleines rotierendes Symbol */
+.text-preview.loading::before {
+  content: "⏳";
+  display: inline-block;
+  animation: spin 1.2s linear infinite;
+}
+
+/* keyframes falls nicht mehr drin */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
