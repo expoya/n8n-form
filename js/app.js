@@ -6,7 +6,15 @@ import { buildXmlFromState, downloadFile } from './export-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Seite initialisieren
-  primeAudioOnUserGesture(); // AudioContext früh „freischalten“
+const _primeOnce = () => {
+primeAudioOnUserGesture();
+window.removeEventListener('pointerdown', _primeOnce);
+window.removeEventListener('keydown', _primeOnce);
+window.removeEventListener('touchstart', _primeOnce);
+ };
+ window.addEventListener('pointerdown', _primeOnce);
+window.addEventListener('keydown', _primeOnce);
+window.addEventListener('touchstart', _primeOnce);
   initForm();
   initAgentModals();
   renderExpoList();
