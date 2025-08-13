@@ -2,7 +2,8 @@
 import { initForm, initAgentModals } from './ui-form.js';
 import { primeAudioOnUserGesture } from './ui/notifier.js';
 import { renderExpoList } from './ui-expos.js';
-import { buildXmlFromState, downloadFile } from './export-utils.js';
+import { buildXmlFromState, buildCsvFromState, downloadFile } from './export-utils.js';
+
 
 document.addEventListener('DOMContentLoaded', () => {
   // Seite initialisieren
@@ -27,6 +28,15 @@ window.addEventListener('touchstart', _primeOnce);
       codeBlockStyle: 'fenced'
     });
   }
+// CSV Export
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+exportCsvBtn?.addEventListener('click', () => {
+  const total = window.state?.titles?.length || 0;
+  if (!total) { alert('Keine Titel vorhanden.'); return; }
+  const csv = buildCsvFromState();
+  const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+  downloadFile(`expoya_export_${ts}.csv`, csv, 'text/csv;charset=utf-8');
+});
 
   // XML-Export-Listener (einmalig)
   document.getElementById("exportXmlBtn")?.addEventListener("click", () => {
