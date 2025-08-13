@@ -1,13 +1,14 @@
-// js/ui/notifier.js
-let audioCtx;
-
-/** Sorgt dafür, dass Audio nach einem User-Gesture erlaubt ist (Autoplay-Policy). */
+// Audio sofort (falls im User-Gesture-Kontext) + Fallback beim nächsten Klick/Key
 export function primeAudioOnUserGesture () {
-  const resume = () => {
+  const doResume = () => {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     } catch {}
+  };
+  doResume(); // Versuch sofort
+  const resume = () => { doResume(); cleanup(); };
+  const cleanup = () => {
     window.removeEventListener('pointerdown', resume);
     window.removeEventListener('keydown', resume);
     window.removeEventListener('touchstart', resume);
@@ -17,51 +18,28 @@ export function primeAudioOnUserGesture () {
   window.addEventListener('touchstart', resume, { once: true });
 }
 
-/** Kleiner „Bing“-Ton per WebAudio (ohne Asset). */
+// Deutlich hörbarer Doppel-Ping (ohne Datei)
 export function playBing () {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Falls noch suspendiert, wird beim nächsten User-Gesture resumed (primeAudioOnUserGesture)
     const t0 = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, t0);              // A5
-    osc.frequency.exponentialRampToValueAtTime(1320, t0 + 0.18); // leichter Sweep
+    const makeBeep = (start, dur = 0.22, f0 = 880, f1 = 1320) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle'; // voller als sine
+      osc.frequency.setValueAtTime(f0, start);
+      osc.frequency.exponentialRampToValueAtTime(f1, start + dur * 0.8);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + dur);
+    };
 
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.08, t0 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(t0);
-    osc.stop(t0 + 0.26);
+    makeBeep(t0, 0.22, 880, 1320);
+    makeBeep(t0 + 0.14, 0.20, 990, 1480);
   } catch {}
-}
-
-/** System-Notification (falls Tab im Hintergrund) + Ton. */
-export async function notify (title, body) {
-  // Immer Ton – das ist dein „Bing“-Signal
-  playBing();
-
-  // Optionale kurze Vibration auf Mobile
-  if ('vibrate' in navigator) navigator.vibrate(30);
-
-  // Nur System-Notification, wenn Seite nicht im Fokus ist
-  if (document.visibilityState === 'visible') return;
-
-  if ('Notification' in window) {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body });
-      return;
-    }
-    if (Notification.permission !== 'denied') {
-      try {
-        const perm = await Notification.requestPermission();
-        if (perm === 'granted') new Notification(title, { body });
-      } catch {}
-    }
-  }
 }
