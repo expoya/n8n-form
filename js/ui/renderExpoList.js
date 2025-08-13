@@ -94,7 +94,7 @@ function markHasText(headerEl) {
   });
 
   // --- Text generieren ---
-  list.querySelectorAll('.btn-generate-text').forEach(btn => {
+  list.querySelectorAll('.btn-generate-text, .btn-regenerate-text').forEach(btn => {
     btn.onclick = async e => {
       e.stopPropagation();
       primeAudioOnUserGesture(); // innerhalb User-Geste
@@ -206,6 +206,7 @@ function markHasText(headerEl) {
             const retry = isRetryText(raw) || safeHtml.trim() === '';
             if (retry) {
               showRegenerate(btn);
+              window.textJobs[idx] = { running: false, cancel: false }; // wichtig!
             } else {
               // normaler Abschluss
               btn.disabled = false;
