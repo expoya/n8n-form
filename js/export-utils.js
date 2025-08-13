@@ -12,6 +12,37 @@ function xmlEscape(s = "") {
     .replace(/'/g, "&apos;");
 }
 
+export function buildCsvFromState() {
+  const company = (state.companyData?.companyName || state.companyData?.Unternehmen || '').toString();
+  const datum = new Date().toLocaleDateString('de-AT');
+  const titles = Array.isArray(state.titles) ? state.titles : [];
+  const texts  = Array.isArray(state.texts)  ? state.texts  : [];
+
+  const htmlToText = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html || '';
+    return (div.textContent || '').replace(/\r\n/g,'\n'); // normalize
+  };
+
+  const csvEscape = (s) => {
+    const v = (s ?? '').toString();
+    // Semikolon-Trenner (DE/AT-Excel-freundlich)
+    if (/[\";\n\r]/.test(v)) {
+      return '"' + v.replace(/"/g, '""') + '"';
+    }
+    return v;
+  };
+
+  const sep = ';';
+  const header = ['Unternehmen','Datum','Titel','Text'].map(csvEscape).join(sep);
+  const rows = titles.map((title, i) => {
+    const textPlain = htmlToText(texts[i] || '');
+    return [csvEscape(company), csvEscape(datum), csvEscape(title || ''), csvEscape(textPlain)].join(sep);
+  });
+  return header + '\n' + rows.join('\n');
+}
+
+
 export function buildXmlFromState({ onlyWithText = false } = {}) {
   const titles = Array.isArray(state.titles) ? state.titles : [];
   const texts  = Array.isArray(state.texts)  ? state.texts  : [];
@@ -55,8 +86,8 @@ export function buildXmlFromState({ onlyWithText = false } = {}) {
   return header + "\n" + rows.join("\n") + footer;
 }
 
-export function downloadFile(filename, text) {
-  const blob = new Blob([text], { type: "application/xml;charset=utf-8" });
+  export function downloadFile(filename, text, mime = "application/xml;charset=utf-8") {
+  const blob = new Blob([text], { type: mime });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
   a.href = url;
