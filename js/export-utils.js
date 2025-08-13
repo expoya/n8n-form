@@ -21,7 +21,7 @@ export function buildCsvFromState() {
   const htmlToText = (html) => {
     const div = document.createElement('div');
     div.innerHTML = html || '';
-    return (div.textContent || '').replace(/\r\n/g,'\n'); // normalize
+    return (div.textContent || '').replace(/\r\n/g,'\n'); // normalize.
   };
 
   const csvEscape = (s) => {
