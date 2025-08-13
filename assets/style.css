@@ -562,3 +562,9 @@ input:checked + .slider:before {
   padding: 10px 20px; /* angenehme Größe */
 }
 
+#exportXmlBtn, #exportCsvBtn {
+  display: inline-flex;
+  width: auto !important;
+  min-width: 0;
+}
+
