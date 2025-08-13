@@ -5,7 +5,7 @@ import { renderMarkdownToHtml } from '../render.js';
 import { ladeFloskelnTexte } from './constants.js';
 import { startLoading, stopLoading } from './loading.js';
 import { ensureEditButton } from './edit.js';
-+import { notify, primeAudioOnUserGesture } from './notifier.js';
+import { notify, primeAudioOnUserGesture } from './notifier.js';
 
 // Laufzeitstatus für Text-Jobs pro Index
 if (!window.textJobs) window.textJobs = {}; // { [idx]: { running: bool, cancel: bool } }
