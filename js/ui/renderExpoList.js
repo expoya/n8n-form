@@ -33,9 +33,12 @@ export function renderExpoList () {
   }
 
   function updateExportButtons() {
-    const exportXmlBtn = document.getElementById('exportXmlBtn');
-const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
-if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
+  const exportXmlBtn = document.getElementById('exportXmlBtn');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
+  const hasAnyTitle = (state.titles || []).length > 0;
+  if (exportCsvBtn) exportCsvBtn.style.display = hasAnyTitle ? 'inline-block' : 'none';
+  if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
 
   }
 
