@@ -4,7 +4,7 @@ import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js'
 import { renderExpoList } from './ui-expos.js';
 import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
-+import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
+import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
