@@ -568,3 +568,27 @@ input:checked + .slider:before {
   min-width: 0;
 }
 
+/* Row mit Vorgaben-Textarea + Button */
+.generate-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.briefing-input {
+  flex: 1;
+  min-height: 72px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  font: 14px/1.4 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+
+.generate-row .btn-generate-text {
+  align-self: flex-start; /* Button bleibt oben ausgerichtet */
+}
+
