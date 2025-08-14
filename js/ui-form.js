@@ -8,6 +8,23 @@ import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
 
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
+/* ---------- NEU: Level-Definitionen für Detailgrad & Schreibstil ---------- */
+const DETAIL_LEVELS = [
+  { value: 1, name: "Einfach",                instruction: "Schreibe kurz und leicht verständlich; vermeide Fachjargon und Details." },
+  { value: 2, name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
+  { value: 3, name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
+  { value: 4, name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
+  { value: 5, name: "Ausführlich & Fachlich", instruction: "Maximal detailreich und technisch präzise; nutze korrekte Terminologie und Begründungen." }
+];
+
+const STYLE_BIAS_LEVELS = [
+  { value: 1, name: "Werblich",               instruction: "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions." },
+  { value: 2, name: "Eher werblich",          instruction: "Benefits priorisieren; sachliche Belege sparsam einstreuen." },
+  { value: 3, name: "Neutral",                instruction: "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage." },
+  { value: 4, name: "Eher faktenorientiert",  instruction: "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache." },
+  { value: 5, name: "Faktenorientiert",       instruction: "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen." }
+];
+
 /* ---------- Helpers: Presets ---------- */
 function setSelectValue(selectEl, value) {
   if (!selectEl) return;
@@ -117,17 +134,45 @@ export function initForm() {
   initAgentModals();     // Info-Buttons & Modal verdrahten
 
   /* ---------- Slider & Toggle ---------- */
-  document.getElementById('tonality')
-    .addEventListener('input', e => {
-      document.getElementById('tonality-value').innerText =
-        tonalities[e.target.value - 1];
-    });
+  // Tonalität (mit Initial-Set)
+  {
+    const tEl  = document.getElementById('tonality');
+    const tOut = document.getElementById('tonality-value');
+    if (tEl && tOut) {
+      const set = v => tOut.textContent = tonalities[(v|0)-1];
+      set(parseInt(tEl.value || '3', 10));
+      tEl.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
+    }
+  }
 
+  // Ansprache (Du/Sie)
   document.getElementById('ansprache')
     .addEventListener('change', e => {
       document.getElementById('ansprache-label').innerText =
         e.target.checked ? 'Du' : 'Sie';
     });
+
+  // NEU: Detailgrad live anzeigen
+  {
+    const el  = document.getElementById('detail_level');
+    const out = document.getElementById('detail_level-value');
+    if (el && out) {
+      const set = v => out.textContent = (DETAIL_LEVELS[(v|0)-1]?.name || 'Neutral');
+      set(parseInt(el.value || '3', 10));
+      el.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
+    }
+  }
+
+  // NEU: Schreibstil live anzeigen
+  {
+    const el  = document.getElementById('style_bias');
+    const out = document.getElementById('style_bias-value');
+    if (el && out) {
+      const set = v => out.textContent = (STYLE_BIAS_LEVELS[(v|0)-1]?.name || 'Neutral');
+      set(parseInt(el.value || '3', 10));
+      el.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
+    }
+  }
 
   /* ---------- Submit ---------- */
   form.addEventListener('submit', async e => {
@@ -142,6 +187,24 @@ export function initForm() {
       document.getElementById('ansprache').checked ? 'Du' : 'Sie';
     state.companyData.tonality =
       tonalities[parseInt(fd.get('tonality')) - 1];
+
+    // NEU: Detailgrad in Payload (Wert, Label, Instruction)
+    {
+      const v = parseInt(fd.get('detail_level') || '3', 10);
+      const meta = DETAIL_LEVELS[v-1] || DETAIL_LEVELS[2];
+      state.companyData.detail_level = v;
+      state.companyData.detail_level_label = meta.name;
+      state.companyData.detail_level_instruction = meta.instruction; // -> {{detail_level_instruction}}
+    }
+
+    // NEU: Schreibstil in Payload (Wert, Label, Instruction)
+    {
+      const v = parseInt(fd.get('style_bias') || '3', 10);
+      const meta = STYLE_BIAS_LEVELS[v-1] || STYLE_BIAS_LEVELS[2];
+      state.companyData.style_bias = v;
+      state.companyData.style_bias_label = meta.name;
+      state.companyData.style_bias_instruction = meta.instruction;   // -> {{style_bias_instruction}}
+    }
 
     /* 2) UI – Loader + Reset */
     showLoader('Titel werden generiert …');
