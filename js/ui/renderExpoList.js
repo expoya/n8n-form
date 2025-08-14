@@ -70,6 +70,12 @@ function markHasText(headerEl) {
         <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
       </div>
       <div class="expo-akk-body">
+        <div class="generate-row">
+  <textarea
+    class="briefing-input"
+    id="briefing-${idx}"
+    placeholder="Vorgaben & Ausschlüsse (optional) – z. B. ‚keine Rabatte nennen; CTA: Beratung; Fokus: Regionalität‘"
+  ></textarea>
         <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
         <div class="text-preview"></div>
       </div>
@@ -146,11 +152,20 @@ function markHasText(headerEl) {
       };
 
       // Payload für Starter
-      const payload = {
-        ...state.companyData,
-        h1Title: state.titles[idx],
-        expoIdx: idx
-      };
+// Vorgaben & Ausschlüsse aus dem Textarea (optional)
+const briefEl   = btn.closest('.expo-akkordeon')?.querySelector(`#briefing-${idx}`);
+const briefText = (briefEl?.value || '').trim();
+
+const payload = {
+  ...state.companyData,
+  h1Title : titel,
+  expoIdx : idx,
+  title   : titel,
+  agentModels: state.agentModels,
+
+  // NEU:
+  custom_brief: briefText    // ← wird im Webhook ankommmen; leer wenn nix eingegeben
+};
 
       try {
         // 1) Job starten
