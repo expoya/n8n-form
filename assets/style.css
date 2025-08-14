@@ -592,3 +592,58 @@ input:checked + .slider:before {
   align-self: flex-start; /* Button bleibt oben ausgerichtet */
 }
 
+/* === 1) Mehr Abstand zwischen Slidern === */
+.tonality-container,
+.detail-container,
+.style-container {
+  margin-bottom: 16px; /* nach Bedarf 20–24px */
+}
+
+/* === 2) Layout für Vorgaben+Buttons+Preview === */
+.generate-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;              /* erlaubt Umbruch */
+  margin-top: 8px;
+}
+
+/* Textarea nimmt Platz, bleibt aber neben den Buttons */
+.generate-row .briefing-input {
+  flex: 1 1 480px;              /* wächst, min. ca. 480px */
+  min-height: 84px;
+}
+
+/* Buttons nur so breit wie nötig */
+.generate-row .btn-generate-text,
+.generate-row .btn-cancel,
+.generate-row .btn-cancel-text {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* WICHTIG: Text-Ausgabe (Preview/Editor) immer darunter */
+.generate-row .text-preview,
+.generate-row .editor-box,
+.generate-row .editor-container,
+.generate-row .text-output {
+  flex: 1 1 100%;
+  order: 5;                     /* nach Textarea/Buttons */
+  margin-top: 10px;
+  width: 100%;
+  display: block;               /* falls irgendwas es inline/flex macht */
+}
+
+/* Optional: Status-Badge bleibt in der Zeile ausgerichtet */
+.generate-row .status-badge {
+  align-self: center;
+}
+
+/* Mobile: Textarea in eigene Zeile, Buttons darunter */
+@media (max-width: 900px) {
+  .generate-row .briefing-input {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+
