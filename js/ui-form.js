@@ -6,6 +6,51 @@ import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
 import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
 
+const AUTO_GROW_MAX = {
+  regionen: 8,
+  zielgruppen: 8,
+  produkte: 8,
+  attribute: 8,
+  zielsetzung: 6
+};
+
+function sizeTextArea(el) {
+  // Max-Zeilen je nach Feldname, Fallback 8
+  const name = el.getAttribute('name');
+  const maxRows = AUTO_GROW_MAX[name] || 8;
+
+  // erst zurücksetzen, damit scrollHeight korrekt ist
+  el.style.height = 'auto';
+
+  const cs = window.getComputedStyle(el);
+  const lineHeight = parseFloat(cs.lineHeight) || 20;
+  const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+  const padding = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  const maxPx = Math.round(lineHeight * maxRows + padding + border);
+
+  // Zielhöhe: Content-Höhe bis zur Obergrenze
+  const target = Math.min(el.scrollHeight, maxPx);
+  el.style.height = target + 'px';
+
+  // Scrollbar nur zeigen, wenn über Limit
+  el.style.overflowY = (el.scrollHeight > maxPx) ? 'auto' : 'hidden';
+}
+
+function initAutoGrow(root = document) {
+  const areas = root.querySelectorAll('.form-group textarea');
+  areas.forEach(el => {
+    // initial (auch bei vorbefülltem Inhalt)
+    sizeTextArea(el);
+
+    // auf Eingabe reagieren
+    el.addEventListener('input', () => sizeTextArea(el));
+
+    // falls Inhalte programmatisch gesetzt werden (Prefill etc.)
+    const obs = new MutationObserver(() => sizeTextArea(el));
+    obs.observe(el, { characterData: true, childList: true, subtree: true });
+  });
+}
+
 const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
 
 /* ---------- NEU: Level-Definitionen für Detailgrad & Schreibstil ---------- */
@@ -96,6 +141,7 @@ export function initAgentModals() {
 /* ---------- Formular-Handling ---------- */
 export function initForm() {
   const form = document.getElementById('myForm');
+  initAutoGrow(form);
 
   /* --- Experten-Auswahl initialisieren --- */
   function initExpertSelects() {
