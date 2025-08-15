@@ -661,6 +661,12 @@ input:checked + .slider:before {
   }
 }
 /* --- Segmented Controls --- */
+.seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* alles mittig */
+  text-align: center;    /* Label-Text mittig */
+}
 .segrow {
   display: flex;
   gap: 16px;
@@ -671,7 +677,7 @@ input:checked + .slider:before {
   display: block;
   opacity: 0.85;
   margin-bottom: 6px;
-  text-allign: center;
+  text-align: center;
 }
 .segmented {
   display: inline-flex;
