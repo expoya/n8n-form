@@ -618,7 +618,7 @@ input:checked + .slider:before {
 /* Textarea nimmt Platz, bleibt aber neben den Buttons */
 .generate-row .briefing-input {
   flex: 1 1 480px;              /* wächst, min. ca. 480px */
-  min-height: 84px;
+  min-height: 24px;
 }
 
 /* Buttons nur so breit wie nötig */
