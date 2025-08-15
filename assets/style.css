@@ -660,4 +660,44 @@ input:checked + .slider:before {
     min-width: 0;
   }
 }
+/* --- Segmented Controls --- */
+.segrow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.seg .toggle-label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+.segmented {
+  display: inline-flex;
+  border: 1px solid #444a63;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1b2130;
+}
+.segmented input {
+  display: none; /* wir stylen die Labels als Buttons */
+}
+.segmented label {
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-right: 1px solid #444a63;
+  user-select: none;
+}
+.segmented label:last-of-type {
+  border-right: none;
+}
+.segmented input:checked + label {
+  background: #39415a;
+}
+.segmented input:focus + label {
+  outline: 2px solid #6aa0ff;
+  outline-offset: -2px; /* bleibt im Segment */
+}
 
