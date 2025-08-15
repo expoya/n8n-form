@@ -669,6 +669,7 @@ input:checked + .slider:before {
 }
 .segrow {
   display: flex;
+  justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
   align-items: center;
