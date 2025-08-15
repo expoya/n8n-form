@@ -235,9 +235,9 @@ state.companyData = Object.assign(
   const ortsbezug = (fd.get('ortsbezug') || 'exakt');
   const ORTSBEZUG_TEXT = {
   ohne:                'Keinen Ortsbezug verwenden',
-  exakt:               'Nur exakten Ort verwenden',
-  umland:              'Region und Nachbarorte verwenden',
-  umland_stadtteile:   'Region, Nachbarorte und Stadtteile verwenden'
+  exakt:               'Nur die exakten Namen der angegebenen Regionen verwenden',
+  umland:              'angegebene Regionen und Nachbarorte davon in Titel verwenden',
+  umland_stadtteile:   'angebebene Regionen, Nachbarorte davon und Stadtteile davon in Titel verwenden'
 };
   state.companyData.ortsbezug    = ortsbezug;
   state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');   // <- wichtig für alte Workflows!
