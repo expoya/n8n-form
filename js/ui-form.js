@@ -233,10 +233,16 @@ state.companyData = Object.assign(
 // NEU: Ortsbezug (Enum) + abgeleitetes Boolean für Abwärtskompatibilität
 {
   const ortsbezug = (fd.get('ortsbezug') || 'exakt');
+  const ORTSBEZUG_TEXT = {
+  ohne:                'Keinen Ortsbezug verwenden',
+  exakt:               'Nur exakten Ort verwenden',
+  umland:              'Region und Nachbarorte verwenden',
+  umland_stadtteile:   'Region, Nachbarorte und Stadtteile verwenden'
+};
   state.companyData.ortsbezug    = ortsbezug;
   state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');   // <- wichtig für alte Workflows!
+  state.companyData.ortsbezug_instruction = ORTSBEZUG_TEXT[ortsbezug] || '';
 }
-
 // Ansprache aus dem segmented control
 state.companyData.ansprache = fd.get('ansprache') || 'Du';
 
