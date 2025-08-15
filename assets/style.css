@@ -86,6 +86,13 @@ input,select,textarea {
   resize:none;
 }
 
+/* Auto-Grow Basis: keine Scrollbar bis zur Maxhöhe */
+.form-group textarea {
+  overflow-y: hidden;   /* Scrollbar erst zeigen, wenn Max erreicht */
+  line-height: 1.4;     /* stabile Berechnungsgrundlage für die Höhe */
+  min-height: 40px;     /* angenehme Anfangshöhe (ca. 2 Zeilen) */
+}
+
 input:focus,select:focus,textarea:focus {
   border:1.5px solid #9ea7f7;
 }
