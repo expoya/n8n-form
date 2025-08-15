@@ -6,10 +6,6 @@ export const state = {
   runningJobId  : null, // aktuelle Titel-Generierung
   selectedPreset: '',   // aktuelles Preset
 
-   if (!state.companyData) state.companyData = {};
-if (!('ortsbezug' in state.companyData)) state.companyData.ortsbezug = 'ohne';
-if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = true;
-
   agentModels   : {     //  ← jetzt sauber eingebettet
     titleGenerator: 'ChatGPT 5 mini',
     titleController: 'ChatGPT 4.1 mini',
@@ -18,4 +14,10 @@ if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = tru
     seoVeredler   : 'Claude Sonnet 4',
     seoAuditor    : 'ChatGPT o4 mini'
   }
-};                       //  ← hier endet das Gesamt-Objekt :contentReference[oaicite:0]{index=0}
+};                       
+
+if (!state.companyData) state.companyData = {};
+if (!('ortsbezug' in state.companyData)) state.companyData.ortsbezug = 'ohne';
+if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = true;
+
+//  ← hier endet das Gesamt-Objekt :contentReference[oaicite:0]{index=0}
