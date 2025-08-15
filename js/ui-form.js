@@ -11,7 +11,8 @@ const AUTO_GROW_MAX = {
   zielgruppen: 8,
   produkte: 8,
   attribute: 8,
-  zielsetzung: 6
+  zielsetzung: 6,
+  keywordliste: 8
 };
 
 function sizeTextArea(el) {
