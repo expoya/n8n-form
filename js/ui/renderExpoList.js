@@ -103,75 +103,58 @@ function markHasText(headerEl) {
   });
 
   // --- Text generieren ---
-  list.querySelectorAll('.btn-generate-text, .btn-regenerate-text').forEach(btn => {
-    btn.onclick = async e => {
-      e.stopPropagation();
-      primeAudioOnUserGesture(); // innerhalb User-Geste
-      const idx = +btn.dataset.idx;
-      if (Number.isNaN(idx)) return;
+ list.querySelectorAll('.btn-generate-text, .btn-regenerate-text').forEach(btn => {
+  btn.onclick = async e => {
+    e.stopPropagation();
+    primeAudioOnUserGesture(); // innerhalb User-Geste
 
-      // Mehrfachstart verhindern
-      if (window.textJobs[idx]?.running) return;
-      window.textJobs[idx] = { running: true, cancel: false };
+    const idx = Number(btn.dataset.idx);
+    if (!Number.isInteger(idx)) return;
 
-      // Button sperren + UI vorbereiten
-      btn.disabled = true;
-      const oldLabel = btn.textContent;
-      btn.textContent = '⏳ …';
+    // 🧩 NEU: Titel für diesen Index holen (sonst ReferenceError)
+    const titel = state.titles?.[idx] ?? '';
+    if (!titel) {
+      console.warn('[Text-Job] Kein Titel für idx', idx, state.titles);
+      return;
+    }
 
-      const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
-      if (preview) startLoading(preview, ladeFloskelnTexte);
+    // Mehrfachstart verhindern
+    if (window.textJobs[idx]?.running) return;
+    window.textJobs[idx] = { running: true, cancel: false };
 
-      // Abbrechen-Button einfügen/anzeigen
-      let cancelBtn = btn.parentNode.querySelector('.btn-cancel-text');
-      if (!cancelBtn) {
-        cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'btn btn-secondary btn-cancel-text';
-        cancelBtn.textContent = 'Abbrechen';
-        cancelBtn.style.marginLeft = '8px';
-        btn.after(cancelBtn);
-      }
-      cancelBtn.style.display = 'inline-flex';
-      cancelBtn.disabled = false;
+    // Button sperren + UI vorbereiten
+    btn.disabled = true;
+    const oldLabel = btn.textContent;
+    btn.textContent = '⏳ …';
 
-      let wasCancelled = false;
-      cancelBtn.onclick = () => {
-        if (!window.textJobs[idx]) return;
-        window.textJobs[idx].cancel = true;
-        wasCancelled = true;
+    const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
+    if (preview) startLoading(preview, ladeFloskelnTexte);
 
-        // UI sofort umstellen
-        if (preview) {
-          stopLoading(preview);
-          preview.innerHTML = '<div class="text-cancelled">⛔ Vorgang abgebrochen.</div>';
-        }
-        btn.disabled = false;
-        btn.textContent = oldLabel;
-        cancelBtn.remove();
-      };
+    // Abbrechen-Button …
+    // (lass deinen bestehenden Code hier unverändert)
 
-      // Payload für Starter
-// Vorgaben & Ausschlüsse aus dem Textarea (optional)
-const briefEl   = btn.closest('.expo-akkordeon')?.querySelector(`#briefing-${idx}`);
-const briefText = (briefEl?.value || '').trim();
+    // Vorgaben & Ausschlüsse einsammeln
+    const briefEl   = btn.closest('.expo-akkordeon')?.querySelector(`#briefing-${idx}`);
+    const briefText = (briefEl?.value || '').trim();
 
-const payload = {
-  ...state.companyData,
-  h1Title : titel,
-  expoIdx : idx,
-  title   : titel,
-  agentModels: state.agentModels,
+    // ✅ Payload sauber bauen (agentModels hängt api.js ohnehin an)
+    const payload = {
+      ...state.companyData,
+      h1Title: titel,
+      expoIdx: idx,
+      title:   titel,
+      custom_brief: briefText
+    };
 
-  // NEU:
-  custom_brief: briefText    // ← wird im Webhook ankommmen; leer wenn nix eingegeben
-};
+    console.debug('[Text-Job] Starte mit Payload:', payload);
 
-      try {
-        // 1) Job starten
-        const start = await startTextJob({ ...payload, title: state.titles[idx] });
-        let jobId = (start?.jobId || '').toString().replace(/^=+/, '');
-        if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
+    try {
+      // 1) Job starten
+      const start = await startTextJob(payload);
+      let jobId = String(start?.jobId || '').replace(/^=+/, '');
+      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
+
+      // 2) … dein Polling-Code weiter wie gehabt …
 
         // 2) Polling
         let tries = 0;
