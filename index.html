@@ -71,23 +71,36 @@
 </div>
 
 
-        <div class="form-group toggles-row">
-          <div class="toggle-combo">
-            <span class="toggle-label">Mit Ortsbezug</span>
-            <label class="switch switch-small">
-              <input type="checkbox" id="mitOrtsbezug" name="mitOrtsbezug" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="toggle-combo">
-            <span class="toggle-label">Ansprache</span>
-            <label class="switch switch-small">
-              <input type="checkbox" id="ansprache" name="ansprache" checked>
-              <span class="slider"></span>
-            </label>
-            <span class="toggle-label" id="ansprache-label">Du</span>
-          </div>
-        </div>
+        <!-- Segmented Controls: Ortsbezug & Ansprache -->
+<div class="form-group">
+  <div class="segrow">
+
+    <!-- Ortsbezug -->
+    <div class="seg">
+      <span class="toggle-label">Ortsbezug</span>
+      <div class="segmented" role="radiogroup" aria-label="Ortsbezug">
+        <input type="radio" id="ortAus" name="mitOrtsbezug" value="false">
+        <label for="ortAus">Ohne</label>
+
+        <input type="radio" id="ortAn" name="mitOrtsbezug" value="true" checked>
+        <label for="ortAn">Mit</label>
+      </div>
+    </div>
+
+    <!-- Ansprache -->
+    <div class="seg">
+      <span class="toggle-label">Ansprache</span>
+      <div class="segmented" role="radiogroup" aria-label="Ansprache">
+        <input type="radio" id="ansSie" name="ansprache" value="Sie">
+        <label for="ansSie">Sie</label>
+
+        <input type="radio" id="ansDu" name="ansprache" value="Du" checked>
+        <label for="ansDu">Du</label>
+      </div>
+    </div>
+
+  </div>
+</div>
 
         <button class="btn-primary" type="submit">🚀 Generieren</button>
       </form>
