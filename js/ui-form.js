@@ -192,12 +192,7 @@ export function initForm() {
     }
   }
 
-  // Ansprache (Du/Sie)
-  document.getElementById('ansprache')
-    .addEventListener('change', e => {
-      document.getElementById('ansprache-label').innerText =
-        e.target.checked ? 'Du' : 'Sie';
-    });
+ 
 
   // NEU: Detailgrad live anzeigen
   {
@@ -229,9 +224,9 @@ export function initForm() {
     const fd = new FormData(form);
     state.companyData = Object.fromEntries(fd.entries());
     state.companyData.mitOrtsbezug =
-      document.getElementById('mitOrtsbezug').checked;
-    state.companyData.ansprache =
-      document.getElementById('ansprache').checked ? 'Du' : 'Sie';
+  (fd.get('mitOrtsbezug') === 'true');     // Boolean aus dem Radio
+state.companyData.ansprache =
+  fd.get('ansprache') || 'Du';             // 'Du' oder 'Sie'
     state.companyData.tonality =
       tonalities[parseInt(fd.get('tonality')) - 1];
 
