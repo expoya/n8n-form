@@ -83,7 +83,7 @@ input,select,textarea {
   font-size:15px;
   font-family:inherit;
   outline:none;
-  resize:none;
+  resize:vertical;
 }
 
 /* Auto-Grow Basis: keine Scrollbar bis zur Maxhöhe */
