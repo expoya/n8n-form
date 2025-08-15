@@ -79,11 +79,17 @@
     <div class="seg">
       <span class="toggle-label">Ortsbezug</span>
       <div class="segmented" role="radiogroup" aria-label="Ortsbezug">
-        <input type="radio" id="ortAus" name="mitOrtsbezug" value="false">
-        <label for="ortAus">Ohne</label>
+        <input type="radio" id="ort-ohne"   name="ortsbezug" value="ohne">
+    <label for="ort-ohne">ohne</label>
 
-        <input type="radio" id="ortAn" name="mitOrtsbezug" value="true" checked>
-        <label for="ortAn">Mit</label>
+    <input type="radio" id="ort-exakt"  name="ortsbezug" value="exakt" checked>
+    <label for="ort-exakt">exakt</label>
+
+    <input type="radio" id="ort-umland" name="ortsbezug" value="umland">
+    <label for="ort-umland">+ Umland</label>
+
+    <input type="radio" id="ort-umland-stadtteile" name="ortsbezug" value="umland_stadtteile">
+    <label for="ort-umland-stadtteile">+ Umland + Stadtteile</label>
       </div>
     </div>
 
