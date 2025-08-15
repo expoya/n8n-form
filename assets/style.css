@@ -120,8 +120,14 @@ input::placeholder,textarea::placeholder {
   margin:10px 0;
 }
 
-.tonality-label,.tonality-value {
+.tonality-label { 
   font-size:15px;
+  color:#bbc1f4;
+  text-align:center;
+}
+
+.tonality-value {
+  font-size:12px;
   color:#bbc1f4;
   text-align:center;
 }
