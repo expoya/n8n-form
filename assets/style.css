@@ -124,6 +124,7 @@ input::placeholder,textarea::placeholder {
   font-size:15px;
   color:#bbc1f4;
   text-align:center;
+  margin-top: 15px;
 }
 
 .tonality-value {
