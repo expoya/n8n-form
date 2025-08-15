@@ -1,14 +1,14 @@
 // zentraler, reaktiver Zustand
 export const state = {
-  if (!state.companyData) state.companyData = {};
-if (!('ortsbezug' in state.companyData)) state.companyData.ortsbezug = 'ohne';
-if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = true;
   companyData   : {},   // Formular-Payload
   titles        : [],   // ["Titel 1", …]
   texts         : [],   // ["<html>", …] 1-zu-1 zu titles.
   runningJobId  : null, // aktuelle Titel-Generierung
   selectedPreset: '',   // aktuelles Preset
 
+   if (!state.companyData) state.companyData = {};
+if (!('ortsbezug' in state.companyData)) state.companyData.ortsbezug = 'ohne';
+if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = true;
 
   agentModels   : {     //  ← jetzt sauber eingebettet
     titleGenerator: 'ChatGPT 5 mini',
