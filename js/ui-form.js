@@ -220,39 +220,63 @@ export function initForm() {
   form.addEventListener('submit', async e => {
     e.preventDefault();
 
-    /* 1) Daten einsammeln */
-    const fd = new FormData(form);
-    const ortsbezug = (fd.get('ortsbezug') || 'exakt');
+   /* 1) Daten einsammeln */
+const fd = new FormData(form);
 
-// Im State speichern
-state.companyData.ortsbezug = ortsbezug;
+// ZUERST: Formfelder → State mergen (Strings bleiben Strings),
+// damit danach abgeleitete Felder NICHT wieder überschrieben werden.
+state.companyData = Object.assign(
+  state.companyData || {},
+  Object.fromEntries(fd.entries())
+);
 
-// Abwärtskompatibel: altes Boolean-Feld weiter befüllen
-state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');
+// NEU: Ortsbezug (Enum) + abgeleitetes Boolean für Abwärtskompatibilität
+{
+  const ortsbezug = (fd.get('ortsbezug') || 'exakt');
+  state.companyData.ortsbezug    = ortsbezug;
+  state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');   // <- wichtig für alte Workflows!
+}
 
-// Ansprache kommt ebenfalls aus dem segmented control (Du | Sie)
+// Ansprache aus dem segmented control
 state.companyData.ansprache = fd.get('ansprache') || 'Du';
-    state.companyData = Object.fromEntries(fd.entries());
-    state.companyData.tonality =
-      tonalities[parseInt(fd.get('tonality')) - 1];
 
-    // NEU: Detailgrad in Payload (Wert, Label, Instruction)
-    {
-      const v = parseInt(fd.get('detail_level') || '3', 10);
-      const meta = DETAIL_LEVELS[v-1] || DETAIL_LEVELS[2];
-      state.companyData.detail_level = v;
-      state.companyData.detail_level_label = meta.name;
-      state.companyData.detail_level_instruction = meta.instruction; // -> {{detail_level_instruction}}
-    }
+// Tonalität (Label aus Slider-Wert ableiten)
+state.companyData.tonality = 
+  ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'][
+    (parseInt(fd.get('tonality') || '3', 10) - 1)
+  ] || 'Neutral';
 
-    // NEU: Schreibstil in Payload (Wert, Label, Instruction)
-    {
-      const v = parseInt(fd.get('style_bias') || '3', 10);
-      const meta = STYLE_BIAS_LEVELS[v-1] || STYLE_BIAS_LEVELS[2];
-      state.companyData.style_bias = v;
-      state.companyData.style_bias_label = meta.name;
-      state.companyData.style_bias_instruction = meta.instruction;   // -> {{style_bias_instruction}}
-    }
+// Detailgrad (Wert, Label, Instruction)
+{
+  const v = parseInt(fd.get('detail_level') || '3', 10);
+  const meta = [
+    { name: "Einfach",                instruction: "Kurz und leicht verständlich; vermeide Fachjargon und Details." },
+    { name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
+    { name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
+    { name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
+    { name: "Ausführlich & Fachlich", instruction: "Maximal informativ und technisch präzise; korrekte Terminologie und Begründungen." }
+  ][v-1] || { name: "Neutral", instruction: "" };
+
+  state.companyData.detail_level            = v;
+  state.companyData.detail_level_label      = meta.name;
+  state.companyData.detail_level_instruction= meta.instruction;
+}
+
+// Schreibstil (Wert, Label, Instruction)
+{
+  const v = parseInt(fd.get('style_bias') || '3', 10);
+  const meta = [
+    { name: "Werblich",              instruction: "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions." },
+    { name: "Eher werblich",         instruction: "Benefits priorisieren; sachliche Belege sparsam einstreuen." },
+    { name: "Neutral",               instruction: "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage." },
+    { name: "Eher faktenorientiert", instruction: "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache." },
+    { name: "Faktenorientiert",      instruction: "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen." }
+  ][v-1] || { name: "Neutral", instruction: "" };
+
+  state.companyData.style_bias            = v;
+  state.companyData.style_bias_label      = meta.name;
+  state.companyData.style_bias_instruction= meta.instruction;
+}
 
     /* 2) UI – Loader + Reset */
     showLoader('Titel werden generiert …');
