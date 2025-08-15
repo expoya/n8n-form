@@ -90,7 +90,7 @@ input,select,textarea {
 .form-group textarea {
   overflow-y: hidden;   /* Scrollbar erst zeigen, wenn Max erreicht */
   line-height: 1.4;     /* stabile Berechnungsgrundlage für die Höhe */
-  min-height: 40px;     /* angenehme Anfangshöhe (ca. 2 Zeilen) */
+  min-height: 1.4em;     /* angenehme Anfangshöhe (ca. 2 Zeilen) */
 }
 
 input:focus,select:focus,textarea:focus {
