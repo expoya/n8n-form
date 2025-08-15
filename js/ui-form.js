@@ -222,11 +222,17 @@ export function initForm() {
 
     /* 1) Daten einsammeln */
     const fd = new FormData(form);
+    const ortsbezug = (fd.get('ortsbezug') || 'exakt');
+
+// Im State speichern
+state.companyData.ortsbezug = ortsbezug;
+
+// Abwärtskompatibel: altes Boolean-Feld weiter befüllen
+state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');
+
+// Ansprache kommt ebenfalls aus dem segmented control (Du | Sie)
+state.companyData.ansprache = fd.get('ansprache') || 'Du';
     state.companyData = Object.fromEntries(fd.entries());
-    state.companyData.mitOrtsbezug =
-  (fd.get('mitOrtsbezug') === 'true');     // Boolean aus dem Radio
-state.companyData.ansprache =
-  fd.get('ansprache') || 'Du';             // 'Du' oder 'Sie'
     state.companyData.tonality =
       tonalities[parseInt(fd.get('tonality')) - 1];
 
