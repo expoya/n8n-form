@@ -2,55 +2,25 @@
 import { initForm, initAgentModals } from './ui-form.js';
 import { primeAudioOnUserGesture } from './ui/notifier.js';
 import { renderExpoList } from './ui-expos.js';
-import { buildXmlFromState, buildCsvFromState, downloadFile } from './export-utils.js';
-
+import { initExportButtons } from './export-utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Seite initialisieren
-const _primeOnce = () => {
-primeAudioOnUserGesture();
-window.removeEventListener('pointerdown', _primeOnce);
-window.removeEventListener('keydown', _primeOnce);
-window.removeEventListener('touchstart', _primeOnce);
- };
- window.addEventListener('pointerdown', _primeOnce);
-window.addEventListener('keydown', _primeOnce);
-window.addEventListener('touchstart', _primeOnce);
+  // Audio primen (einmalig auf erste User-Geste)
+  const _primeOnce = () => {
+    try { primeAudioOnUserGesture(); } catch {}
+    window.removeEventListener('pointerdown', _primeOnce);
+    window.removeEventListener('keydown', _primeOnce);
+    window.removeEventListener('touchstart', _primeOnce);
+  };
+  window.addEventListener('pointerdown', _primeOnce);
+  window.addEventListener('keydown', _primeOnce);
+  window.addEventListener('touchstart', _primeOnce);
+
+  // App initialisieren
   initForm();
-  initAgentModals();
+  initAgentModals?.();
   renderExpoList();
 
-  // Markdown-Konverter (HTML -> Markdown) global anlegen (für Edit-Modus)
-  if (!window.turndownService && window.TurndownService) {
-    window.turndownService = new window.TurndownService({
-      headingStyle: 'atx',
-      bulletListMarker: '-',
-      codeBlockStyle: 'fenced'
-    });
-  }
-// CSV Export
-const exportCsvBtn = document.getElementById('exportCsvBtn');
-exportCsvBtn?.addEventListener('click', () => {
-  const total = window.state?.titles?.length || 0;
-  if (!total) { alert('Keine Titel vorhanden.'); return; }
-  const csv = buildCsvFromState();
-  const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-  downloadFile(`expoya_export_${ts}.csv`, csv, 'text/csv;charset=utf-8');
-});
-
-  // XML-Export-Listener (einmalig)
-  document.getElementById("exportXmlBtn")?.addEventListener("click", () => {
-    // Optional: Warnung, wenn Texte fehlen
-    const total    = window.state?.titles?.length || 0;
-    const withText = (window.state?.titles || []).filter((_, i) => (window.state?.texts?.[i] || '').trim() !== '').length;
-    const missing  = total - withText;
-    if (missing > 0) {
-      const ok = confirm(`Achtung: ${missing} von ${total} Einträgen haben noch keinen Text. Trotzdem exportieren?`);
-      if (!ok) return;
-    }
-
-    const xml = buildXmlFromState(); // oder: buildXmlFromState({ onlyWithText: true })
-    const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-    downloadFile(`expoya_import_${ts}.xml`, xml);
-  });
+  // Export-Buttons einmalig verdrahten (CSV-Export)
+  initExportButtons();
 });
