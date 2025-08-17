@@ -1,4 +1,4 @@
-
+// js/ui/renderExpoList.js
 import { state } from '../state.js';
 import { startTextJob, pollTextJob } from '../api.js';
 import { renderMarkdownToHtml } from '../render.js';
@@ -12,6 +12,10 @@ if (!window.textJobs) window.textJobs = {}; // { [idx]: { running: bool, cancel:
 
 export function renderExpoList () {
   const list = document.getElementById('expoList');
+  if (!list) {
+    console.warn('[renderExpoList] #expoList nicht gefunden – breche ab.');
+    return;
+  }
   list.innerHTML = '';
 
   // --- Helper lokal ---
@@ -55,7 +59,7 @@ export function renderExpoList () {
   }
 
   // --- Items rendern ---
-  state.titles.forEach((titel, idx) => {
+  (state.titles || []).forEach((titel, idx) => {
     const li = document.createElement('li');
     li.className = 'expo-akkordeon';
     li.innerHTML = `
@@ -404,4 +408,3 @@ export function renderExpoList () {
   // Export-Buttons initial passend setzen
   updateExportButtons();
 }
-```
