@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
-import { renderExpoList } from './ui-expos.js';
+import { renderExpoList } from './ui/renderExpoList.js'; 
 import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
 import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
