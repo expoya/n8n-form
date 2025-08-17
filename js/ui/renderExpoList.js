@@ -1,3 +1,6 @@
+Hier ist deine **`js/ui/renderExpoList.js`** – fix & ready zum 1:1 Einfügen (inkl. sauberem `cancelBtn`, Polling & Markup-Fix):
+
+```js
 // js/ui/renderExpoList.js
 import { state } from '../state.js';
 import { startTextJob, pollTextJob } from '../api.js';
@@ -33,30 +36,27 @@ export function renderExpoList () {
   }
 
   function updateExportButtons() {
-  const exportXmlBtn = document.getElementById('exportXmlBtn');
-  const exportCsvBtn = document.getElementById('exportCsvBtn');
-  const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
-  const hasAnyTitle = (state.titles || []).length > 0;
-  if (exportCsvBtn) exportCsvBtn.style.display = hasAnyTitle ? 'inline-block' : 'none';
-  if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
-
+    const exportXmlBtn = document.getElementById('exportXmlBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const hasAnyText = (state.texts || []).some(t => (t || '').trim() !== '');
+    const hasAnyTitle = (state.titles || []).length > 0;
+    if (exportCsvBtn) exportCsvBtn.style.display = hasAnyTitle ? 'inline-block' : 'none';
+    if (exportXmlBtn) exportXmlBtn.style.display = hasAnyText ? 'inline-block' : 'none';
   }
 
   // Kleine Badge im Header anzeigen, wenn Text vorhanden ist
-function markHasText(headerEl) {
-  if (!headerEl) return;
-  if (!headerEl.querySelector('.text-badge')) {
-    const badge = document.createElement('span');
-    badge.className = 'text-badge';
-    badge.textContent = 'Text';
-    // vor dem Pfeil platzieren
-    const expandBtn = headerEl.querySelector('.btn-expand');
-    headerEl.insertBefore(badge, expandBtn || null);
+  function markHasText(headerEl) {
+    if (!headerEl) return;
+    if (!headerEl.querySelector('.text-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'text-badge';
+      badge.textContent = 'Text';
+      const expandBtn = headerEl.querySelector('.btn-expand');
+      headerEl.insertBefore(badge, expandBtn || null);
+    }
+    headerEl.closest('.expo-akkordeon')?.classList.add('has-text');
   }
-  headerEl.closest('.expo-akkordeon')?.classList.add('has-text');
-}
 
-  
   // --- Items rendern ---
   state.titles.forEach((titel, idx) => {
     const li = document.createElement('li');
@@ -71,13 +71,17 @@ function markHasText(headerEl) {
       </div>
       <div class="expo-akk-body">
         <div class="generate-row">
-  <textarea
-    class="briefing-input"
-    id="briefing-${idx}"
-    placeholder="Vorgaben & Ausschlüsse (optional) – z. B. ‚keine Rabatte nennen; CTA: Beratung; Fokus: Regionalität‘"
-  ></textarea>
-        <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
-        <div class="text-preview"></div>
+          <textarea
+            class="briefing-input"
+            id="briefing-${idx}"
+            placeholder="Vorgaben & Ausschlüsse (optional) – z. B. ‚keine Rabatte nennen; CTA: Beratung; Fokus: Regionalität‘"
+          ></textarea>
+          <div class="btn-row">
+            <button class="btn btn-primary btn-generate-text" data-idx="${idx}">Text generieren</button>
+            <button class="btn btn-outline btn-cancel-text" data-idx="${idx}" style="display:none">Abbrechen</button>
+          </div>
+          <div class="text-preview"></div>
+        </div>
       </div>
     `;
     list.appendChild(li);
@@ -87,9 +91,9 @@ function markHasText(headerEl) {
     const existingHtml = (state.texts && state.texts[idx]) || '';
     if (existingHtml) {
       previewEl.innerHTML = existingHtml;
-  ensureEditButton(previewEl, idx);
-  markHasText(li.querySelector('.expo-akk-header'));
-}
+      ensureEditButton(previewEl, idx);
+      markHasText(li.querySelector('.expo-akk-header'));
+    }
   });
 
   // --- Akkordeon-Button (nur der Pfeil) ---
@@ -102,59 +106,67 @@ function markHasText(headerEl) {
     };
   });
 
-  // --- Text generieren ---
- list.querySelectorAll('.btn-generate-text, .btn-regenerate-text').forEach(btn => {
-  btn.onclick = async e => {
-    e.stopPropagation();
-    primeAudioOnUserGesture(); // innerhalb User-Geste
+  // --- Text generieren / erneut generieren ---
+  list.querySelectorAll('.btn-generate-text, .btn-regenerate-text').forEach(btn => {
+    btn.onclick = async e => {
+      e.stopPropagation();
+      primeAudioOnUserGesture?.(); // innerhalb User-Geste
 
-    const idx = Number(btn.dataset.idx);
-    if (!Number.isInteger(idx)) return;
+      const idx = Number(btn.dataset.idx);
+      if (!Number.isInteger(idx)) return;
 
-    // 🧩 NEU: Titel für diesen Index holen (sonst ReferenceError)
-    const titel = state.titles?.[idx] ?? '';
-    if (!titel) {
-      console.warn('[Text-Job] Kein Titel für idx', idx, state.titles);
-      return;
-    }
+      const titel = state.titles?.[idx] ?? '';
+      if (!titel) {
+        console.warn('[Text-Job] Kein Titel für idx', idx, state.titles);
+        return;
+      }
 
-    // Mehrfachstart verhindern
-    if (window.textJobs[idx]?.running) return;
-    window.textJobs[idx] = { running: true, cancel: false };
+      // Mehrfachstart verhindern
+      if (window.textJobs[idx]?.running) return;
+      window.textJobs[idx] = { running: true, cancel: false };
 
-    // Button sperren + UI vorbereiten
-    btn.disabled = true;
-    const oldLabel = btn.textContent;
-    btn.textContent = '⏳ …';
+      const acc     = btn.closest('.expo-akkordeon');
+      const body    = acc?.querySelector('.expo-akk-body');
+      const preview = body?.querySelector('.text-preview');
+      const cancelBtn = body?.querySelector(`.btn-cancel-text[data-idx="${idx}"]`);
 
-    const preview = btn.closest('.expo-akk-body')?.querySelector('.text-preview');
-    if (preview) startLoading(preview, ladeFloskelnTexte);
+      // UI → Running
+      btn.disabled = true;
+      const oldLabel = btn.textContent;
+      btn.textContent = '⏳ …';
+      if (preview) startLoading(preview, ladeFloskelnTexte);
 
-    // Abbrechen-Button …
-    // (lass deinen bestehenden Code hier unverändert)
+      // Cancel-Handler (falls Button existiert)
+      if (cancelBtn) {
+        cancelBtn.style.display = '';
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = 'Abbrechen';
+        cancelBtn.onclick = () => {
+          if (!window.textJobs[idx]) window.textJobs[idx] = {};
+          window.textJobs[idx].cancel = true;
+          cancelBtn.disabled = true;
+          cancelBtn.textContent = 'Abbruch angefordert…';
+        };
+      }
 
-    // Vorgaben & Ausschlüsse einsammeln
-    const briefEl   = btn.closest('.expo-akkordeon')?.querySelector(`#briefing-${idx}`);
-    const briefText = (briefEl?.value || '').trim();
+      // Vorgaben & Ausschlüsse einsammeln
+      const briefEl   = acc?.querySelector(`#briefing-${idx}`);
+      const briefText = (briefEl?.value || '').trim();
 
-    // ✅ Payload sauber bauen (agentModels hängt api.js ohnehin an)
-    const payload = {
-      ...state.companyData,
-      h1Title: titel,
-      expoIdx: idx,
-      title:   titel,
-      custom_brief: briefText
-    };
+      // Payload sauber bauen (agentModels hängt api.js ohnehin an)
+      const payload = {
+        ...state.companyData,
+        h1Title: titel,
+        expoIdx: idx,
+        title:   titel,
+        custom_brief: briefText
+      };
 
-    console.debug('[Text-Job] Starte mit Payload:', payload);
-
-    try {
-      // 1) Job starten
-      const start = await startTextJob(payload);
-      let jobId = String(start?.jobId || '').replace(/^=+/, '');
-      if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
-
-      // 2) … dein Polling-Code weiter wie gehabt …
+      try {
+        // 1) Job starten
+        const start = await startTextJob(payload);
+        let jobId = String(start?.jobId || '').replace(/^=+/, '');
+        if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
         // 2) Polling
         let tries = 0;
@@ -164,6 +176,15 @@ function markHasText(headerEl) {
           // Cancel-Check unmittelbar am Loop-Beginn
           if (window.textJobs[idx]?.cancel) {
             window.textJobs[idx] = { running: false, cancel: false };
+            // UI zurücksetzen
+            btn.disabled = false;
+            btn.textContent = oldLabel;
+            if (preview) stopLoading(preview);
+            if (cancelBtn) {
+              cancelBtn.style.display = 'none';
+              cancelBtn.disabled = false;
+              cancelBtn.onclick = null;
+            }
             return;
           }
 
@@ -181,6 +202,14 @@ function markHasText(headerEl) {
           // Nochmals Cancel checken, falls während fetch geklickt wurde
           if (window.textJobs[idx]?.cancel) {
             window.textJobs[idx] = { running: false, cancel: false };
+            btn.disabled = false;
+            btn.textContent = oldLabel;
+            if (preview) stopLoading(preview);
+            if (cancelBtn) {
+              cancelBtn.style.display = 'none';
+              cancelBtn.disabled = false;
+              cancelBtn.onclick = null;
+            }
             return;
           }
 
@@ -197,24 +226,25 @@ function markHasText(headerEl) {
               stopLoading(preview);
               preview.innerHTML = safeHtml;
               ensureEditButton(preview, idx);
-              // Akustischer Hinweis + (optional) System-Notification
               const t = (state.titles && state.titles[idx]) || `Titel #${idx+1}`;
               notify('Text fertig', `Der Text für „${t}“ ist da.`);
-              markHasText(btn.closest('.expo-akkordeon')?.querySelector('.expo-akk-header'));
-
+              markHasText(acc?.querySelector('.expo-akk-header'));
             }
 
             const retry = isRetryText(raw) || safeHtml.trim() === '';
             if (retry) {
               showRegenerate(btn);
-              window.textJobs[idx] = { running: false, cancel: false }; // wichtig!
+              window.textJobs[idx] = { running: false, cancel: false };
             } else {
-              // normaler Abschluss
               btn.disabled = false;
               btn.textContent = oldLabel;
             }
 
-            if (cancelBtn) cancelBtn.remove();
+            if (cancelBtn) {
+              cancelBtn.style.display = 'none';
+              cancelBtn.disabled = false;
+              cancelBtn.onclick = null;
+            }
             updateExportButtons();
             break; // fertig – Schleife verlassen
           }
@@ -227,7 +257,11 @@ function markHasText(headerEl) {
             }
             btn.disabled = false;
             btn.textContent = oldLabel;
-            if (cancelBtn) cancelBtn.remove();
+            if (cancelBtn) {
+              cancelBtn.style.display = 'none';
+              cancelBtn.disabled = false;
+              cancelBtn.onclick = null;
+            }
             window.textJobs[idx] = { running: false, cancel: false };
             break;
           }
@@ -239,7 +273,11 @@ function markHasText(headerEl) {
               preview.innerHTML = '<em>Kein Text zurückgegeben.</em>';
             }
             showRegenerate(btn);
-            if (cancelBtn) cancelBtn.remove();
+            if (cancelBtn) {
+              cancelBtn.style.display = 'none';
+              cancelBtn.disabled = false;
+              cancelBtn.onclick = null;
+            }
             window.textJobs[idx] = { running: false, cancel: false };
             updateExportButtons();
             break;
@@ -257,7 +295,11 @@ function markHasText(headerEl) {
           }
           btn.disabled = false;
           btn.textContent = oldLabel;
-          if (cancelBtn) cancelBtn.remove();
+          if (cancelBtn) {
+            cancelBtn.style.display = 'none';
+            cancelBtn.disabled = false;
+            cancelBtn.onclick = null;
+          }
           window.textJobs[idx] = { running: false, cancel: false };
         }
       } catch (err) {
@@ -267,7 +309,11 @@ function markHasText(headerEl) {
         }
         btn.disabled = false;
         btn.textContent = oldLabel;
-        if (cancelBtn) cancelBtn.remove();
+        if (cancelBtn) {
+          cancelBtn.style.display = 'none';
+          cancelBtn.disabled = false;
+          cancelBtn.onclick = null;
+        }
         window.textJobs[idx] = { running: false, cancel: false };
       }
     };
@@ -361,3 +407,4 @@ function markHasText(headerEl) {
   // Export-Buttons initial passend setzen
   updateExportButtons();
 }
+```
