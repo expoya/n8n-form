@@ -1,7 +1,4 @@
-Hier ist deine **`js/ui/renderExpoList.js`** – fix & ready zum 1:1 Einfügen (inkl. sauberem `cancelBtn`, Polling & Markup-Fix):
 
-```js
-// js/ui/renderExpoList.js
 import { state } from '../state.js';
 import { startTextJob, pollTextJob } from '../api.js';
 import { renderMarkdownToHtml } from '../render.js';
