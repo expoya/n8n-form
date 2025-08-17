@@ -1,3 +1,4 @@
+// js/ui-form.js
 import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
@@ -5,6 +6,11 @@ import { renderExpoList } from './ui-expos.js';
 import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
 import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
+
+/* -----------------------------------------
+ *  Helpers
+ * ----------------------------------------- */
+const byId = (id) => document.getElementById(id);
 
 const AUTO_GROW_MAX = {
   regionen: 8,
@@ -16,11 +22,10 @@ const AUTO_GROW_MAX = {
 };
 
 function sizeTextArea(el) {
-  // Max-Zeilen je nach Feldname, Fallback 8
-  const name = el.getAttribute('name');
-  const maxRows = AUTO_GROW_MAX[name] || 8;
+  if (!el) return;
+  const name = el.getAttribute('name') || '';
+  const maxRows = AUTO_GROW_MAX[name] || 4;
 
-  // erst zurücksetzen, damit scrollHeight korrekt ist
   el.style.height = 'auto';
 
   const cs = window.getComputedStyle(el);
@@ -29,101 +34,59 @@ function sizeTextArea(el) {
   const padding = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
   const maxPx = Math.round(lineHeight * maxRows + padding + border);
 
-  // Zielhöhe: Content-Höhe bis zur Obergrenze
   const target = Math.min(el.scrollHeight, maxPx);
   el.style.height = target + 'px';
-
-  // Scrollbar nur zeigen, wenn über Limit
   el.style.overflowY = (el.scrollHeight > maxPx) ? 'auto' : 'hidden';
 }
 
 function initAutoGrow(root = document) {
-  const areas = root.querySelectorAll('.form-group textarea');
+  const areas = root.querySelectorAll('textarea[name="regionen"], textarea[name="zielgruppen"], textarea[name="produkte"], textarea[name="attribute"], textarea[name="zielsetzung"], textarea[name="keywordliste"]');
   areas.forEach(el => {
-    // initial (auch bei vorbefülltem Inhalt)
     sizeTextArea(el);
-
-    // auf Eingabe reagieren
     el.addEventListener('input', () => sizeTextArea(el));
-
-    // falls Inhalte programmatisch gesetzt werden (Prefill etc.)
     const obs = new MutationObserver(() => sizeTextArea(el));
     obs.observe(el, { characterData: true, childList: true, subtree: true });
   });
 }
 
-const tonalities = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
-
-/* ---------- NEU: Level-Definitionen für Detailgrad & Schreibstil ---------- */
-const DETAIL_LEVELS = [
-  { value: 1, name: "Einfach",                instruction: "Schreibe kurz und leicht verständlich; vermeide Fachjargon und Details." },
-  { value: 2, name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
-  { value: 3, name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
-  { value: 4, name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
-  { value: 5, name: "Ausführlich & Fachlich", instruction: "Maximal detailreich und technisch präzise; nutze korrekte Terminologie und Begründungen." }
+const TONALITY_LABELS   = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
+const STYLE_LABELS      = ['Werblich','Eher werblich','Neutral','Eher faktenorientiert','Faktenorientiert'];
+const DETAIL_LEVELS     = [
+  { name: "Einfach",                instruction: "Kurz und leicht verständlich; vermeide Fachjargon und Details." },
+  { name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
+  { name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
+  { name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
+  { name: "Ausführlich & Fachlich", instruction: "Maximal informativ und technisch präzise; korrekte Terminologie und Begründungen." }
 ];
 
-const STYLE_BIAS_LEVELS = [
-  { value: 1, name: "Werblich",               instruction: "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions." },
-  { value: 2, name: "Eher werblich",          instruction: "Benefits priorisieren; sachliche Belege sparsam einstreuen." },
-  { value: 3, name: "Neutral",                instruction: "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage." },
-  { value: 4, name: "Eher faktenorientiert",  instruction: "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache." },
-  { value: 5, name: "Faktenorientiert",       instruction: "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen." }
-];
-
-/* ---------- Helpers: Presets ---------- */
-function setSelectValue(selectEl, value) {
-  if (!selectEl) return;
-  const texts = Array.from(selectEl.options).map(o => o.text);
-  if (!texts.includes(value)) return;      // Schutz: Option existiert?
-  selectEl.value = value;
-  // change-Event feuern, damit State/Listener sauber aktualisieren
-  selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-}
-
-function applyPreset(name) {
-  const conf = PRESETS?.[name];
-  if (!conf) return;
-
-  // DOM-IDs der Selects ↔ Keys im State
-  const idMap = {
-    titleGenerator : 'modelTitleGenerator',
-    titleController: 'modelTitleController',
-    seoStrategist  : 'modelSeoStrategist',
-    microTexter    : 'modelMicroTexter',
-    seoVeredler    : 'modelSeoVeredler',
-    seoAuditor     : 'modelSeoAuditor'
+function initSlider(id, labelsOrFn) {
+  const el  = byId(id);
+  const out = byId(`${id}-value`);
+  if (!el || !out) return;
+  const toLabel = (v) => {
+    const n = parseInt(v || '3', 10);
+    if (Array.isArray(labelsOrFn)) return labelsOrFn[(n - 1)] || labelsOrFn[2] || 'Neutral';
+    if (typeof labelsOrFn === 'function') return labelsOrFn(n);
+    return String(n);
   };
-
-  // Werte setzen (inkl. Change-Events)
-  Object.entries(conf).forEach(([key, val]) => {
-    const el = document.getElementById(idMap[key]);
-    setSelectValue(el, val);
-  });
-
-  // UI/State syncen
-  state.selectedPreset = name;
-  const presetEl = document.getElementById('modelPreset');
-  if (presetEl) presetEl.value = name;
+  const set = (v) => { out.textContent = toLabel(v); };
+  set(el.value);
+  el.addEventListener('input', e => set(e.target.value));
 }
 
-function initPresetSelect() {
-  const presetEl = document.getElementById('modelPreset');
-  if (!presetEl) return;
-
-  // Beim Wechsel Preset anwenden (außer Benutzerdefiniert/leer)
-  presetEl.addEventListener('change', () => {
-    const val = presetEl.value;
-    if (!val || val === 'Benutzerdefiniert') return;
-    applyPreset(val);
-  });
+function readSegmented(form, name, fallback) {
+  const val = new FormData(form).get(name);
+  return (val == null || val === '') ? fallback : String(val);
 }
 
-/* ---------- Modal verdrahten ---------- */
+/* -----------------------------------------
+ *  Agent Info Modal
+ * ----------------------------------------- */
 export function initAgentModals() {
-  const modal     = document.getElementById('infoModal');
-  const modalText = document.getElementById('modalText');
-  const closeBtn  = modal.querySelector('.close');
+  const modal    = byId('infoModal');
+  const modalText= byId('modalText');
+  if (!modal || !modalText) return;
+  const closeBtn = modal.querySelector('.close');
 
   document.querySelectorAll('.info-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -133,156 +96,148 @@ export function initAgentModals() {
     });
   });
 
-  closeBtn.addEventListener('click', () =>  modal.style.display = 'none');
-  modal.addEventListener('click', e => {
-    if (e.target === modal) modal.style.display = 'none';
+  closeBtn && closeBtn.addEventListener('click', () => modal.style.display = 'none');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+}
+
+/* -----------------------------------------
+ *  Presets & Model-Auswahl
+ * ----------------------------------------- */
+function applyModelsToSelects(models) {
+  const map = {
+    titleGenerator: byId('modelTitleGenerator'),
+    titleController: byId('modelTitleController'),
+    seoStrategist: byId('modelSeoStrategist'),
+    microTexter: byId('modelMicroTexter'),
+    seoVeredler: byId('modelSeoVeredler'),
+    seoAuditor: byId('modelSeoAuditor')
+  };
+  Object.entries(models || {}).forEach(([k, v]) => {
+    const sel = map[k];
+    if (sel) {
+      // set exact match if exists
+      const opt = Array.from(sel.options).find(o => o.value === v || o.textContent === v);
+      if (opt) sel.value = opt.value;
+      else sel.value = v; // fallback, even wenn Option fehlt
+    }
   });
 }
 
-/* ---------- Formular-Handling ---------- */
+function readModelsFromSelects() {
+  const val = (id) => byId(id)?.value || '';
+  return {
+    titleGenerator:  val('modelTitleGenerator'),
+    titleController: val('modelTitleController'),
+    seoStrategist:   val('modelSeoStrategist'),
+    microTexter:     val('modelMicroTexter'),
+    seoVeredler:     val('modelSeoVeredler'),
+    seoAuditor:      val('modelSeoAuditor')
+  };
+}
+
+/* -----------------------------------------
+ *  Init Form
+ * ----------------------------------------- */
 export function initForm() {
-  const form = document.getElementById('myForm');
+  const form = byId('myForm');
+  if (!form) return;
+
+  // Auto-Grow Textareas & Sliders
   initAutoGrow(form);
+  initSlider('tonality',     TONALITY_LABELS);
+  initSlider('detail_level', (n) => (DETAIL_LEVELS[(n-1)]?.name || 'Neutral'));
+  initSlider('style_bias',   STYLE_LABELS);
 
-  /* --- Experten-Auswahl initialisieren --- */
-  function initExpertSelects() {
-    const map = {
-      modelTitleGenerator : 'titleGenerator',
-      modelTitleController: 'titleController',
-      modelSeoStrategist  : 'seoStrategist',
-      modelMicroTexter    : 'microTexter',
-      modelSeoVeredler    : 'seoVeredler',
-      modelSeoAuditor     : 'seoAuditor'
-    };
+  // Preset select
+  const presetSel = byId('modelPreset');
+  if (presetSel) {
+    // init from state.selectedPreset
+    if (state.selectedPreset && PRESETS[state.selectedPreset]) {
+      presetSel.value = state.selectedPreset;
+      applyModelsToSelects(PRESETS[state.selectedPreset]);
+    } else {
+      applyModelsToSelects(state.agentModels || {});
+    }
 
-    Object.entries(map).forEach(([id, key]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+    presetSel.addEventListener('change', () => {
+      const key = presetSel.value || '';
+      state.selectedPreset = key;
+      const models = PRESETS[key] || {};
+      // apply and store
+      applyModelsToSelects(models);
+      state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
+    });
+  } else {
+    // kein Preset-Control; trotzdem Selects aus state initialisieren
+    applyModelsToSelects(state.agentModels || {});
+  }
 
-      // Startwert in State spiegeln
-      state.agentModels[key] = el.value;
-
-      // Bei manueller Änderung → State updaten & Preset auf "Benutzerdefiniert"
-      el.addEventListener('change', () => {
-        state.agentModels[key] = el.value;
-
-        const presetEl = document.getElementById('modelPreset');
-        // Nur umschalten, wenn zuvor ein Preset aktiv war
-        if (presetEl && state.selectedPreset) {
-          state.selectedPreset = '';
-          presetEl.value = 'Benutzerdefiniert';
-        }
+  // Jede Model-Select-Änderung direkt in den State schreiben
+  ['modelTitleGenerator','modelTitleController','modelSeoStrategist','modelMicroTexter','modelSeoVeredler','modelSeoAuditor']
+    .forEach(id => {
+      const sel = byId(id);
+      if (!sel) return;
+      sel.addEventListener('change', () => {
+        state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
       });
     });
-  }
 
-  initExpertSelects();   // Dropdowns verdrahten
-  initPresetSelect();    // Preset-Dropdown verdrahten
-  initAgentModals();     // Info-Buttons & Modal verdrahten
-
-  /* ---------- Slider & Toggle ---------- */
-  // Tonalität (mit Initial-Set)
-  {
-    const tEl  = document.getElementById('tonality');
-    const tOut = document.getElementById('tonality-value');
-    if (tEl && tOut) {
-      const set = v => tOut.textContent = tonalities[(v|0)-1];
-      set(parseInt(tEl.value || '3', 10));
-      tEl.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
-    }
-  }
-
- 
-
-  // NEU: Detailgrad live anzeigen
-  {
-    const el  = document.getElementById('detail_level');
-    const out = document.getElementById('detail_level-value');
-    if (el && out) {
-      const set = v => out.textContent = (DETAIL_LEVELS[(v|0)-1]?.name || 'Neutral');
-      set(parseInt(el.value || '3', 10));
-      el.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
-    }
-  }
-
-  // NEU: Schreibstil live anzeigen
-  {
-    const el  = document.getElementById('style_bias');
-    const out = document.getElementById('style_bias-value');
-    if (el && out) {
-      const set = v => out.textContent = (STYLE_BIAS_LEVELS[(v|0)-1]?.name || 'Neutral');
-      set(parseInt(el.value || '3', 10));
-      el.addEventListener('input', e => set(parseInt(e.target.value || '3', 10)));
-    }
-  }
-
-  /* ---------- Submit ---------- */
-  form.addEventListener('submit', async e => {
+  // Submit handler: Titel-Job starten
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-   /* 1) Daten einsammeln */
-const fd = new FormData(form);
+    // 1) Form → State companyData (Strings)
+    const fd = new FormData(form);
+    const entries = Object.fromEntries(fd.entries());
 
-// ZUERST: Formfelder → State mergen (Strings bleiben Strings),
-// damit danach abgeleitete Felder NICHT wieder überschrieben werden.
-state.companyData = Object.assign(
-  state.companyData || {},
-  Object.fromEntries(fd.entries())
-);
+    // Mergen, damit abgeleitete Felder nicht überschrieben werden
+    state.companyData = { ...(state.companyData || {}), ...entries };
 
-// NEU: Ortsbezug (Enum) + abgeleitetes Boolean für Abwärtskompatibilität
-{
-  const ortsbezug = (fd.get('ortsbezug') || 'exakt');
-  const ORTSBEZUG_TEXT = {
-  ohne:                'Keinen Ortsbezug verwenden',
-  exakt:               'Nur die exakten Namen der angegebenen Regionen verwenden',
-  umland:              'angegebene Regionen und Nachbarorte davon in Titel verwenden',
-  umland_stadtteile:   'angebebene Regionen, Nachbarorte davon und Stadtteile davon in Titel verwenden'
-};
-  state.companyData.ortsbezug    = ortsbezug;
-  state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');   // <- wichtig für alte Workflows!
-  state.companyData.ortsbezug_instruction = ORTSBEZUG_TEXT[ortsbezug] || '';
-}
-// Ansprache aus dem segmented control
-state.companyData.ansprache = fd.get('ansprache') || 'Du';
+    // Legacy-Feld (Website) sicher entfernen
+    delete state.companyData.website;
 
-// Tonalität (Label aus Slider-Wert ableiten)
-state.companyData.tonality = 
-  ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'][
-    (parseInt(fd.get('tonality') || '3', 10) - 1)
-  ] || 'Neutral';
+    // Segmented controls
+    const ortsbezug = readSegmented(form, 'ortsbezug', 'exakt');
+    const ansprache = readSegmented(form, 'ansprache', 'Du');
 
-// Detailgrad (Wert, Label, Instruction)
-{
-  const v = parseInt(fd.get('detail_level') || '3', 10);
-  const meta = [
-    { name: "Einfach",                instruction: "Kurz und leicht verständlich; vermeide Fachjargon und Details." },
-    { name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
-    { name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
-    { name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
-    { name: "Ausführlich & Fachlich", instruction: "Maximal informativ und technisch präzise; korrekte Terminologie und Begründungen." }
-  ][v-1] || { name: "Neutral", instruction: "" };
+    state.companyData.ortsbezug    = ortsbezug;
+    state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');
+    state.companyData.ansprache    = ansprache;
 
-  state.companyData.detail_level            = v;
-  state.companyData.detail_level_label      = meta.name;
-  state.companyData.detail_level_instruction= meta.instruction;
-}
+    // Klartext-Instruktion fürs Backend
+    const ORTSBEZUG_TEXT = {
+      ohne:               'Keinen Ortsbezug verwenden',
+      exakt:              'Nur exakten Ort verwenden',
+      umland:             'Region und Nachbarorte verwenden',
+      umland_stadtteile:  'Region, Nachbarorte und Stadtteile verwenden'
+    };
+    state.companyData.ortsbezug_instruction = ORTSBEZUG_TEXT[ortsbezug] || '';
 
-// Schreibstil (Wert, Label, Instruction)
-{
-  const v = parseInt(fd.get('style_bias') || '3', 10);
-  const meta = [
-    { name: "Werblich",              instruction: "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions." },
-    { name: "Eher werblich",         instruction: "Benefits priorisieren; sachliche Belege sparsam einstreuen." },
-    { name: "Neutral",               instruction: "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage." },
-    { name: "Eher faktenorientiert", instruction: "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache." },
-    { name: "Faktenorientiert",      instruction: "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen." }
-  ][v-1] || { name: "Neutral", instruction: "" };
+    // Tonalität
+    const ton = parseInt(fd.get('tonality') || '3', 10);
+    state.companyData.tonality = TONALITY_LABELS[(ton-1)] || 'Neutral';
 
-  state.companyData.style_bias            = v;
-  state.companyData.style_bias_label      = meta.name;
-  state.companyData.style_bias_instruction= meta.instruction;
-}
+    // Detailgrad
+    const dl = parseInt(fd.get('detail_level') || '3', 10);
+    const dlMeta = DETAIL_LEVELS[(dl-1)] || DETAIL_LEVELS[2];
+    state.companyData.detail_level             = dl;
+    state.companyData.detail_level_label       = dlMeta.name;
+    state.companyData.detail_level_instruction = dlMeta.instruction;
+
+    // Schreibstil
+    const sb = parseInt(fd.get('style_bias') || '3', 10);
+    const sbMeta = STYLE_LABELS[(sb-1)] || 'Neutral';
+    state.companyData.style_bias         = sb;
+    state.companyData.style_bias_label   = sbMeta;
+    state.companyData.style_bias_instruction =
+      (sb === 1) ? "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions."
+      : (sb === 2) ? "Benefits priorisieren; sachliche Belege sparsam einstreuen."
+      : (sb === 4) ? "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache."
+      : (sb === 5) ? "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen."
+      : "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage.";
+
+    // Agent-Modelle sicherstellen
+    state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
 
     /* 2) UI – Loader + Reset */
     showLoader('Titel werden generiert …');
@@ -292,13 +247,12 @@ state.companyData.tonality =
     /* 3) Job starten */
     let jobId;
     try {
-      primeAudioOnUserGesture(); // Aufruf innerhalb echter Button-Geste
+      primeAudioOnUserGesture(); // innerhalb User-Geste
       ({ jobId } = await startTitleJob(state.companyData));
       if (!jobId) throw new Error('Keine Job-ID erhalten');
     } catch (err) {
       hideLoader();
-      document.getElementById('expoList').innerHTML =
-        `<li class="expo-placeholder">Fehler: ${err.message}</li>`;
+      showToast('Fehler beim Start: ' + (err?.message || err));
       return;
     }
 
@@ -306,36 +260,44 @@ state.companyData.tonality =
     state.runningJobId = jobId;
     pollUntilDone(jobId);
   });
-} //  ←  HIER wird initForm geschlossen
+} // end initForm
 
 /* ---------- Poll-Loop ---------- */
 async function pollUntilDone(jobId) {
   let tries = 0;
-  const maxTries = 90;
+  const maxTries = 90; // 90 * 10s = 15 min
 
   const timer = setInterval(async () => {
     tries++;
-    updateLoader(tries);
+    try { updateLoader(tries); } catch {}
 
     let job;
     try {
       job = await pollTitleJob(jobId);
     } catch (err) {
       clearInterval(timer); hideLoader();
-      showToast('Polling-Fehler: ' + err.message);
+      showToast('Polling-Fehler: ' + (err?.message || err));
       return;
     }
 
-    if (job.status === 'finished') {
+    if (job?.status === 'finished') {
       clearInterval(timer); hideLoader();
-      state.titles = JSON.parse(job.result || '[]');
+      try {
+        state.titles = JSON.parse(job.result || '[]');
+      } catch {
+        state.titles = Array.isArray(job.result) ? job.result : [];
+      }
       state.texts  = new Array(state.titles.length).fill('');
       notify('Titel fertig', `${state.titles.length} Expo-Titel wurden generiert.`);
       renderExpoList();
+      return;
     }
-    if (job.status === 'error' || tries > maxTries) {
+
+    if (job?.status === 'error' || tries > maxTries) {
       clearInterval(timer); hideLoader();
       showToast('Titel-Generierung fehlgeschlagen oder Timeout.');
+      return;
     }
+    // else: keep polling every 10s
   }, 10_000);
 }
