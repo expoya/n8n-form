@@ -44,6 +44,25 @@
           <textarea name="keywordliste" placeholder="Keywordliste (mit , oder ; trennen)" rows="1"></textarea>
         </div>
 
+<div class="form-group">
+  <label for="contentSourceId">ContentSource-ID</label>
+  <input
+    type="text"
+    id="contentSourceId"
+    name="contentSourceId"
+    placeholder="z. B. cs_8f3a1c_metallfritz_2025"
+    autocomplete="off"
+    inputmode="latin"
+    spellcheck="false"
+    required
+    pattern="[A-Za-z0-9._\-:]{4,100}"
+    title="4–100 Zeichen; erlaubt sind Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und Doppelpunkt."
+  />
+  <small class="hint">ID von ContentSource-ID & Website-Scraper hier einfügen.</small>
+</div>
+
+
+  
         <div class="form-group tonality-container">
           <label class="tonality-label" for="tonality">Tonalität</label>
           <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
