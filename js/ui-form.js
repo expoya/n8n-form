@@ -40,12 +40,21 @@ function sizeTextArea(el) {
 }
 
 function initAutoGrow(root = document) {
-  const areas = root.querySelectorAll('textarea[name="regionen"], textarea[name="zielgruppen"], textarea[name="produkte"], textarea[name="attribute"], textarea[name="zielsetzung"], textarea[name="keywordliste"]');
+  const areas = root.querySelectorAll([
+    'textarea[name="regionen"]',
+    'textarea[name="zielgruppen"]',
+    'textarea[name="produkte"]',
+    'textarea[name="attribute"]',
+    'textarea[name="zielsetzung"]',
+    'textarea[name="keywordliste"]'
+  ].join(', '));
   areas.forEach(el => {
     sizeTextArea(el);
     el.addEventListener('input', () => sizeTextArea(el));
     const obs = new MutationObserver(() => sizeTextArea(el));
     obs.observe(el, { characterData: true, childList: true, subtree: true });
+  });
+});
   });
 }
 
@@ -139,6 +148,41 @@ function readModelsFromSelects() {
  *  Init Form
  * ----------------------------------------- */
 export function initForm() {
+const form = byId('myForm');
+  if (!form) return;
+
+  // Restore from localStorage (companyData + agentModels)
+  try {
+    const saved = JSON.parse(localStorage.getItem('expoya_ce_state_v1') || '{}');
+    if (saved.agentModels && typeof saved.agentModels === 'object') {
+      Object.assign(state.agentModels, saved.agentModels);
+      // Set selects
+      const modelIds = {
+        titleGenerator: 'modelTitleGenerator',
+        titleController: 'modelTitleController',
+        seoStrategist: 'modelSeoStrategist',
+        microTexter: 'modelMicroTexter',
+        seoVeredler: 'modelSeoVeredler',
+        seoAuditor: 'modelSeoAuditor'
+      };
+      for (const [key, selId] of Object.entries(modelIds)) {
+        const sel = byId(selId);
+        if (sel && saved.agentModels[key]) sel.value = saved.agentModels[key];
+      }
+    }
+    if (saved.companyData && typeof saved.companyData === 'object') {
+      Object.assign(state.companyData, saved.companyData);
+      for (const [k,v] of Object.entries(saved.companyData)) {
+        const el = form.querySelector(`[name="${k}"]`) || document.getElementById(k);
+        if (!el) continue;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = !!v;
+        } else {
+          el.value = v;
+        }
+      }
+    }
+  } catch {}
   const form = byId('myForm');
   if (!form) return;
 
@@ -213,6 +257,8 @@ export function initForm() {
     };
     state.companyData.ortsbezug_instruction = ORTSBEZUG_TEXT[ortsbezug] || '';
 
+    try { localStorage.setItem('expoya_ce_state_v1', JSON.stringify({ companyData: state.companyData, agentModels: state.agentModels })); } catch {}
+
     // Tonalität
     const ton = parseInt(fd.get('tonality') || '3', 10);
     state.companyData.tonality = TONALITY_LABELS[(ton-1)] || 'Neutral';
@@ -267,37 +313,36 @@ async function pollUntilDone(jobId) {
   let tries = 0;
   const maxTries = 90; // 90 * 10s = 15 min
 
-  const timer = setInterval(async () => {
-    tries++;
-    try { updateLoader(tries); } catch {}
+  let delay = 5000; const maxDelay = 30000;
+  let tries = 0; const maxTries = 120;
+  let stopped = false;
 
-    let job;
+  async function poll() {
     try {
-      job = await pollTitleJob(jobId);
-    } catch (err) {
-      clearInterval(timer); hideLoader();
-      showToast('Polling-Fehler: ' + (err?.message || err));
-      return;
-    }
-
-    if (job?.status === 'finished') {
-      clearInterval(timer); hideLoader();
-      try {
-        state.titles = JSON.parse(job.result || '[]');
-      } catch {
-        state.titles = Array.isArray(job.result) ? job.result : [];
+      const job = await pollTitleJob(jobId);
+      tries++;
+      if (Array.isArray(job) && job[0]?.titles?.length) {
+        state.titles = job[0].titles;
+        clearInterval(0); hideLoader();
+        state.texts  = new Array(state.titles.length).fill('');
+        notify('Titel fertig', `${state.titles.length} Expo-Titel wurden generiert.`);
+        renderExpoList();
+        return;
       }
-      state.texts  = new Array(state.titles.length).fill('');
-      notify('Titel fertig', `${state.titles.length} Expo-Titel wurden generiert.`);
-      renderExpoList();
+      if (job?.status === 'error' || tries > maxTries) {
+        hideLoader();
+        showToast('Titel-Generierung fehlgeschlagen oder Timeout.');
+        return;
+      }
+    } catch (err) {
+      console.error('[Titel-Poll Fehler]', err);
+      hideLoader();
+      showToast(`Fehler beim Abfragen: ${err?.message || err}`);
       return;
     }
-
-    if (job?.status === 'error' || tries > maxTries) {
-      clearInterval(timer); hideLoader();
-      showToast('Titel-Generierung fehlgeschlagen oder Timeout.');
-      return;
-    }
-    // else: keep polling every 10s
-  }, 10_000);
+    await new Promise(r => setTimeout(r, delay));
+    delay = Math.min(maxDelay, Math.round(delay * 1.5));
+    if (!stopped) await poll();
+  }
+  poll();
 }
