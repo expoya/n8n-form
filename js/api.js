@@ -98,14 +98,15 @@ export async function generateText (payload) {
   const res = await fetch(TEXT_WEBHOOK_URL, {
     method  : "POST",
     headers : { "Content-Type": "application/json" },
-    body    : JSON.stringify(completePayload)
+    body    : JSON.stringify(completePayload),
+    signal
   });
 
   return safeJson(res); // { html }
 }
 // ---------- Text-Job: Start + Poll (analog Titel) ----------
 
-export async function startTextJob(payload = {}) {
+export async function startTextJob(payload = {}, { signal } = {}) {
   // Modelle zentral anhängen – genauso wie beim Titel-Job
   const completePayload = {
     ...payload,
@@ -117,14 +118,15 @@ export async function startTextJob(payload = {}) {
   const res = await fetch(TEXT_WEBHOOK_URL, {
     method  : "POST",
     headers : { "Content-Type": "application/json" },
-    body    : JSON.stringify(completePayload)
+    body    : JSON.stringify(completePayload),
+    signal
   });
   // Erwartet: { jobId: "..." }
   console.debug('[Text-Start RAW]', res.status, res.headers.get('content-type'));
   return safeJson(res);
 }
 
-export async function pollTextJob(jobId) {
+export async function pollTextJob(jobId, { signal } = {}) {
   // Cache-Buster gegen CDN/Proxy/Browser-Caching
   const url = `${TEXT_POLL_URL}${encodeURIComponent(jobId)}&_=${Date.now()}`;
 
@@ -132,7 +134,8 @@ export async function pollTextJob(jobId) {
     cache: 'no-store',
     headers: {
       'Cache-Control': 'no-cache'
-    }
+    },
+    signal
   });
 
   return safeJson(res); // erwartet Array[0] mit Status/Text in deinem Flow
