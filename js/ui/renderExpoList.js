@@ -65,7 +65,7 @@ export function renderExpoList () {
     li.innerHTML = `
       <div class="expo-akk-header" data-idx="${idx}">
         <span class="expo-akk-index">${idx + 1}.</span>
-        <span class="expo-akk-titel"><span class="expo-titel-text">${titel}</span></span>
+        <span class="expo-akk-titel"><span class="expo-titel-text"></span></span>
         <button class="btn-icon btn-edit-title" data-idx="${idx}" title="Bearbeiten">✏️</button>
         <button class="btn-icon btn-delete"      data-idx="${idx}" title="Entfernen">🗑️</button>
         <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
@@ -85,7 +85,8 @@ export function renderExpoList () {
         </div>
       </div>
     `;
-    list.appendChild(li);
+      li.querySelector('.expo-titel-text').textContent = titel;
+list.appendChild(li);
 
     // Falls bereits Text vorhanden → direkt anzeigen + Edit-Button sicherstellen
     const previewEl = li.querySelector('.text-preview');
@@ -143,6 +144,8 @@ export function renderExpoList () {
         cancelBtn.disabled = false;
         cancelBtn.textContent = 'Abbrechen';
         cancelBtn.onclick = () => {
+          try { window.textJobs[idx]?.ac?.abort(); } catch (e) {}
+
           if (!window.textJobs[idx]) window.textJobs[idx] = {};
           window.textJobs[idx].cancel = true;
           cancelBtn.disabled = true;
@@ -165,7 +168,9 @@ export function renderExpoList () {
 
       try {
         // 1) Job starten
-        const start = await startTextJob(payload);
+        const ac = new AbortController();
+  window.textJobs[idx] = { running: true, cancel: false, ac };
+  const start = await startTextJob(payload, { signal: ac.signal });
         let jobId = String(start?.jobId || '').replace(/^=+/, '');
         if (!jobId) throw new Error('Keine Text-Job-ID erhalten');
 
@@ -193,10 +198,11 @@ export function renderExpoList () {
 
           let job;
           try {
-            job = await pollTextJob(jobId);
+            job = await pollTextJob(jobId, { signal: (window.textJobs[idx]?.ac?.signal) });
           } catch (pollErr) {
             console.debug('[pollText] fetch error:', pollErr?.message || pollErr);
-            await new Promise(r => setTimeout(r, 10_000));
+            await new Promise(r => setTimeout(r, delayMs));
+          delayMs = Math.min(maxDelay, Math.round(delayMs * 1.5));
             continue;
           }
 
@@ -285,7 +291,8 @@ export function renderExpoList () {
           }
 
           // noch nicht fertig -> warten & weiter
-          await new Promise(r => setTimeout(r, 10_000));
+          await new Promise(r => setTimeout(r, delayMs));
+          delayMs = Math.min(maxDelay, Math.round(delayMs * 1.5));
         } // while
 
         // --- Timeout-Absicherung ---
