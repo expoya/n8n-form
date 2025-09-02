@@ -20,4 +20,4 @@ if (!state.companyData) state.companyData = {};
 if (!('ortsbezug' in state.companyData)) state.companyData.ortsbezug = 'ohne';
 if (!('mitOrtsbezug' in state.companyData)) state.companyData.mitOrtsbezug = true;
 
-//  ← hier endet das Gesamt-Objekt :contentReference[oaicite:0]{index=0}
+
