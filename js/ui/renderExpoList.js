@@ -7,8 +7,38 @@ import { startLoading, stopLoading } from './loading.js';
 import { ensureEditButton } from './edit.js';
 import { notify } from './notifier.js';
 
-// Laufzeitstatus für Text-Jobs je Index
 if (!window.textJobs) window.textJobs = {}; // {[idx]: {running:boolean, abort?:AbortController}}
+
+/** CSS-freier Klickeffekt */
+function clickFlash(btn) {
+  if (!btn) return;
+  const prev = btn.style.transform;
+  const prevSh = btn.style.boxShadow;
+  btn.style.transform = 'scale(0.98)';
+  btn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.08) inset';
+  setTimeout(() => {
+    btn.style.transform = prev || '';
+    btn.style.boxShadow = prevSh || '';
+  }, 130);
+}
+
+/** Copy-Helper (zeigt Toast bei Erfolg/Fehler) */
+async function copyToClipboard(str) {
+  try {
+    await navigator.clipboard.writeText(str);
+    notify('Kopiert', 'In die Zwischenablage übernommen.');
+  } catch (e) {
+    console.error('Clipboard', e);
+    alert('Kopieren fehlgeschlagen. Bitte manuell kopieren.');
+  }
+}
+
+/** extrahiert reinen Text aus HTML */
+function htmlToPlain(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html || '';
+  return tmp.textContent || tmp.innerText || '';
+}
 
 export function renderExpoList () {
   const list = document.getElementById('expoList');
@@ -26,6 +56,7 @@ export function renderExpoList () {
       <div class="expo-akk-header" data-idx="${idx}">
         <span class="expo-akk-index">${idx + 1}.</span>
         <span class="expo-akk-titel"><span class="expo-titel-text"></span></span>
+        <button class="btn-icon btn-copy-title" data-idx="${idx}" title="Titel kopieren">📋</button>
         <button class="btn-icon btn-edit-title" data-idx="${idx}" title="Bearbeiten">✏️</button>
         <button class="btn-icon btn-delete"      data-idx="${idx}" title="Entfernen">🗑️</button>
         <button class="btn-expand"               data-idx="${idx}" title="Details">▼</button>
@@ -35,13 +66,23 @@ export function renderExpoList () {
           <textarea class="prompt-input" placeholder="Hinweise, Varianten, Tonalität … (optional)" rows="2"></textarea>
           <button class="generate-text-btn" data-idx="${idx}">Text generieren</button>
           <button class="cancel-text-btn"   data-idx="${idx}" style="display:none">Abbrechen</button>
+          <div class="copy-row" style="display:none;gap:.5rem;">
+            <button class="btn-copy-html"  data-idx="${idx}" title="HTML kopieren">HTML kopieren</button>
+            <button class="btn-copy-plain" data-idx="${idx}" title="Plaintext kopieren">Text kopieren</button>
+          </div>
         </div>
         <div class="expo-html" id="expo-html-${idx}">${state.texts?.[idx] || ''}</div>
       </div>
     `;
 
-    // Titel-Text einsetzen (escaped per TextNode)
+    // Titeltext setzen
     li.querySelector('.expo-titel-text').textContent = titel;
+
+    // Copy Titel
+    li.querySelector('.btn-copy-title').addEventListener('click', () => {
+      clickFlash(li.querySelector('.btn-copy-title'));
+      copyToClipboard(state.titles[idx] || '');
+    });
 
     // Edit-Button (Titel bearbeiten)
     ensureEditButton(li.querySelector('.btn-edit-title'), idx, (newTitle) => {
@@ -67,12 +108,17 @@ export function renderExpoList () {
     const cancelBtn = li.querySelector('.cancel-text-btn');
     const promptEl = li.querySelector('.prompt-input');
     const htmlContainer = li.querySelector(`#expo-html-${idx}`);
+    const copyRow = li.querySelector('.copy-row');
+
+    // Falls bereits Text vorhanden ist, Copy-Buttons zeigen
+    if (state.texts?.[idx]) copyRow.style.display = 'flex';
 
     genBtn.addEventListener('click', async () => {
       if (window.textJobs[idx]?.running) return;
+      clickFlash(genBtn);
+
       const userHint = promptEl.value.trim();
 
-      // Reset + Start
       htmlContainer.innerHTML = '';
       const abort = new AbortController();
       window.textJobs[idx] = { running: true, abort };
@@ -82,12 +128,11 @@ export function renderExpoList () {
       cancelBtn.style.display = 'inline-block';
       cancelBtn.disabled = false;
 
-      // Nettigkeiten
       const floskel = ladeFloskelnTexte[Math.floor(Math.random()*ladeFloskelnTexte.length)] || 'Die Agents legen los …';
       startLoading(htmlContainer, floskel);
 
       try {
-        // 1) Start
+        // Start
         const payload = {
           titel: state.titles[idx],
           hint : userHint,
@@ -98,8 +143,8 @@ export function renderExpoList () {
         const jobId = res?.jobId || res?.id;
         if (!jobId) throw new Error('Kein text jobId erhalten.');
 
-        // 2) Poll stabil
-        const MAX_MS = 10 * 60 * 1000; // 10 min
+        // Poll
+        const MAX_MS = 10 * 60 * 1000;
         const start = Date.now();
         let delay   = 2000;
         const MAX_DELAY = 12000;
@@ -118,6 +163,7 @@ export function renderExpoList () {
             const htmlOut = html ? String(html) : renderMarkdownToHtml(md);
             state.texts[idx] = htmlOut;
             htmlContainer.innerHTML = htmlOut;
+            copyRow.style.display = 'flex'; // Copy-Buttons zeigen
             notify('Text fertig', `„${state.titles[idx]}“ wurde erstellt.`);
             break;
           }
@@ -128,30 +174,3 @@ export function renderExpoList () {
       } catch (err) {
         if (err?.name === 'AbortError') {
           // Nutzer hat abgebrochen
-          // UI wird unten im finally zurückgesetzt
-        } else {
-          console.error('[Text-Generation]', err);
-          htmlContainer.innerHTML = `<div class="error">⚠️ ${ (err?.message || String(err)) }</div>`;
-        }
-      } finally {
-        stopLoading(htmlContainer);
-        genBtn.disabled = false;
-        genBtn.textContent = 'Text generieren';
-        cancelBtn.style.display = 'none';
-        window.textJobs[idx] = { running: false };
-      }
-    });
-
-    // Cancel
-    cancelBtn.addEventListener('click', () => {
-      const job = window.textJobs[idx];
-      if (job?.running && job.abort) {
-        try { job.abort.abort(); } catch {}
-      }
-      cancelBtn.disabled = true;
-      cancelBtn.textContent = 'Abgebrochen';
-    });
-
-    list.appendChild(li);
-  });
-}
