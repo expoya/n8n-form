@@ -1,240 +1,223 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>AI-Content-Engine</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="assets/style.css">
-  <link rel="icon" href="assets/logo.png">
-  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expoya – AI Content Engine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
-  <body>
-  <div class="container">
-    <!-- ============ EINGABE  ================= -->
-    <div class="compact-panel">
-      <img src="assets/logo.png" class="logo" alt="Expoya">
-      <h2 class="headline">AI-Content-Engine</h2>
-      <!-- Formular-Markup bleibt unverändert ↓↓ -->
-<form id="myForm" autocomplete="off">
-        <div class="form-group">
-          <input type="text" name="companyName" placeholder="Unternehmensname" required>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-name">AI Content Engine</span></div>
+    </header>
+
+    <main class="container">
+      <!-- LINKES PANEL: FORM -->
+      <section class="panel panel-input">
+        <h2>Einstellungen & Eingaben</h2>
+
+        <form id="mainForm" autocomplete="off">
+          <!-- Zeile 1: Unternehmensname, #Expos, ContentSource_ID -->
+          <div class="grid grid-3">
+            <div class="form-group">
+              <label for="firma">Unternehmensname</label>
+              <input id="firma" type="text" placeholder="z. B. Tischlerei Huber" required>
+            </div>
+            <div class="form-group">
+              <label for="exposCount"># Expos</label>
+              <input id="exposCount" type="number" min="1" max="100" value="15">
+            </div>
+            <div class="form-group">
+              <label for="contentSourceId">ContentSource_ID (UUID)</label>
+              <input id="contentSourceId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            </div>
+          </div>
+
+          <!-- Zeile 2: Attribute + Zielsetzung -->
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label for="attribute">Attribute</label>
+              <textarea id="attribute" rows="1" placeholder="z. B. regional; nachhaltig; familiengeführt"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="zielsetzung">Zielsetzung</label>
+              <textarea id="zielsetzung" rows="1" placeholder="z. B. mehr Anfragen für Küchen in Linz"></textarea>
+            </div>
+          </div>
+
+          <!-- Zeile 3: Regionen + Zielgruppen -->
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label for="regionen">Regionen</label>
+              <textarea id="regionen" rows="1" placeholder="z. B. Linz; Wels; Vöcklabruck"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="zielgruppen">Zielgruppen</label>
+              <textarea id="zielgruppen" rows="1" placeholder="z. B. Privatkunden; Architekten; Bauträger"></textarea>
+            </div>
+          </div>
+
+          <!-- Zeile 4: Produkte/DL -->
+          <div class="grid">
+            <div class="form-group">
+              <label for="produkte">Produkte / Dienstleistungen</label>
+              <textarea id="produkte" rows="1" placeholder="z. B. Küchen; Esstische; Maßmöbel"></textarea>
+            </div>
+          </div>
+
+          <!-- Zeile 5: Keywordliste -->
+          <div class="grid">
+            <div class="form-group">
+              <label for="keywords">Keywordliste</label>
+              <textarea id="keywords" rows="1" placeholder="z. B. Tischlerei Linz; Massivholz Tisch; Küchenstudio Linz"></textarea>
+            </div>
+          </div>
+
+          <!-- Slider -->
+          <div class="grid grid-3 sliders-row">
+            <div class="form-group">
+              <label for="diversity_level">Kreativität</label>
+              <input id="diversity_level" type="range" min="1" max="5" value="3">
+              <div class="range-val" id="diversity_level-value">Neutral</div>
+            </div>
+            <div class="form-group">
+              <label for="detail_level">Detailgrad</label>
+              <input id="detail_level" type="range" min="1" max="5" value="3">
+              <div class="range-val" id="detail_level-value">Neutral</div>
+            </div>
+            <div class="form-group">
+              <label for="style_bias">Schreibstil</label>
+              <input id="style_bias" type="range" min="1" max="5" value="3">
+              <div class="range-val" id="style_bias-value">Neutral</div>
+            </div>
+          </div>
+
+          <!-- Segmented Controls: 3 in einer Zeile -->
+          <div class="grid grid-3">
+            <div class="form-group">
+              <div class="seg-label">Ortsbezug</div>
+              <div class="segmented" role="radiogroup">
+                <input type="radio" id="ort-ohne" name="ortsbezug" value="ohne" checked><label for="ort-ohne">ohne</label>
+                <input type="radio" id="ort-exakt" name="ortsbezug" value="exakt"><label for="ort-exakt">exakt</label>
+                <input type="radio" id="ort-umland" name="ortsbezug" value="umland"><label for="ort-umland">Umland</label>
+                <input type="radio" id="ort-umland-stadtteile" name="ortsbezug" value="umland-stadtteile"><label for="ort-umland-stadtteile">Umland+Stadtteile</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="seg-label">Ansprache</div>
+              <div class="segmented" role="radiogroup">
+                <input type="radio" id="ans-neutral" name="ansprache" value="neutral" checked><label for="ans-neutral">neutral</label>
+                <input type="radio" id="ans-sie" name="ansprache" value="sie"><label for="ans-sie">Sie</label>
+                <input type="radio" id="ans-du" name="ansprache" value="du"><label for="ans-du">Du</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="seg-label">Branding</div>
+              <div class="segmented" role="radiogroup">
+                <input type="radio" id="brand-kein" name="branding" value="kein" checked><label for="brand-kein">kein</label>
+                <input type="radio" id="brand-dezent" name="branding" value="dezent"><label for="brand-dezent">dezent</label>
+                <input type="radio" id="brand-moderat" name="branding" value="moderat"><label for="brand-moderat">moderat</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Model-Preset -->
+          <div class="form-group">
+            <label for="modelPreset">Modell-Preset</label>
+            <select id="modelPreset">
+              <option value="">Eigenes Setup …</option>
+              <option value="Sprint-Mode">Sprint-Mode</option>
+              <option value="Eco-Mode">Eco-Mode</option>
+              <option value="Balanced">Balanced</option>
+            </select>
+          </div>
+
+          <!-- Model-Auswahl (2 Reihen à 3 Spalten) -->
+          <div class="grid grid-3">
+            <div class="form-group">
+              <label for="modelTitleGenerator">Titel-Generator</label>
+              <select id="modelTitleGenerator">
+                <option>ChatGPT 5 mini</option>
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>ChatGPT o4 mini</option>
+                <option>ChatGPT 4.1 mini</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="modelTitleController">Titel-Kontrolle</label>
+              <select id="modelTitleController">
+                <option>ChatGPT 4.1 mini</option>
+                <option>ChatGPT 5 mini</option>
+                <option>Claude Sonnet 4</option>
+                <option>Gemini 2.5 Pro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="modelSeoStrategist">SEO-Stratege</label>
+              <select id="modelSeoStrategist">
+                <option>Gemini 2.5 Pro</option>
+                <option>ChatGPT o4 mini</option>
+                <option>Claude Sonnet 4</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-3">
+            <div class="form-group">
+              <label for="modelMicroTexter">Mikro-Texter</label>
+              <select id="modelMicroTexter">
+                <option>Gemini 2.5 Flash</option>
+                <option>ChatGPT 5 mini</option>
+                <option>Claude Sonnet 3.5</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="modelSeoVeredler">SEO-Veredler</label>
+              <select id="modelSeoVeredler">
+                <option>Claude Sonnet 4</option>
+                <option>ChatGPT 4.1</option>
+                <option>Gemini 2.5 Pro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="modelSeoAuditor">SEO-Auditor</label>
+              <select id="modelSeoAuditor">
+                <option>ChatGPT o4 mini</option>
+                <option>ChatGPT 4.1</option>
+                <option>Gemini 2.5 Pro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="generateBtn" type="button" class="btn btn-primary">Titel generieren</button>
+            <button id="clearBtn" type="button" class="btn btn-ghost">Felder leeren</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- RECHTES PANEL: OUTPUT -->
+      <section class="panel panel-output">
+        <h2>Expos</h2>
+        <ul id="expoList" class="expo-list">
+          <li class="expo-placeholder">Hier erscheinen deine generierten Expo-Titel …</li>
+        </ul>
+        <div class="export-actions">
+          <button id="exportCsvBtn" class="btn btn-secondary" style="display:none;">Export als CSV</button>
+          <button id="exportXmlBtn" class="btn btn-secondary" style="display:none;">Export als XML</button>
         </div>
-<div class="form-row">
-  <input type="number" name="expoCount" placeholder="# Expos" min="1" max="100" required style="flex:2;">
-  <input type="text"   name="branche"   placeholder="Branche"   required style="flex:3;">
-</div>
-        <div class="form-group">
-          <textarea name="regionen" placeholder="Regionen (mit , oder ; trennen)" rows="1"></textarea>
-        </div>
-        <div class="form-group">
-          <textarea name="zielgruppen" placeholder="Zielgruppen (mit , oder ; trennen)" rows="1"></textarea>
-        </div>
-        <div class="form-group">
-          <textarea name="produkte" placeholder="Produkte / Dienstleistungen (mit , oder ; trennen)" rows="1"></textarea>
-        </div>
-        <div class="form-group">
-  <textarea name="attribute" placeholder="Attribute (z.B. preiswert, luxuriös, exklusiv) (mit , oder ; trennen)" rows="1"></textarea>
-</div>
-
-        <div class="form-group">
-          <textarea name="zielsetzung" placeholder="Zielsetzung der Expos (z.B. 'Neukundengewinnung')" rows="1"></textarea>
-        </div>
-  
-  <div class="form-group">
-          <textarea name="keywordliste" placeholder="Keywordliste (mit , oder ; trennen)" rows="1"></textarea>
-        </div>
-
-<div class="form-group">
-    <input
-    type="text"
-    id="contentSourceId"
-    name="contentSourceId"
-    placeholder="ID von ContentSource-ID & Website-Scraper hier einfügen."
-    autocomplete="off"
-    inputmode="latin"
-    spellcheck="false"
-    required
-    pattern="[A-Za-z0-9._\-:]{4,100}"
-    title="4–100 Zeichen; erlaubt sind Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und Doppelpunkt."
-  />
-</div>
-
-
-  
-        <div class="form-group tonality-container">
-          <label class="tonality-label" for="tonality">Tonalität</label>
-          <input type="range" min="1" max="5" value="3" class="tonality-slider" id="tonality" name="tonality">
-          <div class="tonality-value" id="tonality-value">Neutral</div>
-        </div>
-  <!-- Detailgrad -->
-<div class="form-group tonality-container detail-container">
-  <label class="tonality-label detail-label" for="detail_level">Detailgrad</label>
-  <input type="range" min="1" max="5" value="3"
-         class="tonality-slider detail-slider"
-         id="detail_level" name="detail_level">
-  <div class="tonality-value detail-value" id="detail_level-value">Neutral</div>
-</div>
-
-<!-- Schreibstil -->
-<div class="form-group tonality-container style-container">
-  <label class="tonality-label style-label" for="style_bias">Schreibstil</label>
-  <input type="range" min="1" max="5" value="3"
-         class="tonality-slider style-slider"
-         id="style_bias" name="style_bias">
-  <div class="tonality-value style-value" id="style_bias-value">Neutral</div>
-</div>
-
-
-        <!-- Segmented Controls: Ortsbezug & Ansprache -->
-<div class="form-group">
-  <div class="segrow">
-
-    <!-- Ortsbezug -->
-    <div class="seg">
-      <span class="toggle-label">Ortsbezug</span>
-      <div class="segmented" role="radiogroup" aria-label="Ortsbezug">
-        <input type="radio" id="ort-ohne"   name="ortsbezug" value="ohne">
-    <label for="ort-ohne">ohne</label>
-
-    <input type="radio" id="ort-exakt"  name="ortsbezug" value="exakt" checked>
-    <label for="ort-exakt">exakt</label>
-
-    <input type="radio" id="ort-umland" name="ortsbezug" value="umland">
-    <label for="ort-umland">+ Umland</label>
-
-    <input type="radio" id="ort-umland-stadtteile" name="ortsbezug" value="umland_stadtteile">
-    <label for="ort-umland-stadtteile">+ Umland + Stadtteile</label>
-      </div>
-    </div>
-
-    <!-- Ansprache -->
-    <div class="seg">
-      <span class="toggle-label">Ansprache</span>
-      <div class="segmented" role="radiogroup" aria-label="Ansprache">
-        <input type="radio" id="ansSie" name="ansprache" value="Sie">
-        <label for="ansSie">Sie</label>
-
-        <input type="radio" id="ansDu" name="ansprache" value="Du" checked>
-        <label for="ansDu">Du</label>
-      </div>
-    </div>
-
+      </section>
+    </main>
   </div>
-</div>
 
-        <button class="btn-primary" type="submit">🚀 Generieren</button>
-      </form>
-             <!-- ——— Experten-Auswahl ——— -->
-<details id="expertOptions" class="expert-box">
-  <summary>🧑‍💻 Experten Auswahl</summary>
-
-  <div class="expert-fields">
-    <label>Preset
-  <select id="modelPreset">
-    <option value="">— Preset wählen —</option>
-    <option>Sprint-Mode</option>
-    <option>Eco-Mode</option>
-    <option>Prime Heavy</option>
-    <option>Prime</option>
-    <option>Balanced</option>
-  </select>
-</label>
-    <label>Titel-Generator
-     <select id="modelTitleGenerator">
-    <option>Gemini 2.5 Flash</option>
-    <option>Gemini 2.5 Pro</option>
-    <option>Claude Sonnet 4</option>
-    <option>ChatGPT 4.1 mini</option>
-    <option>ChatGPT 5 mini</option>
-  </select>
-      <button type="button" class="info-btn" data-agent="titleGenerator">ℹ️</button>
-</label>
-    <label>Titel-Kontrolleur
-    <select id="modelTitleController">
-    <option>Gemini 2.5 Pro</option>
-    <option>Claude Sonnet 4</option>
-    <option>ChatGPT 4.1 mini</option>
-    <option>ChatGPT o4 mini</option>
-    <option>ChatGPT 5 mini</option>
-  </select>
-      <button type="button" class="info-btn" data-agent="titleController">ℹ️</button>
-</label>
-    <label>SEO-Stratege
-      <select id="modelSeoStrategist">
-        <option>Gemini 2.5 Pro</option>
-        <option>Claude Sonnet 4</option>
-        <option>Claude Opus 4.1</option>
-        <option>ChatGPT 5</option>
-        <option>ChatGPT 4.1</option>
-        <option>ChatGPT o4 mini</option>
-      </select>
-      <button type="button" class="info-btn" data-agent="seoStrategist">ℹ️</button>
-    </label>
-
-    <label>Mikro-Texter
-      <select id="modelMicroTexter">
-        <option>Gemini 2.5 Flash</option>
-        <option>Gemini 2.5 Pro</option>
-        <option>Claude Sonnet 3.5</option>
-        <option>Claude Sonnet 4</option>
-        <option>Claude Haiku 3.5</option>
-        <option>ChatGPT 4.1</option>
-        <option>ChatGPT 4.1 mini</option>
-        <option>ChatGPT 5</option>
-        <option>ChatGPT 5 mini</option>
-      </select>
-      <button type="button" class="info-btn" data-agent="microTexter">ℹ️</button>
-    </label>
-
-    <label>SEO-Veredler
-      <select id="modelSeoVeredler">
-        <option>Gemini 2.5 Pro</option>
-        <option>Claude Sonnet 4</option>
-        <option>ChatGPT 4.1</option>
-        <option>ChatGPT 5</option>
-      </select>
-      <button type="button" class="info-btn" data-agent="seoVeredler">ℹ️</button>
-    </label>
-
-    <label>SEO-Auditor
-      <select id="modelSeoAuditor">
-        <option>Gemini 2.5 Pro</option>
-        <option>Claude Sonnet 4</option>
-        <option>Claude Opus 4.1</option>
-        <option>ChatGPT o4 mini</option>
-        <option>ChatGPT 5</option>
-      </select>
-      <button type="button" class="info-btn" data-agent="seoAuditor">ℹ️</button>
-    </label>
-  </div>
-</details>
-    <!-- ——— Info-Modal ——— -->
-<div id="infoModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <div id="modalText"></div>
-  </div>
-</div>
-
-      <!-- 👉 kopiere deinen <form>…</form>-Block hier hinein  -->
-    </div>
-
-
-    <!-- ============ AUSGABE  ================= -->
-    <div class="output-panel" id="outputPanel">
-      <h3 class="output-headline">📝 Generierte Expo-Titel</h3>
-      <ul class="expo-list" id="expoList">
-        <li class="expo-placeholder">Hier erscheinen deine generierten Expo-Titel…</li>
-      </ul>
-      <button id="exportXmlBtn" class="btn-primary" style="margin-top:18px;display:none;">Export als XML</button>
-      <button id="exportCsvBtn" class="btn-primary"  style="margin-top:12px;display:none;">Export als CSV</button>
-
-    </div>
-  </div>
-<script src="https://cdn.jsdelivr.net/npm/turndown@7.1.3/dist/turndown.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
-<script type="module" src="./assets/presets.js"></script>
-<script type="module" src="./js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
