@@ -29,6 +29,19 @@ function autoGrow(el, maxRows = 6) {
   el.style.height = `${rows * line + 8}px`;
 }
 
+/** kleiner, CSS-freier Klick-Effekt */
+function clickFlash(btn) {
+  if (!btn) return;
+  const prev = btn.style.transform;
+  const prevSh = btn.style.boxShadow;
+  btn.style.transform = 'scale(0.98)';
+  btn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.08) inset';
+  setTimeout(() => {
+    btn.style.transform = prev || '';
+    btn.style.boxShadow = prevSh || '';
+  }, 130);
+}
+
 /* -----------------------------------------
  *  Presets + Agent-Info (Info-Modal)
  * ----------------------------------------- */
@@ -44,7 +57,6 @@ function initPresets() {
   sel.innerHTML = `<option value="">— Kein Preset —</option>` + PRESETS.map(p => `<option value="${p.value}">${p.label}</option>`).join('');
   sel.addEventListener('change', () => {
     state.selectedPreset = sel.value || '';
-    // Optional: auf Preset umschalten (z. B. Felder vorfüllen)
     if (sel.value) {
       const p = PRESETS.find(x => x.value === sel.value);
       if (p?.defaults) {
@@ -60,19 +72,16 @@ function initPresets() {
  * ----------------------------------------- */
 function readFormIntoState() {
   const cd = state.companyData = state.companyData || {};
-  // Grunddaten
-  cd.firma         = byId('firma')?.value?.trim() || '';
-  cd.domain        = byId('domain')?.value?.trim() || '';
-  cd.webshop       = byId('webshop')?.value?.trim() || '';
+  cd.firma            = byId('firma')?.value?.trim() || '';
+  cd.domain           = byId('domain')?.value?.trim() || '';
+  cd.webshop          = byId('webshop')?.value?.trim() || '';
   cd.kurzbeschreibung = byId('kurzbeschreibung')?.value?.trim() || '';
 
-  // mehrzeilige Felder
-  cd.regionen   = byId('regionen')?.value || '';
-  cd.zielgruppen= byId('zielgruppen')?.value || '';
-  cd.produkte   = byId('produkte')?.value || '';
-  cd.keywords   = byId('keywords')?.value || '';
+  cd.regionen    = byId('regionen')?.value || '';
+  cd.zielgruppen = byId('zielgruppen')?.value || '';
+  cd.produkte    = byId('produkte')?.value || '';
+  cd.keywords    = byId('keywords')?.value || '';
 
-  // Segmented Controls
   const ort = document.querySelector('input[name="ortsbezug"]:checked')?.value || 'ohne';
   cd.ortsbezug = ort;
   cd.mitOrtsbezug = (ort !== 'ohne');
@@ -97,63 +106,56 @@ function applyFormFromState() {
     const el = byId(`ansprache-${cd.ansprache}`);
     if (el) el.checked = true;
   }
-  // Auto-Grow aktualisieren
   ['regionen','zielgruppen','produkte','keywords'].forEach(id => autoGrow(byId(id), AUTO_GROW_MAX[id] || 6));
 }
 
 /* -----------------------------------------
  *  Titel-Job starten + stabil pollen
  * ----------------------------------------- */
-async function startTitlesFlow() {
+async function startTitlesFlow(btnRef) {
   readFormIntoState();
-
-  // UI: Loader zeigen
   showLoader('Titel werden generiert …');
+
+  // optional: Mini-Klickeffekt auf dem Button
+  if (btnRef) clickFlash(btnRef);
+
   let stopped = false;
 
   try {
-    // 1) Titel-Job starten
     const payload = { ...state.companyData, agentModels: state.agentModels };
     const startRes = await startTitleJob(payload);
     const jobId = startRes?.jobId || startRes?.id || null;
     if (!jobId) throw new Error('Kein jobId vom Webhook erhalten.');
     state.runningJobId = jobId;
 
-    // 2) Stabil pollen (exponentiell, Obergrenze, harter Abbruch)
     const startedAt = Date.now();
-    const MAX_MS    = 15 * 60 * 1000; // 15 Minuten
-    let delay       = 3000;           // 3s initial
-    const MAX_DELAY = 15000;          // 15s
+    const MAX_MS    = 15 * 60 * 1000;
+    let delay       = 3000;
+    const MAX_DELAY = 15000;
 
     while (true) {
       if (stopped) break;
       const elapsed = Date.now() - startedAt;
       if (elapsed > MAX_MS) throw new Error('Zeitüberschreitung beim Titel-Polling.');
 
-      // Fancy Loader-Text
       updateLoader(`Pollen … (${Math.ceil(elapsed/1000)}s)`);
-
       const res = await pollTitleJob(jobId);
-      // Erwartete Struktur: { status: 'running'|'done'|'failed', titles: [], message? }
+
       const status = (res && (res.status || res[0]?.status)) || 'running';
       const titles = (res && (res.titles || res[0]?.titles)) || [];
       const msg    = (res && (res.message || res[0]?.message)) || '';
 
       if (status === 'done' || (Array.isArray(titles) && titles.length)) {
-        // Erfolg
         state.titles = Array.from(new Set(titles.map(t => String(t).trim()).filter(Boolean)));
-        state.texts  = new Array(state.titles.length).fill(''); // reset texts
+        state.texts  = new Array(state.titles.length).fill('');
         localStorage.setItem('expoya_ce_state_v1', JSON.stringify(state));
         renderExpoList();
         notify('Titel fertig', `Es wurden ${state.titles.length} Titel generiert.`);
         break;
       }
 
-      if (status === 'failed') {
-        throw new Error(msg || 'Titel-Job fehlgeschlagen.');
-      }
+      if (status === 'failed') throw new Error(msg || 'Titel-Job fehlgeschlagen.');
 
-      // Warten + Backoff
       await new Promise(r => setTimeout(r, delay));
       delay = Math.min(MAX_DELAY, Math.round(delay * 1.5));
     }
@@ -175,9 +177,8 @@ export function initAgentModals() {
 }
 
 export function initForm() {
-  primeAudioOnUserGesture(); // für Sounds/Notifications
+  primeAudioOnUserGesture();
 
-  // Auto-Grow Handlers
   ['regionen','zielgruppen','produkte','keywords'].forEach(id => {
     const el = byId(id);
     if (!el) return;
@@ -185,16 +186,15 @@ export function initForm() {
     autoGrow(el, AUTO_GROW_MAX[id] || 6);
   });
 
-  // Primary Action
   const btn = byId('generateTitlesBtn') || byId('generateBtn');
   if (btn) {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      startTitlesFlow();
+      clickFlash(btn);
+      startTitlesFlow(btn);
     });
   }
 
-  // Optional: Persistenz laden
   try {
     const raw = localStorage.getItem('expoya_ce_state_v1');
     if (raw) {
