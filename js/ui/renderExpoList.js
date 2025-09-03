@@ -22,10 +22,22 @@ function clickFlash(btn) {
   }, 130);
 }
 
-/** Copy-Helper (zeigt Toast bei Erfolg/Fehler) */
+/** Copy-Helper (mit Fallback) */
 async function copyToClipboard(str) {
   try {
-    await navigator.clipboard.writeText(str);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(str);
+    } else {
+      // Fallback (HTTP / unsichere Kontexte)
+      const ta = document.createElement('textarea');
+      ta.value = str;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
     notify('Kopiert', 'In die Zwischenablage übernommen.');
   } catch (e) {
     console.error('Clipboard', e);
@@ -173,4 +185,45 @@ export function renderExpoList () {
         }
       } catch (err) {
         if (err?.name === 'AbortError') {
-          // Nutzer hat abgebrochen
+          // Nutzer hat abgebrochen – UI-Reset unten
+        } else {
+          console.error('[Text-Generation]', err);
+          htmlContainer.innerHTML = `<div class="error">⚠️ ${(err?.message || String(err))}</div>`;
+        }
+      } finally {
+        stopLoading(htmlContainer);
+        genBtn.disabled = false;
+        genBtn.textContent = 'Text generieren';
+        cancelBtn.style.display = 'none';
+        window.textJobs[idx] = { running: false };
+      }
+    });
+
+    // Cancel
+    cancelBtn.addEventListener('click', () => {
+      clickFlash(cancelBtn);
+      const job = window.textJobs[idx];
+      if (job?.running && job.abort) {
+        try { job.abort.abort(); } catch {}
+      }
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = 'Abgebrochen';
+    });
+
+    // Copy HTML
+    li.querySelector('.btn-copy-html').addEventListener('click', () => {
+      clickFlash(li.querySelector('.btn-copy-html'));
+      const html = state.texts?.[idx] || '';
+      copyToClipboard(html);
+    });
+
+    // Copy Plain
+    li.querySelector('.btn-copy-plain').addEventListener('click', () => {
+      clickFlash(li.querySelector('.btn-copy-plain'));
+      const html = state.texts?.[idx] || '';
+      copyToClipboard(htmlToPlain(html));
+    });
+
+    list.appendChild(li);
+  });
+}
