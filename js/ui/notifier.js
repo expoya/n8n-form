@@ -1,83 +1,83 @@
 // js/ui/notifier.js
-let audioCtx;
+// Robuster Notifier ohne Auto-Start von AudioContext.
+// Audio wird erst nach echter User-Geste initialisiert.
+
+let audioCtx = null;
 let primed = false;
 
-/** Audio + (optional) Notification-Permission nach erster User-Geste freischalten */
-export function primeAudioOnUserGesture () {
-  const doResume = () => {
-    try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-    } catch {}
-  };
-  // Sofort versuchen (falls im User-Gesten-Context aufgerufen)
-  doResume();
-
-  // Fallback: beim nächsten Click/Key/Tap
-  const resume = () => { doResume(); cleanup(); };
-  const cleanup = () => {
-    window.removeEventListener('pointerdown', resume);
-    window.removeEventListener('keydown', resume);
-    window.removeEventListener('touchstart', resume);
-  };
-  window.addEventListener('pointerdown', resume, { once: true });
-  window.addEventListener('keydown', resume, { once: true });
-  window.addEventListener('touchstart', resume, { once: true });
-
-  // Notifications früh anfragen (nur über https/localhost sinnvoll)
+function initAudioCtxSafely() {
   try {
-    if ('Notification' in window && location.protocol.startsWith('http')) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().catch(()=>{});
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    if (audioCtx?.state === 'suspended') {
+      // nur auf explizite Usergeste resume versuchen
+      audioCtx.resume().catch(() => {});
+    }
+  } catch { /* ignore */ }
+}
+
+/** Einmalig auf echte User-Geste warten (Klick/Taste), dann Audio vorbereiten. */
+export function primeAudioOnUserGesture() {
+  if (primed) return;
+  const handler = () => {
+    primed = true;
+    initAudioCtxSafely();
+
+    // kurzer, nahezu unhörbarer „unlock“-Ping
+    try {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 1000;
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      o.connect(g).connect(audioCtx.destination);
+      o.start();
+      o.stop(audioCtx.currentTime + 0.02);
+    } catch { /* ignore */ }
+
+    window.removeEventListener('pointerdown', handler, { capture: true });
+    window.removeEventListener('keydown', handler, { capture: true });
+  };
+
+  // echte Gesten: Pointer + Tastatur
+  window.addEventListener('pointerdown', handler, { once: true, passive: true, capture: true });
+  window.addEventListener('keydown', handler, { once: true, capture: true });
+}
+
+/** Leichtes akustisches Feedback + (optional) Browser-Notification */
+export function notify(title = 'Hinweis', body = '') {
+  // Beep (nur wenn freigeschaltet)
+  try {
+    if (audioCtx && audioCtx.state !== 'suspended') {
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(0.06, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now);
+      o.stop(now + 0.15);
+    }
+  } catch { /* ignore */ }
+
+  // Optionale Web Notifications (stören nie, nur wenn erlaubt)
+  try {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      } else if (Notification.permission === 'default') {
+        // Anfrage stellen, aber Ergebnis nicht erzwingen
+        Notification.requestPermission().catch(() => {});
       }
     }
-  } catch {}
-  primed = true;
-}
+  } catch { /* ignore */ }
 
-/** Deutlich hörbarer Doppel-Ping (ohne Audiofile) */
-export function playBing () {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = audioCtx.currentTime;
-
-    const beep = (start, dur = 0.22, f0 = 880, f1 = 1320) => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';                          // voller als sine
-      osc.frequency.setValueAtTime(f0, start);
-      osc.frequency.exponentialRampToValueAtTime(f1, start + dur * 0.8);
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(start);
-      osc.stop(start + dur);
-    };
-
-    beep(t0,       0.22, 880, 1320);
-    beep(t0 + 0.14,0.20, 990, 1480);
-  } catch {}
-}
-
-/** Ton immer; Browser-Notification nur wenn Tab im Hintergrund */
-export async function notify (title, body) {
-  playBing();
-
-  if (document.visibilityState === 'visible') return; // keine System-Notif im Vordergrund
-
-  if (!('Notification' in window)) return;
-  if (!location.protocol.startsWith('http')) return;
-
-  try {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body });
-      return;
-    }
-    if (Notification.permission === 'default' && primed) {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') new Notification(title, { body });
-    }
-  } catch {}
+  // Debug-Fallback
+  try { console.debug('[notify]', title, body); } catch {}
 }
