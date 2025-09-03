@@ -3,209 +3,187 @@ import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
 import { renderExpoList } from './ui/renderExpoList.js';
-import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
 import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
 
-/* -----------------------------------------
- *  Helpers
- * ----------------------------------------- */
 const byId = (id) => document.getElementById(id);
+const TEXTAREAS = ['regionen','zielgruppen','produkte','keywords','attribute','zielsetzung'];
 
-const AUTO_GROW_MAX = {
-  regionen: 8,
-  zielgruppen: 8,
-  produkte: 12,
-  keywords: 8
-};
-
-function autoGrow(el, maxRows = 6) {
-  if (!el) return;
-  el.style.height = 'auto';
-  const max = (maxRows || 6);
-  const scrollH = el.scrollHeight;
-  const line = parseInt(getComputedStyle(el).lineHeight || '20', 10);
-  const rows = Math.min(max, Math.ceil(scrollH / line));
-  el.style.height = `${rows * line + 8}px`;
-}
-
-/** kleiner, CSS-freier Klick-Effekt */
-function clickFlash(btn) {
-  if (!btn) return;
-  const prev = btn.style.transform;
-  const prevSh = btn.style.boxShadow;
-  btn.style.transform = 'scale(0.98)';
-  btn.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.08) inset';
-  setTimeout(() => {
-    btn.style.transform = prev || '';
-    btn.style.boxShadow = prevSh || '';
-  }, 130);
-}
-
-/* -----------------------------------------
- *  Presets + Agent-Info (Info-Modal)
- * ----------------------------------------- */
-function fillAgentInfo() {
-  const el = byId('agentInfo');
-  if (!el) return;
-  el.innerHTML = agentInfo;
-}
-
-function initPresets() {
-  const sel = byId('presetSelect');
-  if (!sel || !Array.isArray(PRESETS)) return;
-  sel.innerHTML = `<option value="">— Kein Preset —</option>` + PRESETS.map(p => `<option value="${p.value}">${p.label}</option>`).join('');
-  sel.addEventListener('change', () => {
-    state.selectedPreset = sel.value || '';
-    if (sel.value) {
-      const p = PRESETS.find(x => x.value === sel.value);
-      if (p?.defaults) {
-        Object.assign(state.companyData, p.defaults);
-        applyFormFromState();
-      }
-    }
-  });
-}
-
-/* -----------------------------------------
- *  Form <-> State
- * ----------------------------------------- */
 function readFormIntoState() {
-  const cd = state.companyData = state.companyData || {};
-  cd.firma            = byId('firma')?.value?.trim() || '';
-  cd.domain           = byId('domain')?.value?.trim() || '';
-  cd.webshop          = byId('webshop')?.value?.trim() || '';
-  cd.kurzbeschreibung = byId('kurzbeschreibung')?.value?.trim() || '';
+  const cd = (state.companyData = state.companyData || {});
+  cd.firma           = byId('firma')?.value || '';
+  cd.expoCount       = Number(byId('exposCount')?.value || 0);
+  cd.contentSourceId = byId('contentSourceId')?.value || '';
 
-  cd.regionen    = byId('regionen')?.value || '';
-  cd.zielgruppen = byId('zielgruppen')?.value || '';
-  cd.produkte    = byId('produkte')?.value || '';
-  cd.keywords    = byId('keywords')?.value || '';
+  cd.attribute       = byId('attribute')?.value || '';
+  cd.zielsetzung     = byId('zielsetzung')?.value || '';
+  cd.regionen        = byId('regionen')?.value || '';
+  cd.zielgruppen     = byId('zielgruppen')?.value || '';
+  cd.produkte        = byId('produkte')?.value || '';
+  cd.keywords        = byId('keywords')?.value || '';
 
-  const ort = document.querySelector('input[name="ortsbezug"]:checked')?.value || 'ohne';
-  cd.ortsbezug = ort;
-  cd.mitOrtsbezug = (ort !== 'ohne');
+  cd.ortsbezug       = document.querySelector('input[name="ortsbezug"]:checked')?.value || 'ohne';
+  cd.ansprache       = document.querySelector('input[name="ansprache"]:checked')?.value || 'neutral';
+  cd.branding        = document.querySelector('input[name="branding"]:checked')?.value || 'kein';
 
-  const ansprache = document.querySelector('input[name="ansprache"]:checked')?.value || 'neutral';
-  cd.ansprache = ansprache;
+  cd.diversity_level = Number(byId('diversity_level')?.value || 3);
+  cd.detail_level    = Number(byId('detail_level')?.value || 3);
+  cd.style_bias      = Number(byId('style_bias')?.value || 3);
+
+  // Modelle aus der UI lesen
+  state.agentModels = {
+    ...(state.agentModels || {}),
+    titleGenerator  : byId('modelTitleGenerator')?.value,
+    titleController : byId('modelTitleController')?.value,
+    seoStrategist   : byId('modelSeoStrategist')?.value,
+    microTexter     : byId('modelMicroTexter')?.value,
+    seoVeredler     : byId('modelSeoVeredler')?.value,
+    seoAuditor      : byId('modelSeoAuditor')?.value,
+  };
 }
 
 function applyFormFromState() {
   const cd = state.companyData || {};
-  ['firma','domain','webshop','kurzbeschreibung','regionen','zielgruppen','produkte','keywords']
-    .forEach(id => {
-      const el = byId(id);
-      if (el && cd[id] !== undefined) el.value = cd[id];
-    });
+  if (byId('firma')) byId('firma').value = cd.firma || '';
+  if (byId('exposCount')) byId('exposCount').value = cd.expoCount || 15;
+  if (byId('contentSourceId')) byId('contentSourceId').value = cd.contentSourceId || '';
+  if (byId('attribute')) byId('attribute').value = cd.attribute || '';
+  if (byId('zielsetzung')) byId('zielsetzung').value = cd.zielsetzung || '';
+  if (byId('regionen')) byId('regionen').value = cd.regionen || '';
+  if (byId('zielgruppen')) byId('zielgruppen').value = cd.zielgruppen || '';
+  if (byId('produkte')) byId('produkte').value = cd.produkte || '';
+  if (byId('keywords')) byId('keywords').value = cd.keywords || '';
 
-  if (cd.ortsbezug) {
-    const el = byId(`ort-${cd.ortsbezug}`);
-    if (el) el.checked = true;
+  // Modelle zurückspielen (mit Defaults)
+  if (byId('modelTitleGenerator'))  byId('modelTitleGenerator').value  = state.agentModels?.titleGenerator  || 'ChatGPT 5 mini';
+  if (byId('modelTitleController')) byId('modelTitleController').value = state.agentModels?.titleController || 'ChatGPT 4.1 mini';
+  if (byId('modelSeoStrategist'))   byId('modelSeoStrategist').value   = state.agentModels?.seoStrategist   || 'Gemini 2.5 Pro';
+  if (byId('modelMicroTexter'))     byId('modelMicroTexter').value     = state.agentModels?.microTexter     || 'Gemini 2.5 Flash';
+  if (byId('modelSeoVeredler'))     byId('modelSeoVeredler').value     = state.agentModels?.seoVeredler     || 'Claude Sonnet 4';
+  if (byId('modelSeoAuditor'))      byId('modelSeoAuditor').value      = state.agentModels?.seoAuditor      || 'ChatGPT o4 mini';
+
+  // Radios
+  const ort = cd.ortsbezug || 'ohne';
+  const ans = cd.ansprache || 'neutral';
+  const br  = cd.branding  || 'kein';
+  const ortId = `ort-${ort}`;
+  const ansId = ans === 'sie' ? 'ans-sie' : (ans === 'du' ? 'ans-du' : 'ans-neutral');
+  const brId  = br === 'dezent' ? 'brand-dezent' : (br === 'moderat' ? 'brand-moderat' : 'brand-kein');
+  if (byId(ortId)) byId(ortId).checked = true;
+  if (byId(ansId)) byId(ansId).checked = true;
+  if (byId(brId))  byId(brId).checked  = true;
+
+  // Slider
+  const sliders = { diversity_level: cd.diversity_level || 3, detail_level: cd.detail_level || 3, style_bias: cd.style_bias || 3 };
+  for (const [k, v] of Object.entries(sliders)) {
+    if (byId(k)) byId(k).value = String(v);
+    if (byId(`${k}-value`)) byId(`${k}-value`).textContent = mapSliderLabel(k, v);
   }
-  if (cd.ansprache) {
-    const el = byId(`ansprache-${cd.ansprache}`);
-    if (el) el.checked = true;
-  }
-  ['regionen','zielgruppen','produkte','keywords'].forEach(id => autoGrow(byId(id), AUTO_GROW_MAX[id] || 6));
 }
 
-/* -----------------------------------------
- *  Titel-Job starten + stabil pollen
- * ----------------------------------------- */
-async function startTitlesFlow(btnRef) {
+const LABELS = {
+  diversity_level: ['Sehr nüchtern','Zurückhaltend','Neutral','Kreativ','Sehr kreativ'],
+  detail_level   : ['Übersichtlich','Kurz','Neutral','Detailreich','Sehr detailreich'],
+  style_bias     : ['Faktisch','Sachlich','Neutral','Emotional','Werblich']
+};
+function mapSliderLabel(key, val){
+  const arr = LABELS[key] || ['1','2','3','4','5'];
+  const i = Math.min(arr.length - 1, Math.max(0, Number(val) - 1));
+  return arr[i];
+}
+function wireSliders(){
+  ['diversity_level','detail_level','style_bias'].forEach((id)=>{
+    const el = byId(id), out = byId(`${id}-value`);
+    if (!el || !out) return;
+    out.textContent = mapSliderLabel(id, el.value);
+    el.addEventListener('input', ()=> out.textContent = mapSliderLabel(id, el.value));
+  });
+}
+function autogrow(el){
+  if (!el) return;
+  el.style.height = 'auto';
+  const line = parseInt(getComputedStyle(el).lineHeight || '20', 10);
+  el.style.height = Math.min(10*line, el.scrollHeight) + 'px';
+}
+
+/* ---------- Presets ---------- */
+function initPresets(){
+  const sel = byId('modelPreset');
+  if (!sel) return;
+  sel.addEventListener('change', ()=>{
+    const p = PRESETS?.[sel.value];
+    if (!p) return;
+    state.agentModels = { ...(state.agentModels || {}), ...p };
+    applyFormFromState();
+    showToast('Preset übernommen');
+  });
+}
+
+/* ---------- Init & Flow ---------- */
+export async function initForm(){
+  primeAudioOnUserGesture();
+  TEXTAREAS.forEach(id => { const el = byId(id); if (el){ el.addEventListener('input', ()=>autogrow(el)); autogrow(el); }});
+  wireSliders();
+  initPresets();
+
+  // restore
+  try {
+    const raw = localStorage.getItem('expoya_ce_state_v2');
+    if (raw) Object.assign(state, JSON.parse(raw));
+  } catch {}
+  applyFormFromState();
+  if (Array.isArray(state.titles) && state.titles.length) renderExpoList();
+
+  // buttons
+  const gen = byId('generateBtn');
+  if (gen) gen.onclick = ()=> startTitlesFlow(gen);
+  const clr = byId('clearBtn');
+  if (clr) clr.onclick = ()=>{
+    byId('mainForm').reset();
+    byId('ort-ohne').checked    = true;
+    byId('ans-neutral').checked = true;
+    byId('brand-kein').checked  = true;
+    wireSliders();
+  };
+}
+
+async function startTitlesFlow(btn){
   readFormIntoState();
   showLoader('Titel werden generiert …');
-
-  // optional: Mini-Klickeffekt auf dem Button
-  if (btnRef) clickFlash(btnRef);
-
-  let stopped = false;
-
-  try {
-    const payload = { ...state.companyData, agentModels: state.agentModels };
-    const startRes = await startTitleJob(payload);
-    const jobId = startRes?.jobId || startRes?.id || null;
+  try{
+    const startRes = await startTitleJob({ ...state.companyData, agentModels: state.agentModels });
+    const jobId = startRes?.jobId || startRes?.id;
     if (!jobId) throw new Error('Kein jobId vom Webhook erhalten.');
-    state.runningJobId = jobId;
+    const started = Date.now();
+    const MAX = 15 * 60 * 1000;
+    let delay = 2500;
 
-    const startedAt = Date.now();
-    const MAX_MS    = 15 * 60 * 1000;
-    let delay       = 3000;
-    const MAX_DELAY = 15000;
-
-    while (true) {
-      if (stopped) break;
-      const elapsed = Date.now() - startedAt;
-      if (elapsed > MAX_MS) throw new Error('Zeitüberschreitung beim Titel-Polling.');
-
+    while (true){
+      const elapsed = Date.now() - started;
+      if (elapsed > MAX) throw new Error('Zeitüberschreitung beim Titel-Polling.');
       updateLoader(`Pollen … (${Math.ceil(elapsed/1000)}s)`);
+
       const res = await pollTitleJob(jobId);
+      const status = res?.status || res?.[0]?.status || 'running';
+      const titles = res?.titles || res?.[0]?.titles || [];
 
-      const status = (res && (res.status || res[0]?.status)) || 'running';
-      const titles = (res && (res.titles || res[0]?.titles)) || [];
-      const msg    = (res && (res.message || res[0]?.message)) || '';
-
-      if (status === 'done' || (Array.isArray(titles) && titles.length)) {
+      if (status === 'done' || (Array.isArray(titles) && titles.length)){
         state.titles = Array.from(new Set(titles.map(t => String(t).trim()).filter(Boolean)));
-        state.texts  = new Array(state.titles.length).fill('');
-        localStorage.setItem('expoya_ce_state_v1', JSON.stringify(state));
+        state.texts = new Array(state.titles.length).fill('');
+        localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state));
+        hideLoader();
         renderExpoList();
         notify('Titel fertig', `Es wurden ${state.titles.length} Titel generiert.`);
-        break;
+        return;
       }
-
-      if (status === 'failed') throw new Error(msg || 'Titel-Job fehlgeschlagen.');
-
+      if (status === 'failed') throw new Error(res?.message || 'Titel-Job fehlgeschlagen.');
       await new Promise(r => setTimeout(r, delay));
-      delay = Math.min(MAX_DELAY, Math.round(delay * 1.5));
+      delay = Math.min(15000, Math.round(delay * 1.15));
     }
-  } catch (err) {
-    console.error('[Titel-Flow]', err);
-    showToast(err?.message || String(err));
+  } catch(e){
+    console.error(e);
+    showToast(e.message || 'Fehler beim Generieren der Titel');
   } finally {
     hideLoader();
-    state.runningJobId = null;
   }
-}
-
-/* -----------------------------------------
- *  Public: Init Agent-Modal + Formular
- * ----------------------------------------- */
-export function initAgentModals() {
-  fillAgentInfo();
-  initPresets();
-}
-
-export function initForm() {
-  primeAudioOnUserGesture();
-
-  ['regionen','zielgruppen','produkte','keywords'].forEach(id => {
-    const el = byId(id);
-    if (!el) return;
-    el.addEventListener('input', () => autoGrow(el, AUTO_GROW_MAX[id] || 6));
-    autoGrow(el, AUTO_GROW_MAX[id] || 6);
-  });
-
-  const btn = byId('generateTitlesBtn') || byId('generateBtn');
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      clickFlash(btn);
-      startTitlesFlow(btn);
-    });
-  }
-
-  try {
-    const raw = localStorage.getItem('expoya_ce_state_v1');
-    if (raw) {
-      const saved = JSON.parse(raw);
-      if (saved && typeof saved === 'object') {
-        Object.assign(state, saved);
-        applyFormFromState();
-        if (Array.isArray(state.titles) && state.titles.length) {
-          renderExpoList();
-        }
-      }
-    }
-  } catch {}
 }
