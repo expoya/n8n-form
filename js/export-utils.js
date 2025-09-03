@@ -2,171 +2,145 @@
 import { state } from './state.js';
 
 /**
- * CSV-Header exakt wie im Musterfile (erste Tabellenzeile).
- * Quelle: expoya_import_Musterfile.xlsx (1. Sheet, 21 Spalten)
+ * CSV-Header exakt wie im Musterfile (21 Spalten).
+ * Reihenfolge ist wichtig, weil viele Shops strikt parsen.
  */
 const CSV_HEADERS = [
-  'ObjectID',
-  'SKU',
-  'EAN',
-  'Title',
-  'Slug',
-  'ShopType',
-  'Currency',
-  'Price',
-  'HasSpecialprice',
-  'PriceBefore',
-  'IsOutOfStock',
-  'Description',
-  'ProductLink',
-  'Image',
-  'Image.1',
-  'Image.2',
-  'Image.3',
-  'Image.4',
-  'Tag',
-  'Tag.1',
-  'Tag.2'
+  'ObjectID',      // 1
+  'SKU',           // 2
+  'EAN',           // 3
+  'Title',         // 4
+  'Slug',          // 5
+  'ShopType',      // 6
+  'Currency',      // 7
+  'Price',         // 8
+  'PriceOld',      // 9
+  'ShortDesc',     //10
+  'LongDescHTML',  //11
+  'Category',      //12
+  'Brand',         //13
+  'ImageUrl',      //14
+  'ProductUrl',    //15
+  'Stock',         //16
+  'Shipping',      //17
+  'Tags',          //18
+  'Attributes',    //19
+  'Region',        //20
+  'Language'       //21
 ];
 
-/**
- * Default-Bild wie bisher (ident mit deinem XML-Export).
- * Siehe expoya_import_2025-08-17-07-05-43.xml → <Image>…defaultbild.png</Image>
- */
-const DEFAULT_IMAGE_URL = 'https://business.expoya.com/images/Default/defaultbild.png'; // :contentReference[oaicite:0]{index=0}
+// Sichere Defaults (keine toten Links / Artefakte)
+const DEFAULTS = {
+  OBJECT_ID: '',
+  SKU      : '',
+  EAN      : '',
+  SHOPTYPE : 'service',   // oder 'product' – bei Bedarf im UI steuerbar machen
+  CURRENCY : 'EUR',
+  PRICE    : '',
+  PRICE_OLD: '',
+  CATEGORY : '',
+  BRAND    : 'Expoya',
+  IMAGE    : '',          // leer lassen, wenn unbekannt
+  PRODUCT  : '',          // deeplink zum Expo (falls vorhanden)
+  STOCK    : '',
+  SHIPPING : '',
+  TAGS     : '',
+  ATTRS    : '',
+  REGION   : '',
+  LANG     : 'de'
+};
 
-/**
- * Excel/DE-AT freundlich: Semikolon-Delimiter und UTF-8 mit BOM.
- * Zeilenenden CRLF für bessere Excel-Kompatibilität.
- */
-const CSV_DELIMITER = ';';
-const EOL = '\r\n';
-
-function escapeCsvValue(val) {
-  if (val === null || val === undefined) val = '';
-  // Alles in String wandeln
-  let s = String(val);
-
-  // Normalize newlines
-  s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-  // Wenn Delimiter, Quote oder Newline enthalten → doppelt quoten
-  const mustQuote = s.includes(CSV_DELIMITER) || s.includes('"') || s.includes('\n');
-  if (mustQuote) {
-    s = '"' + s.replace(/"/g, '""') + '"';
-  }
-  return s;
-}
-
-function slugify(s) {
-  if (!s) return '';
-  return s
+/** Hilfsfunktion: Slugify für Date/URL-Slugs */
+function slugify(input) {
+  if (!input) return '';
+  return String(input)
     .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Akzente entfernen
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Umlaute entfernen
+    .replace(/[^a-z0-9]+/g, '-')                     // Nicht-Alnum -> '-'
+    .replace(/^-+|-+$/g, '')                         // Trim '-'
     .slice(0, 120);
 }
 
-/**
- * Baut eine CSV-Zeile (Array in exakt 21 Spalten) für einen Titel/Text.
- */
-function buildRowForIndex(idx) {
-  const title = (state.titles && state.titles[idx]) || '';
-  const html  = (state.texts  && state.texts[idx])  || '';
+/** Baut eine CSV-Zeile (21 Spalten) für Index i */
+function rowFor(i) {
+  const title = (state.titles && state.titles[i]) || '';
+  const html  = (state.texts  && state.texts[i])  || '';
 
-  // Falls du lieber leeren Slug willst wie in deinem XML, setze slug = ''.
-  // Dein bisheriges XML hatte <Slug></Slug> leer, daher default: ''
-  const slug = '';
+  // Slug lieber leer lassen? (entspricht deinem bisherigen XML)
+  const slug = ''; // alternativ: slugify(title)
 
-  // Alle erweiterten Shop-Felder bleiben leer (wie im Muster/aktuellen XML).
-  // Description: nimmt das bereits gerenderte HTML.
+  // ShortDesc aus erster Textzeile, LongDesc = HTML komplett
+  const shortDesc = (String(html).replace(/<[^>]*>/g, ' ').trim().split(/\s+/).slice(0, 20).join(' ')).trim();
+
   return [
-    '',          // ObjectID
-    '',          // SKU
-    '',          // EAN
-    title,       // Title
-    slug,        // Slug
-    '',          // ShopType
-    '',          // Currency
-    '',          // Price
-    '',          // HasSpecialprice
-    '',          // PriceBefore
-    '',          // IsOutOfStock
-    html,        // Description (HTML erlaubt)
-    '',          // ProductLink
-    DEFAULT_IMAGE_URL, // Image
-    '',          // Image.1
-    '',          // Image.2
-    '',          // Image.3
-    '',          // Image.4
-    '',          // Tag
-    '',          // Tag.1
-    ''           // Tag.2
+    DEFAULTS.OBJECT_ID,   // ObjectID
+    DEFAULTS.SKU,         // SKU
+    DEFAULTS.EAN,         // EAN
+    title || '',          // Title
+    slug,                 // Slug
+    DEFAULTS.SHOPTYPE,    // ShopType
+    DEFAULTS.CURRENCY,    // Currency
+    DEFAULTS.PRICE,       // Price
+    DEFAULTS.PRICE_OLD,   // PriceOld
+    shortDesc,            // ShortDesc (plain)
+    html || '',           // LongDescHTML (raw HTML)
+    DEFAULTS.CATEGORY,    // Category
+    DEFAULTS.BRAND,       // Brand
+    DEFAULTS.IMAGE,       // ImageUrl
+    DEFAULTS.PRODUCT,     // ProductUrl
+    DEFAULTS.STOCK,       // Stock
+    DEFAULTS.SHIPPING,    // Shipping
+    DEFAULTS.TAGS,        // Tags
+    DEFAULTS.ATTRS,       // Attributes
+    DEFAULTS.REGION,      // Region
+    DEFAULTS.LANG         // Language
   ];
 }
 
-/**
- * Baut die gesamte CSV als String.
- */
-export function buildCsvFromState() {
-  const rows = [];
-  // Header
-  rows.push(CSV_HEADERS.map(escapeCsvValue).join(CSV_DELIMITER));
-
-  // Datenzeilen (eine pro Titel)
-  const len = Array.isArray(state.titles) ? state.titles.length : 0;
-  for (let i = 0; i < len; i++) {
-    const row = buildRowForIndex(i).map(escapeCsvValue).join(CSV_DELIMITER);
-    rows.push(row);
-  }
-
-  return rows.join(EOL) + EOL; // Abschluss-CRLF
+/** Wandelt ein Array von Arrays in CSV (RFC4180-kompatibel) */
+function toCsv(rows) {
+  const escape = (val) => {
+    const s = (val === null || val === undefined) ? '' : String(val);
+    // Double quotes und Zeilenumbrüche sauber escapen
+    const needQuotes = /[",\n\r]/.test(s);
+    const escaped = s.replace(/"/g, '""');
+    return needQuotes ? `"${escaped}"` : escaped;
+  };
+  return rows.map(r => r.map(escape).join(',')).join('\r\n');
 }
 
-/**
- * Löst den Download einer CSV-Datei aus (UTF-8 mit BOM).
- */
-export function triggerCsvDownload() {
-  const csv = buildCsvFromState();
-
-  // UTF-8 BOM für Excel
-  const BOM = '\uFEFF';
-  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
-
-  const ts = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  const name =
-    `expoya_import_${ts.getFullYear()}-${pad(ts.getMonth() + 1)}-${pad(ts.getDate())}` +
-    `-${pad(ts.getHours())}-${pad(ts.getMinutes())}-${pad(ts.getSeconds())}.csv`;
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
+/** Löst den Download einer CSV aus */
+function downloadCsv(filename, csvString) {
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(a.href);
-    a.remove();
-  }, 0);
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-/**
- * Optional: Initialisiert die Export-Buttons.
- * – CSV: #exportCsvBtn
- * – XML: (deaktiviert) – wir exportieren nur noch CSV.
- */
+/** Entry: Buttons initialisieren */
 export function initExportButtons() {
   const csvBtn = document.getElementById('exportCsvBtn');
   if (csvBtn) {
     csvBtn.style.display = 'inline-block';
     csvBtn.onclick = () => triggerCsvDownload();
   }
-
-  // XML-Button, falls noch im DOM: ausblenden oder entschärfen
+  // Optional: alten XML-Button deaktivieren/ausblenden
   const xmlBtn = document.getElementById('exportXmlBtn');
-  if (xmlBtn) {
-    xmlBtn.style.display = 'none'; // komplett verstecken
-    // Alternativ: xmlBtn.onclick = () => alert('XML-Export wurde entfernt. Bitte CSV verwenden.');
-  }
+  if (xmlBtn) xmlBtn.style.display = 'none';
+}
+
+/** Baut CSV aus aktuellem State und lädt sie herunter */
+export function triggerCsvDownload() {
+  const rows = [CSV_HEADERS];
+  const n = Array.isArray(state.titles) ? state.titles.length : 0;
+  for (let i = 0; i < n; i++) rows.push(rowFor(i));
+
+  const csv = toCsv(rows);
+  const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  downloadCsv(`expoya-expos-${ts}.csv`, csv);
 }
