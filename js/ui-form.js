@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
-import { renderExpoList } from './ui/renderExpoList.js'; 
+import { renderExpoList } from './ui/renderExpoList.js';
 import { agentInfo } from '../assets/agentInfo.js';
 import { PRESETS } from '../assets/presets.js';
 import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
@@ -15,334 +15,197 @@ const byId = (id) => document.getElementById(id);
 const AUTO_GROW_MAX = {
   regionen: 8,
   zielgruppen: 8,
-  produkte: 8,
-  attribute: 8,
-  zielsetzung: 6,
-  keywordliste: 8
+  produkte: 12,
+  keywords: 8
 };
 
-function sizeTextArea(el) {
+function autoGrow(el, maxRows = 6) {
   if (!el) return;
-  const name = el.getAttribute('name') || '';
-  const maxRows = AUTO_GROW_MAX[name] || 4;
-
   el.style.height = 'auto';
-
-  const cs = window.getComputedStyle(el);
-  const lineHeight = parseFloat(cs.lineHeight) || 20;
-  const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
-  const padding = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  const maxPx = Math.round(lineHeight * maxRows + padding + border);
-
-  const target = Math.min(el.scrollHeight, maxPx);
-  el.style.height = target + 'px';
-  el.style.overflowY = (el.scrollHeight > maxPx) ? 'auto' : 'hidden';
-}
-
-function initAutoGrow(root = document) {
-  const areas = root.querySelectorAll([
-    'textarea[name="regionen"]',
-    'textarea[name="zielgruppen"]',
-    'textarea[name="produkte"]',
-    'textarea[name="attribute"]',
-    'textarea[name="zielsetzung"]',
-    'textarea[name="keywordliste"]'
-  ].join(', '));
-  areas.forEach(el => {
-    sizeTextArea(el);
-    el.addEventListener('input', () => sizeTextArea(el));
-    const obs = new MutationObserver(() => sizeTextArea(el));
-    obs.observe(el, { characterData: true, childList: true, subtree: true });
-  });
-});
-  });
-}
-
-const TONALITY_LABELS   = ['Locker','Eher locker','Neutral','Eher formell','Sehr formell'];
-const STYLE_LABELS      = ['Werblich','Eher werblich','Neutral','Eher faktenorientiert','Faktenorientiert'];
-const DETAIL_LEVELS     = [
-  { name: "Einfach",                instruction: "Kurz und leicht verständlich; vermeide Fachjargon und Details." },
-  { name: "Eher einfach",           instruction: "Erkläre Grundlagen; nutze wenige, kurz erklärte Fachbegriffe." },
-  { name: "Neutral",                instruction: "Ausgewogen zwischen Einfachheit und Fachlichkeit; erkläre bei Bedarf." },
-  { name: "Eher fachlich",          instruction: "Detaillierter mit präziser Terminologie; gib kurze Begründungen." },
-  { name: "Ausführlich & Fachlich", instruction: "Maximal informativ und technisch präzise; korrekte Terminologie und Begründungen." }
-];
-
-function initSlider(id, labelsOrFn) {
-  const el  = byId(id);
-  const out = byId(`${id}-value`);
-  if (!el || !out) return;
-  const toLabel = (v) => {
-    const n = parseInt(v || '3', 10);
-    if (Array.isArray(labelsOrFn)) return labelsOrFn[(n - 1)] || labelsOrFn[2] || 'Neutral';
-    if (typeof labelsOrFn === 'function') return labelsOrFn(n);
-    return String(n);
-  };
-  const set = (v) => { out.textContent = toLabel(v); };
-  set(el.value);
-  el.addEventListener('input', e => set(e.target.value));
-}
-
-function readSegmented(form, name, fallback) {
-  const val = new FormData(form).get(name);
-  return (val == null || val === '') ? fallback : String(val);
+  const max = (maxRows || 6);
+  const scrollH = el.scrollHeight;
+  const line = parseInt(getComputedStyle(el).lineHeight || '20', 10);
+  const rows = Math.min(max, Math.ceil(scrollH / line));
+  el.style.height = `${rows * line + 8}px`;
 }
 
 /* -----------------------------------------
- *  Agent Info Modal
+ *  Presets + Agent-Info (Info-Modal)
  * ----------------------------------------- */
-export function initAgentModals() {
-  const modal    = byId('infoModal');
-  const modalText= byId('modalText');
-  if (!modal || !modalText) return;
-  const closeBtn = modal.querySelector('.close');
-
-  document.querySelectorAll('.info-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.agent;
-      modalText.innerHTML = agentInfo[key] ?? 'Noch keine Infos hinterlegt.';
-      modal.style.display = 'block';
-    });
-  });
-
-  closeBtn && closeBtn.addEventListener('click', () => modal.style.display = 'none');
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+function fillAgentInfo() {
+  const el = byId('agentInfo');
+  if (!el) return;
+  el.innerHTML = agentInfo;
 }
 
-/* -----------------------------------------
- *  Presets & Model-Auswahl
- * ----------------------------------------- */
-function applyModelsToSelects(models) {
-  const map = {
-    titleGenerator: byId('modelTitleGenerator'),
-    titleController: byId('modelTitleController'),
-    seoStrategist: byId('modelSeoStrategist'),
-    microTexter: byId('modelMicroTexter'),
-    seoVeredler: byId('modelSeoVeredler'),
-    seoAuditor: byId('modelSeoAuditor')
-  };
-  Object.entries(models || {}).forEach(([k, v]) => {
-    const sel = map[k];
-    if (sel) {
-      // set exact match if exists
-      const opt = Array.from(sel.options).find(o => o.value === v || o.textContent === v);
-      if (opt) sel.value = opt.value;
-      else sel.value = v; // fallback, even wenn Option fehlt
-    }
-  });
-}
-
-function readModelsFromSelects() {
-  const val = (id) => byId(id)?.value || '';
-  return {
-    titleGenerator:  val('modelTitleGenerator'),
-    titleController: val('modelTitleController'),
-    seoStrategist:   val('modelSeoStrategist'),
-    microTexter:     val('modelMicroTexter'),
-    seoVeredler:     val('modelSeoVeredler'),
-    seoAuditor:      val('modelSeoAuditor')
-  };
-}
-
-/* -----------------------------------------
- *  Init Form
- * ----------------------------------------- */
-export function initForm() {
-const form = byId('myForm');
-  if (!form) return;
-
-  // Restore from localStorage (companyData + agentModels)
-  try {
-    const saved = JSON.parse(localStorage.getItem('expoya_ce_state_v1') || '{}');
-    if (saved.agentModels && typeof saved.agentModels === 'object') {
-      Object.assign(state.agentModels, saved.agentModels);
-      // Set selects
-      const modelIds = {
-        titleGenerator: 'modelTitleGenerator',
-        titleController: 'modelTitleController',
-        seoStrategist: 'modelSeoStrategist',
-        microTexter: 'modelMicroTexter',
-        seoVeredler: 'modelSeoVeredler',
-        seoAuditor: 'modelSeoAuditor'
-      };
-      for (const [key, selId] of Object.entries(modelIds)) {
-        const sel = byId(selId);
-        if (sel && saved.agentModels[key]) sel.value = saved.agentModels[key];
+function initPresets() {
+  const sel = byId('presetSelect');
+  if (!sel || !Array.isArray(PRESETS)) return;
+  sel.innerHTML = `<option value="">— Kein Preset —</option>` + PRESETS.map(p => `<option value="${p.value}">${p.label}</option>`).join('');
+  sel.addEventListener('change', () => {
+    state.selectedPreset = sel.value || '';
+    // Optional: auf Preset umschalten (z. B. Felder vorfüllen)
+    if (sel.value) {
+      const p = PRESETS.find(x => x.value === sel.value);
+      if (p?.defaults) {
+        Object.assign(state.companyData, p.defaults);
+        applyFormFromState();
       }
     }
-    if (saved.companyData && typeof saved.companyData === 'object') {
-      Object.assign(state.companyData, saved.companyData);
-      for (const [k,v] of Object.entries(saved.companyData)) {
-        const el = form.querySelector(`[name="${k}"]`) || document.getElementById(k);
-        if (!el) continue;
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          el.checked = !!v;
-        } else {
-          el.value = v;
+  });
+}
+
+/* -----------------------------------------
+ *  Form <-> State
+ * ----------------------------------------- */
+function readFormIntoState() {
+  const cd = state.companyData = state.companyData || {};
+  // Grunddaten
+  cd.firma         = byId('firma')?.value?.trim() || '';
+  cd.domain        = byId('domain')?.value?.trim() || '';
+  cd.webshop       = byId('webshop')?.value?.trim() || '';
+  cd.kurzbeschreibung = byId('kurzbeschreibung')?.value?.trim() || '';
+
+  // mehrzeilige Felder
+  cd.regionen   = byId('regionen')?.value || '';
+  cd.zielgruppen= byId('zielgruppen')?.value || '';
+  cd.produkte   = byId('produkte')?.value || '';
+  cd.keywords   = byId('keywords')?.value || '';
+
+  // Segmented Controls
+  const ort = document.querySelector('input[name="ortsbezug"]:checked')?.value || 'ohne';
+  cd.ortsbezug = ort;
+  cd.mitOrtsbezug = (ort !== 'ohne');
+
+  const ansprache = document.querySelector('input[name="ansprache"]:checked')?.value || 'neutral';
+  cd.ansprache = ansprache;
+}
+
+function applyFormFromState() {
+  const cd = state.companyData || {};
+  ['firma','domain','webshop','kurzbeschreibung','regionen','zielgruppen','produkte','keywords']
+    .forEach(id => {
+      const el = byId(id);
+      if (el && cd[id] !== undefined) el.value = cd[id];
+    });
+
+  if (cd.ortsbezug) {
+    const el = byId(`ort-${cd.ortsbezug}`);
+    if (el) el.checked = true;
+  }
+  if (cd.ansprache) {
+    const el = byId(`ansprache-${cd.ansprache}`);
+    if (el) el.checked = true;
+  }
+  // Auto-Grow aktualisieren
+  ['regionen','zielgruppen','produkte','keywords'].forEach(id => autoGrow(byId(id), AUTO_GROW_MAX[id] || 6));
+}
+
+/* -----------------------------------------
+ *  Titel-Job starten + stabil pollen
+ * ----------------------------------------- */
+async function startTitlesFlow() {
+  readFormIntoState();
+
+  // UI: Loader zeigen
+  showLoader('Titel werden generiert …');
+  let stopped = false;
+
+  try {
+    // 1) Titel-Job starten
+    const payload = { ...state.companyData, agentModels: state.agentModels };
+    const startRes = await startTitleJob(payload);
+    const jobId = startRes?.jobId || startRes?.id || null;
+    if (!jobId) throw new Error('Kein jobId vom Webhook erhalten.');
+    state.runningJobId = jobId;
+
+    // 2) Stabil pollen (exponentiell, Obergrenze, harter Abbruch)
+    const startedAt = Date.now();
+    const MAX_MS    = 15 * 60 * 1000; // 15 Minuten
+    let delay       = 3000;           // 3s initial
+    const MAX_DELAY = 15000;          // 15s
+
+    while (true) {
+      if (stopped) break;
+      const elapsed = Date.now() - startedAt;
+      if (elapsed > MAX_MS) throw new Error('Zeitüberschreitung beim Titel-Polling.');
+
+      // Fancy Loader-Text
+      updateLoader(`Pollen … (${Math.ceil(elapsed/1000)}s)`);
+
+      const res = await pollTitleJob(jobId);
+      // Erwartete Struktur: { status: 'running'|'done'|'failed', titles: [], message? }
+      const status = (res && (res.status || res[0]?.status)) || 'running';
+      const titles = (res && (res.titles || res[0]?.titles)) || [];
+      const msg    = (res && (res.message || res[0]?.message)) || '';
+
+      if (status === 'done' || (Array.isArray(titles) && titles.length)) {
+        // Erfolg
+        state.titles = Array.from(new Set(titles.map(t => String(t).trim()).filter(Boolean)));
+        state.texts  = new Array(state.titles.length).fill(''); // reset texts
+        localStorage.setItem('expoya_ce_state_v1', JSON.stringify(state));
+        renderExpoList();
+        notify('Titel fertig', `Es wurden ${state.titles.length} Titel generiert.`);
+        break;
+      }
+
+      if (status === 'failed') {
+        throw new Error(msg || 'Titel-Job fehlgeschlagen.');
+      }
+
+      // Warten + Backoff
+      await new Promise(r => setTimeout(r, delay));
+      delay = Math.min(MAX_DELAY, Math.round(delay * 1.5));
+    }
+  } catch (err) {
+    console.error('[Titel-Flow]', err);
+    showToast(err?.message || String(err));
+  } finally {
+    hideLoader();
+    state.runningJobId = null;
+  }
+}
+
+/* -----------------------------------------
+ *  Public: Init Agent-Modal + Formular
+ * ----------------------------------------- */
+export function initAgentModals() {
+  fillAgentInfo();
+  initPresets();
+}
+
+export function initForm() {
+  primeAudioOnUserGesture(); // für Sounds/Notifications
+
+  // Auto-Grow Handlers
+  ['regionen','zielgruppen','produkte','keywords'].forEach(id => {
+    const el = byId(id);
+    if (!el) return;
+    el.addEventListener('input', () => autoGrow(el, AUTO_GROW_MAX[id] || 6));
+    autoGrow(el, AUTO_GROW_MAX[id] || 6);
+  });
+
+  // Primary Action
+  const btn = byId('generateTitlesBtn') || byId('generateBtn');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      startTitlesFlow();
+    });
+  }
+
+  // Optional: Persistenz laden
+  try {
+    const raw = localStorage.getItem('expoya_ce_state_v1');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === 'object') {
+        Object.assign(state, saved);
+        applyFormFromState();
+        if (Array.isArray(state.titles) && state.titles.length) {
+          renderExpoList();
         }
       }
     }
   } catch {}
-  const form = byId('myForm');
-  if (!form) return;
-
-  // Auto-Grow Textareas & Sliders
-  initAutoGrow(form);
-  initSlider('tonality',     TONALITY_LABELS);
-  initSlider('detail_level', (n) => (DETAIL_LEVELS[(n-1)]?.name || 'Neutral'));
-  initSlider('style_bias',   STYLE_LABELS);
-
-  // Preset select
-  const presetSel = byId('modelPreset');
-  if (presetSel) {
-    // init from state.selectedPreset
-    if (state.selectedPreset && PRESETS[state.selectedPreset]) {
-      presetSel.value = state.selectedPreset;
-      applyModelsToSelects(PRESETS[state.selectedPreset]);
-    } else {
-      applyModelsToSelects(state.agentModels || {});
-    }
-
-    presetSel.addEventListener('change', () => {
-      const key = presetSel.value || '';
-      state.selectedPreset = key;
-      const models = PRESETS[key] || {};
-      // apply and store
-      applyModelsToSelects(models);
-      state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
-    });
-  } else {
-    // kein Preset-Control; trotzdem Selects aus state initialisieren
-    applyModelsToSelects(state.agentModels || {});
-  }
-
-  // Jede Model-Select-Änderung direkt in den State schreiben
-  ['modelTitleGenerator','modelTitleController','modelSeoStrategist','modelMicroTexter','modelSeoVeredler','modelSeoAuditor']
-    .forEach(id => {
-      const sel = byId(id);
-      if (!sel) return;
-      sel.addEventListener('change', () => {
-        state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
-      });
-    });
-
-  // Submit handler: Titel-Job starten
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // 1) Form → State companyData (Strings)
-    const fd = new FormData(form);
-    const entries = Object.fromEntries(fd.entries());
-
-    // Mergen, damit abgeleitete Felder nicht überschrieben werden
-    state.companyData = { ...(state.companyData || {}), ...entries };
-
-    // Legacy-Feld (Website) sicher entfernen
-    delete state.companyData.website;
-
-    // Segmented controls
-    const ortsbezug = readSegmented(form, 'ortsbezug', 'exakt');
-    const ansprache = readSegmented(form, 'ansprache', 'Du');
-
-    state.companyData.ortsbezug    = ortsbezug;
-    state.companyData.mitOrtsbezug = (ortsbezug !== 'ohne');
-    state.companyData.ansprache    = ansprache;
-
-    // Klartext-Instruktion fürs Backend
-    const ORTSBEZUG_TEXT = {
-      ohne:               'Keinen Ortsbezug verwenden',
-      exakt:              'Nur exakten Ort verwenden',
-      umland:             'Region und Nachbarorte verwenden',
-      umland_stadtteile:  'Region, Nachbarorte und Stadtteile verwenden'
-    };
-    state.companyData.ortsbezug_instruction = ORTSBEZUG_TEXT[ortsbezug] || '';
-
-    try { localStorage.setItem('expoya_ce_state_v1', JSON.stringify({ companyData: state.companyData, agentModels: state.agentModels })); } catch {}
-
-    // Tonalität
-    const ton = parseInt(fd.get('tonality') || '3', 10);
-    state.companyData.tonality = TONALITY_LABELS[(ton-1)] || 'Neutral';
-
-    // Detailgrad
-    const dl = parseInt(fd.get('detail_level') || '3', 10);
-    const dlMeta = DETAIL_LEVELS[(dl-1)] || DETAIL_LEVELS[2];
-    state.companyData.detail_level             = dl;
-    state.companyData.detail_level_label       = dlMeta.name;
-    state.companyData.detail_level_instruction = dlMeta.instruction;
-
-    // Schreibstil
-    const sb = parseInt(fd.get('style_bias') || '3', 10);
-    const sbMeta = STYLE_LABELS[(sb-1)] || 'Neutral';
-    state.companyData.style_bias         = sb;
-    state.companyData.style_bias_label   = sbMeta;
-    state.companyData.style_bias_instruction =
-      (sb === 1) ? "Emotional, nutzenorientiert, aktive Verben, klare Call-to-Actions."
-      : (sb === 2) ? "Benefits priorisieren; sachliche Belege sparsam einstreuen."
-      : (sb === 4) ? "Sachlich-präzise; Daten/Belege hervorheben; wenig Werbesprache."
-      : (sb === 5) ? "Objektiv und nüchtern; evidenzbasiert; keine werblichen Formulierungen."
-      : "Ausgewogen: Nutzenargumente und Fakten halten sich die Waage.";
-
-    // Agent-Modelle sicherstellen
-    state.agentModels = { ...state.agentModels, ...readModelsFromSelects() };
-
-    /* 2) UI – Loader + Reset */
-    showLoader('Titel werden generiert …');
-    state.titles = [];
-    state.texts  = [];
-
-    /* 3) Job starten */
-    let jobId;
-    try {
-      primeAudioOnUserGesture(); // innerhalb User-Geste
-      ({ jobId } = await startTitleJob(state.companyData));
-      if (!jobId) throw new Error('Keine Job-ID erhalten');
-    } catch (err) {
-      hideLoader();
-      showToast('Fehler beim Start: ' + (err?.message || err));
-      return;
-    }
-
-    /* 4) Polling */
-    state.runningJobId = jobId;
-    pollUntilDone(jobId);
-  });
-} // end initForm
-
-/* ---------- Poll-Loop ---------- */
-async function pollUntilDone(jobId) {
-  let tries = 0;
-  const maxTries = 90; // 90 * 10s = 15 min
-
-  let delay = 5000; const maxDelay = 30000;
-  let tries = 0; const maxTries = 120;
-  let stopped = false;
-
-  async function poll() {
-    try {
-      const job = await pollTitleJob(jobId);
-      tries++;
-      if (Array.isArray(job) && job[0]?.titles?.length) {
-        state.titles = job[0].titles;
-        clearInterval(0); hideLoader();
-        state.texts  = new Array(state.titles.length).fill('');
-        notify('Titel fertig', `${state.titles.length} Expo-Titel wurden generiert.`);
-        renderExpoList();
-        return;
-      }
-      if (job?.status === 'error' || tries > maxTries) {
-        hideLoader();
-        showToast('Titel-Generierung fehlgeschlagen oder Timeout.');
-        return;
-      }
-    } catch (err) {
-      console.error('[Titel-Poll Fehler]', err);
-      hideLoader();
-      showToast(`Fehler beim Abfragen: ${err?.message || err}`);
-      return;
-    }
-    await new Promise(r => setTimeout(r, delay));
-    delay = Math.min(maxDelay, Math.round(delay * 1.5));
-    if (!stopped) await poll();
-  }
-  poll();
 }
