@@ -4,17 +4,63 @@ import { startTitleJob, pollTitleJob } from './api.js';
 import { showLoader, updateLoader, hideLoader, showToast } from './ui-loader.js';
 import { renderExpoList } from './ui/renderExpoList.js';
 import { PRESETS } from '../assets/presets.js';
-import { primeAudioOnUserGesture, notify } from './ui/notifier.js';
+import { primeAudioOnUserGesture, notify, attachSoundToggle } from './ui/notifier.js';
 
 const byId = (id) => document.getElementById(id);
+
+// Diese Textareas wachsen automatisch mit
 const TEXTAREAS = ['regionen','zielgruppen','produkte','keywords','attribute','zielsetzung'];
 
-function readFormIntoState() {
-  const cd = (state.companyData = state.companyData || {});
+/* -------------------- Slider-Labeling -------------------- */
+const LABELS = {
+  // „Kreativität“ wurde zu „Tonalität“, Bezeichnungen bleiben aus deinem Ursprungsentwurf
+  diversity_level: ['Sehr nüchtern','Zurückhaltend','Neutral','Kreativ','Sehr kreativ'],
+  detail_level   : ['Übersichtlich','Kurz','Neutral','Detailreich','Sehr detailreich'],
+  style_bias     : ['Faktisch','Sachlich','Neutral','Emotional','Werblich']
+};
+function mapSliderLabel(key, val){
+  const arr = LABELS[key] || ['1','2','3','4','5'];
+  const i = Math.min(arr.length-1, Math.max(0, Number(val)-1));
+  return arr[i];
+}
+function wireSliders(){
+  ['diversity_level','detail_level','style_bias'].forEach((id)=>{
+    const el = byId(id), out = byId(`${id}-value`);
+    if(!el || !out) return;
+    out.textContent = mapSliderLabel(id, el.value);
+    el.addEventListener('input', ()=> out.textContent = mapSliderLabel(id, el.value));
+  });
+}
+
+/* -------------------- Autogrow -------------------- */
+function autogrow(el){
+  if(!el) return;
+  el.style.height='auto';
+  const max = 800;
+  el.style.height = Math.min(max, el.scrollHeight)+'px';
+}
+
+/* -------------------- Presets -------------------- */
+function initPresets(){
+  const sel = byId('modelPreset'); if(!sel) return;
+  sel.addEventListener('change', ()=>{
+    const p = PRESETS?.[sel.value];
+    if(!p) return;
+    state.agentModels = { ...(state.agentModels||{}), ...p };
+    applyFormFromState();
+    try { localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state)); } catch {}
+    showToast('Preset übernommen');
+  });
+}
+
+/* -------------------- STATE: lesen/schreiben -------------------- */
+export function readFormIntoState() {
+  const cd = state.companyData = state.companyData || {};
+
   cd.firma           = byId('firma')?.value || '';
+  cd.branche         = byId('branche')?.value || '';
   cd.expoCount       = Number(byId('exposCount')?.value || 0);
   cd.contentSourceId = byId('contentSourceId')?.value || '';
-
   cd.attribute       = byId('attribute')?.value || '';
   cd.zielsetzung     = byId('zielsetzung')?.value || '';
   cd.regionen        = byId('regionen')?.value || '';
@@ -22,168 +68,250 @@ function readFormIntoState() {
   cd.produkte        = byId('produkte')?.value || '';
   cd.keywords        = byId('keywords')?.value || '';
 
+  // Segmented Controls
   cd.ortsbezug       = document.querySelector('input[name="ortsbezug"]:checked')?.value || 'ohne';
-  cd.ansprache       = document.querySelector('input[name="ansprache"]:checked')?.value || 'neutral';
+  cd.ansprache       = document.querySelector('input[name="ansprache"]:checked')?.value || 'sie'; // nur sie/du
   cd.branding        = document.querySelector('input[name="branding"]:checked')?.value || 'kein';
 
+  // Slider
   cd.diversity_level = Number(byId('diversity_level')?.value || 3);
   cd.detail_level    = Number(byId('detail_level')?.value || 3);
   cd.style_bias      = Number(byId('style_bias')?.value || 3);
 
-  // Modelle aus der UI lesen
-  state.agentModels = {
-    ...(state.agentModels || {}),
-    titleGenerator  : byId('modelTitleGenerator')?.value,
-    titleController : byId('modelTitleController')?.value,
-    seoStrategist   : byId('modelSeoStrategist')?.value,
-    microTexter     : byId('modelMicroTexter')?.value,
-    seoVeredler     : byId('modelSeoVeredler')?.value,
-    seoAuditor      : byId('modelSeoAuditor')?.value,
-  };
+  // Modelle
+  state.agentModels = state.agentModels || {};
+  state.agentModels.titleGenerator  = byId('modelTitleGenerator')?.value || state.agentModels.titleGenerator;
+  state.agentModels.titleController = byId('modelTitleController')?.value || state.agentModels.titleController;
+  state.agentModels.seoStrategist   = byId('modelSeoStrategist')?.value || state.agentModels.seoStrategist;
+  state.agentModels.microTexter     = byId('modelMicroTexter')?.value || state.agentModels.microTexter;
+  state.agentModels.seoVeredler     = byId('modelSeoVeredler')?.value || state.agentModels.seoVeredler;
+  state.agentModels.seoAuditor      = byId('modelSeoAuditor')?.value || state.agentModels.seoAuditor;
 }
+
+function setIf(elId, val){
+  const el = byId(elId); if (el) el.value = val;
+}
+function setChecked(id){ const el = byId(id); if (el) el.checked = true; }
 
 function applyFormFromState() {
   const cd = state.companyData || {};
-  if (byId('firma')) byId('firma').value = cd.firma || '';
-  if (byId('exposCount')) byId('exposCount').value = cd.expoCount || 15;
-  if (byId('contentSourceId')) byId('contentSourceId').value = cd.contentSourceId || '';
-  if (byId('attribute')) byId('attribute').value = cd.attribute || '';
-  if (byId('zielsetzung')) byId('zielsetzung').value = cd.zielsetzung || '';
-  if (byId('regionen')) byId('regionen').value = cd.regionen || '';
-  if (byId('zielgruppen')) byId('zielgruppen').value = cd.zielgruppen || '';
-  if (byId('produkte')) byId('produkte').value = cd.produkte || '';
-  if (byId('keywords')) byId('keywords').value = cd.keywords || '';
 
-  // Modelle zurückspielen (mit Defaults)
-  if (byId('modelTitleGenerator'))  byId('modelTitleGenerator').value  = state.agentModels?.titleGenerator  || 'ChatGPT 5 mini';
-  if (byId('modelTitleController')) byId('modelTitleController').value = state.agentModels?.titleController || 'ChatGPT 4.1 mini';
-  if (byId('modelSeoStrategist'))   byId('modelSeoStrategist').value   = state.agentModels?.seoStrategist   || 'Gemini 2.5 Pro';
-  if (byId('modelMicroTexter'))     byId('modelMicroTexter').value     = state.agentModels?.microTexter     || 'Gemini 2.5 Flash';
-  if (byId('modelSeoVeredler'))     byId('modelSeoVeredler').value     = state.agentModels?.seoVeredler     || 'Claude Sonnet 4';
-  if (byId('modelSeoAuditor'))      byId('modelSeoAuditor').value      = state.agentModels?.seoAuditor      || 'ChatGPT o4 mini';
+  setIf('firma', cd.firma || '');
+  setIf('branche', cd.branche || '');
+  setIf('exposCount', cd.expoCount || 15);
+  setIf('contentSourceId', cd.contentSourceId || '');
+  setIf('attribute', cd.attribute || '');
+  setIf('zielsetzung', cd.zielsetzung || '');
+  setIf('regionen', cd.regionen || '');
+  setIf('zielgruppen', cd.zielgruppen || '');
+  setIf('produkte', cd.produkte || '');
+  setIf('keywords', cd.keywords || '');
 
-  // Radios
+  // Segmented Controls
   const ort = cd.ortsbezug || 'ohne';
-  const ans = cd.ansprache || 'neutral';
-  const br  = cd.branding  || 'kein';
-  const ortId = `ort-${ort}`;
-  const ansId = ans === 'sie' ? 'ans-sie' : (ans === 'du' ? 'ans-du' : 'ans-neutral');
-  const brId  = br === 'dezent' ? 'brand-dezent' : (br === 'moderat' ? 'brand-moderat' : 'brand-kein');
-  if (byId(ortId)) byId(ortId).checked = true;
-  if (byId(ansId)) byId(ansId).checked = true;
-  if (byId(brId))  byId(brId).checked  = true;
+  const ans = cd.ansprache || 'sie';
+  const brd = cd.branding  || 'kein';
+  setChecked(`ort-${ort}`);
+  setChecked(ans === 'du' ? 'ans-du' : 'ans-sie');
+  setChecked(`branding-${brd}`);
+
+  // Slider + aktuelle Labels
+  const sliders = {
+    diversity_level: cd.diversity_level || 3,
+    detail_level   : cd.detail_level    || 3,
+    style_bias     : cd.style_bias      || 3
+  };
+  for (const [k,v] of Object.entries(sliders)){
+    if(byId(k)) byId(k).value=String(v);
+    if(byId(`${k}-value`)) byId(`${k}-value`).textContent=mapSliderLabel(k,v);
+  }
+
+  // Modelle zurückspielen (mit Defaults für schöne Startwerte)
+  byId('modelTitleGenerator') && (byId('modelTitleGenerator').value  = state.agentModels.titleGenerator  || 'ChatGPT 5 mini');
+  byId('modelTitleController')&& (byId('modelTitleController').value = state.agentModels.titleController || 'ChatGPT 5 mini');
+  byId('modelSeoStrategist')  && (byId('modelSeoStrategist').value   = state.agentModels.seoStrategist   || 'Gemini 2.5 Pro');
+  byId('modelMicroTexter')    && (byId('modelMicroTexter').value     = state.agentModels.microTexter     || 'Gemini 2.5 Flash');
+  byId('modelSeoVeredler')    && (byId('modelSeoVeredler').value     = state.agentModels.seoVeredler     || 'Claude Sonnet 4');
+  byId('modelSeoAuditor')     && (byId('modelSeoAuditor').value      = state.agentModels.seoAuditor      || 'ChatGPT o4 mini');
+}
+
+/* -------------------- Gemeinsame Payload -------------------- */
+export function buildCommonPayload(){
+  const cd = state.companyData || {};
+
+  // Mapping der Slider → textuelle Labels (nach deinem Ursprungsentwurf)
+  const payload = {
+    firma           : cd.firma || '',
+    branche         : cd.branche || '',
+    expoCount       : cd.expoCount || 0,
+    contentSourceId : cd.contentSourceId || '',
+    attribute       : cd.attribute || '',
+    zielsetzung     : cd.zielsetzung || '',
+    regionen        : cd.regionen || '',
+    zielgruppen     : cd.zielgruppen || '',
+    produkte        : cd.produkte || '',
+    keywords        : cd.keywords || '',
+    ortsbezug       : cd.ortsbezug || 'ohne',
+    ansprache       : cd.ansprache || 'sie',
+    branding        : cd.branding  || 'kein',
+    agentModels     : { ...(state.agentModels||{}) },
+
+    // Umbenannte Slider-Felder
+    'Tonalität' : mapSliderLabel('diversity_level', cd.diversity_level || 3),
+    'Detailgrad': mapSliderLabel('detail_level',    cd.detail_level    || 3),
+    'Schreibstil':mapSliderLabel('style_bias',      cd.style_bias      || 3),
+
+    // Instruktionen (automatisch abhängig von Auswahl)
+    instructions: {
+      branding: (()=>{
+        switch(cd.branding){
+          case 'kein'     : return 'Verwende den Unternehmensnamen überhaupt nicht. Erstelle einen rein informativen Text.';
+          case 'dezent'   : return 'Verwende den Unternehmensnamen dezent in einer etwaigen Einleitung oder im Fazit.';
+          case 'moderat'  : return 'Verwende den Unternehmensnamen an 3-4 logischen Stellen im Text.';
+          default         : return '';
+        }
+      })(),
+      ortsbezug: (()=>{
+        switch(cd.ortsbezug){
+          case 'ohne': return 'Verwende keinen regionalen Ortsbezug in den Titeln oder Text.';
+          case 'exakt': return 'Verwende, sofern sinnvoll im Kontext, genau die angegebenen Regionen/Orte/Städte in den Titeln oder Text.';
+          case 'erweitert': return 'Verwende, sofern sinnvoll im Kontext, neben den angegebenen Regionen/Orte/Städte auch Nachbarn der exakt gleichen administrativen Ebene (z. B. „Linz“ → Wels, Marchtrenk, Leonding; „Oberösterreich“ → Niederösterreich, Salzburg) in den Titeln oder Text.';
+          case 'erweitert+vertieft': return 'Verwende, sofern sinnvoll im Kontext, neben den angegebenen Regionen/Orte/Städte auch Stadt-/Ortsteile auf der darunter liegenden administrativen Ebene und auch Nachbarn der exakt gleichen administrativen Ebene sowie der administrativen Ebene darunter. (Bsp.1: „Linz“ → Linz(Auwiesen, Ebelsberg, Urfahr…), Leonding(Alharting, Zaubertal…); Bsp.2: „Oberösterreich“ → Oberösterreich(Vöcklabruck, Grieskirchen…), Niederösterreich(Amstetten, Baden…))';
+          default: return '';
+        }
+      })()
+    }
+  };
+
+  return payload;
+}
+
+/* -------------------- INIT & FLOW -------------------- */
+export async function initForm(){
+  // Audio-Priming + Toggle
+  primeAudioOnUserGesture();
+  attachSoundToggle();
+
+  // Textareas autogrow
+  TEXTAREAS.forEach(id=>{
+    const el=byId(id);
+    if(el){ el.addEventListener('input',()=>autogrow(el)); autogrow(el); }
+  });
 
   // Slider
-  const sliders = { diversity_level: cd.diversity_level || 3, detail_level: cd.detail_level || 3, style_bias: cd.style_bias || 3 };
-  for (const [k, v] of Object.entries(sliders)) {
-    if (byId(k)) byId(k).value = String(v);
-    if (byId(`${k}-value`)) byId(`${k}-value`).textContent = mapSliderLabel(k, v);
-  }
-}
-
-const LABELS = {
-  diversity_level: ['Sehr nüchtern','Zurückhaltend','Neutral','Kreativ','Sehr kreativ'],
-  detail_level   : ['Übersichtlich','Kurz','Neutral','Detailreich','Sehr detailreich'],
-  style_bias     : ['Faktisch','Sachlich','Neutral','Emotional','Werblich']
-};
-function mapSliderLabel(key, val){
-  const arr = LABELS[key] || ['1','2','3','4','5'];
-  const i = Math.min(arr.length - 1, Math.max(0, Number(val) - 1));
-  return arr[i];
-}
-function wireSliders(){
-  ['diversity_level','detail_level','style_bias'].forEach((id)=>{
-    const el = byId(id), out = byId(`${id}-value`);
-    if (!el || !out) return;
-    out.textContent = mapSliderLabel(id, el.value);
-    el.addEventListener('input', ()=> out.textContent = mapSliderLabel(id, el.value));
-  });
-}
-function autogrow(el){
-  if (!el) return;
-  el.style.height = 'auto';
-  const line = parseInt(getComputedStyle(el).lineHeight || '20', 10);
-  el.style.height = Math.min(10*line, el.scrollHeight) + 'px';
-}
-
-/* ---------- Presets ---------- */
-function initPresets(){
-  const sel = byId('modelPreset');
-  if (!sel) return;
-  sel.addEventListener('change', ()=>{
-    const p = PRESETS?.[sel.value];
-    if (!p) return;
-    state.agentModels = { ...(state.agentModels || {}), ...p };
-    applyFormFromState();
-    showToast('Preset übernommen');
-  });
-}
-
-/* ---------- Init & Flow ---------- */
-export async function initForm(){
-  primeAudioOnUserGesture();
-  TEXTAREAS.forEach(id => { const el = byId(id); if (el){ el.addEventListener('input', ()=>autogrow(el)); autogrow(el); }});
   wireSliders();
+
+  // Presets
   initPresets();
 
-  // restore
-  try {
+  // Restore
+  try{
     const raw = localStorage.getItem('expoya_ce_state_v2');
-    if (raw) Object.assign(state, JSON.parse(raw));
-  } catch {}
-  applyFormFromState();
-  if (Array.isArray(state.titles) && state.titles.length) renderExpoList();
+    if(raw){
+      const saved = JSON.parse(raw);
+      Object.assign(state, saved);
+      applyFormFromState();
 
-  // buttons
+      // Backward-Compat: sicherstellen, dass Arrays existieren
+      state.textsMd   = state.textsMd   || [];
+      state.expoNotes = state.expoNotes || [];
+
+      if(Array.isArray(state.titles) && state.titles.length){
+        renderExpoList();
+      }
+    }
+  }catch{}
+
+  // Buttons
   const gen = byId('generateBtn');
-  if (gen) gen.onclick = ()=> startTitlesFlow(gen);
+  if(gen) gen.onclick = ()=> startTitlesFlow(gen);
+
   const clr = byId('clearBtn');
-  if (clr) clr.onclick = ()=>{
-    byId('mainForm').reset();
-    byId('ort-ohne').checked    = true;
-    byId('ans-neutral').checked = true;
-    byId('brand-kein').checked  = true;
+  if(clr) clr.onclick = ()=>{
+    byId('mainForm')?.reset();
+    // Standard-Checks
+    byId('ort-ohne') && (byId('ort-ohne').checked=true);
+    byId('ans-sie') && (byId('ans-sie').checked=true);
+    byId('branding-kein') && (byId('branding-kein').checked=true);
+    // Slider-Labels neu setzen
     wireSliders();
+    // State partiell leeren, UI bleibt
+    state.titles = [];
+    state.textsMd = [];
+    state.expoNotes = [];
+    try { localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state)); } catch {}
+    renderExpoList();
   };
+
+  // Live-Update der Modell-Selects → State & Storage
+  [
+    'modelTitleGenerator','modelTitleController',
+    'modelSeoStrategist','modelMicroTexter','modelSeoVeredler','modelSeoAuditor'
+  ].forEach(id=>{
+    const el = byId(id);
+    if(el) el.addEventListener('change', ()=>{
+      readFormIntoState();
+      try { localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state)); } catch {}
+    });
+  });
 }
 
 async function startTitlesFlow(btn){
   readFormIntoState();
   showLoader('Titel werden generiert …');
   try{
-    const startRes = await startTitleJob({ ...state.companyData, agentModels: state.agentModels });
-    const jobId = startRes?.jobId || startRes?.id;
-    if (!jobId) throw new Error('Kein jobId vom Webhook erhalten.');
-    const started = Date.now();
-    const MAX = 15 * 60 * 1000;
-    let delay = 2500;
+    // Gemeinsame, strukturierte Payload (wie später beim Text-Job)
+    const basePayload = buildCommonPayload();
 
-    while (true){
-      const elapsed = Date.now() - started;
-      if (elapsed > MAX) throw new Error('Zeitüberschreitung beim Titel-Polling.');
+    const startRes = await startTitleJob(basePayload);
+    const jobId = startRes?.jobId || startRes?.id;
+    if(!jobId) throw new Error('Kein jobId vom Webhook erhalten.');
+
+    const started = Date.now();
+    const MAX = 15*60*1000;
+    let delay=2500;
+
+    while(true){
+      const elapsed = Date.now()-started;
+      if(elapsed>MAX) throw new Error('Zeitüberschreitung beim Titel-Polling.');
       updateLoader(`Pollen … (${Math.ceil(elapsed/1000)}s)`);
 
       const res = await pollTitleJob(jobId);
-      const status = res?.status || res?.[0]?.status || 'running';
-      const titles = res?.titles || res?.[0]?.titles || [];
+      const status = String(res?.status || res?.[0]?.status || 'running').toLowerCase();
 
-      if (status === 'done' || (Array.isArray(titles) && titles.length)){
-        state.titles = Array.from(new Set(titles.map(t => String(t).trim()).filter(Boolean)));
-        state.texts = new Array(state.titles.length).fill('');
-        localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state));
+      // Titel robust extrahieren
+      let titles = res?.titles || res?.[0]?.titles || res?.data?.titles || [];
+      if (typeof titles === 'string') {
+        try { titles = JSON.parse(titles); } catch { titles = [titles]; }
+      }
+      if (!Array.isArray(titles)) titles = [];
+
+      if (status==='done' || titles.length){
+        // eindeutige, getrimmte Titel
+        state.titles = Array.from(new Set(titles.map(t=>String(t||'').trim()).filter(Boolean)));
+
+        // *** Wichtig: Texte/Notes vollständig zurücksetzen, passend zur Titel-Länge ***
+        const n = state.titles.length;
+        state.textsMd   = new Array(n).fill('');
+        state.expoNotes = new Array(n).fill('');
+        // eventuell alte Felder entfernen
+        delete state.texts;
+
+        try { localStorage.setItem('expoya_ce_state_v2', JSON.stringify(state)); } catch {}
         hideLoader();
         renderExpoList();
-        notify('Titel fertig', `Es wurden ${state.titles.length} Titel generiert.`);
+        notify('Titel fertig', `Es wurden ${n} Titel generiert.`);
         return;
       }
-      if (status === 'failed') throw new Error(res?.message || 'Titel-Job fehlgeschlagen.');
-      await new Promise(r => setTimeout(r, delay));
-      delay = Math.min(15000, Math.round(delay * 1.15));
+
+      if (status==='failed') throw new Error(res?.message || 'Titel-Job fehlgeschlagen.');
+      await new Promise(r=>setTimeout(r, delay));
+      delay = Math.min(15000, Math.round(delay*1.15));
     }
-  } catch(e){
+  }catch(e){
     console.error(e);
-    showToast(e.message || 'Fehler beim Generieren der Titel');
-  } finally {
+    showToast(e.message||'Fehler beim Generieren der Titel');
+  }finally{
     hideLoader();
   }
 }
